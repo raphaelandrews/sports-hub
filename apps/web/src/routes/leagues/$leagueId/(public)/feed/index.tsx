@@ -164,12 +164,20 @@ function FeedPage() {
                           </p>
                           <div className="flex flex-wrap gap-2 text-xs text-muted-foreground">
                             {item.competition_number != null ? (
-                              <span>Competição {item.competition_number}</span>
+                              <Badge variant="default">Competição {item.competition_number}</Badge>
                             ) : null}
-                            {item.sport_name ? <span>{item.sport_name}</span> : null}
-                            {item.modality_name ? <span>{item.modality_name}</span> : null}
-                            {item.delegation_name ? <span>{item.delegation_name}</span> : null}
-                            {item.minute != null ? <span>{item.minute}min</span> : null}
+                            {item.sport_name ? (
+                              <Badge className="bg-blue-100 text-blue-800 hover:bg-blue-200">{item.sport_name}</Badge>
+                            ) : null}
+                            {item.modality_name ? (
+                              <Badge className="bg-emerald-100 text-emerald-800 hover:bg-emerald-200">{item.modality_name}</Badge>
+                            ) : null}
+                            {item.delegation_name ? (
+                              <Badge className="bg-purple-100 text-purple-800 hover:bg-purple-200">{item.delegation_name}</Badge>
+                            ) : null}
+                            {item.minute != null ? (
+                              <Badge className="bg-amber-100 text-amber-800 hover:bg-amber-200">{item.minute}min</Badge>
+                            ) : null}
                           </div>
                         </div>
                         <div className="shrink-0 text-right">

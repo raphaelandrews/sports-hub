@@ -287,6 +287,8 @@
       "refuse": "Rechazar"
     },
     "panelTitle": "Notificaciones",
+    "pageTitle": "Notificaciones",
+    "pageDescription": "Mantente al día.",
     "markAllRead": "Marcar todo como leído",
     "empty": "Sin notificaciones"
   },
@@ -407,6 +409,12 @@
         "utc": "UTC"
       },
       "membersHeading": "Miembros",
+      "membersDesc": "Administre los miembros y sus roles en la liga.",
+      "membersCountLabel": "miembros",
+      "searchPlaceholder": "Buscar miembros…",
+      "transferWindowDesc": "Permitir transferencias entre delegaciones",
+      "submit": "Guardar cambios",
+      "submitting": "Ahorrando...",
       "table": {
         "user": "Usuario",
         "role": "Role",
@@ -417,11 +425,23 @@
         "title": "Zona de peligro",
         "desc": "Medidas irreversibles para esta liga."
       },
+      "archive": "Archivar liga",
+      "archiving": "Archivando...",
       "role": {
         "admin": "Administrador de la liga",
         "chief": "Jefe",
         "coach": "Entrenador",
         "athlete": "Atleta"
+      },
+      "toast": {
+        "updateSuccess": "Liga actualizada con éxito.",
+        "updateError": "Error al actualizar la liga.",
+        "archiveSuccess": "Liga archivada con éxito.",
+        "archiveError": "Error al archivar la liga.",
+        "roleSuccess": "Rol actualizado con éxito.",
+        "roleError": "Error al actualizar el rol.",
+        "removeSuccess": "Miembro eliminado con éxito.",
+        "removeError": "Error al eliminar miembro."
       }
     }
   },
@@ -443,7 +463,12 @@
     "title": "SportsHub",
     "subtitle": "Crea, únete y sigue ligas deportivas.",
     "popularLeagues": "ligas populares",
-    "recentLeagues": "ligas recientes"
+    "recentLeagues": "ligas recientes",
+    "charts": {
+      "topLeagues": "Ligas con mas miembros",
+      "statusBreakdown": "Estado de las ligas",
+      "creationTimeline": "Ligas creadas (ultimos 6 meses)"
+    }
   },
   "leagues": {
     "listTitle": "Ligas",
@@ -1470,5 +1495,7 @@
   "result.form.sportFallback": "Deporte",
   "result.form.modalityFallback": "Modalidad #{id}",
   "result.form.rankLabel": "Clasificación",
-  "result.form.jsonError": "JSON inválido en el payload del resultado."
+  "result.form.jsonError": "JSON inválido en el payload del resultado.",
+  "terms.title": "Términos de Uso",
+  "privacy.title": "Política de Privacidad"
 }

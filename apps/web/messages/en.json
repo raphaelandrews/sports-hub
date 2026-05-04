@@ -161,7 +161,10 @@
     },
     "sort": {
       "asc": "Ascending",
-      "desc": "Descending"
+      "desc": "Descending",
+      "byName": "Sort by name",
+      "byCode": "Sort by code",
+      "byCreation": "Sort by creation"
     },
     "actions": {
       "clearAria": "Clear",
@@ -221,11 +224,6 @@
       "allStatuses": "All statuses",
       "onlyActive": "Only active",
       "onlyInactive": "Only inactive"
-    },
-    "sort": {
-      "byName": "Sort by name",
-      "byCode": "Sort by code",
-      "byCreation": "Sort by creation"
     },
     "items": "items",
     "current": "current",
@@ -297,6 +295,8 @@
       "refuse": "Refuse"
     },
     "panelTitle": "Notifications",
+    "pageTitle": "Notifications",
+    "pageDescription": "Stay updated.",
     "markAllRead": "Mark all as read",
     "empty": "No notifications"
   },
@@ -417,6 +417,12 @@
         "utc": "UTC"
       },
       "membersHeading": "Members",
+      "membersDesc": "Manage members and their roles in the league.",
+      "membersCountLabel": "members",
+      "searchPlaceholder": "Search members…",
+      "transferWindowDesc": "Allow transfers between delegations",
+      "submit": "Save changes",
+      "submitting": "Saving...",
       "table": {
         "user": "User",
         "role": "Role",
@@ -427,11 +433,23 @@
         "title": "Danger zone",
         "desc": "Irreversible actions for this league."
       },
+      "archive": "Archive league",
+      "archiving": "Archiving...",
       "role": {
         "admin": "League Admin",
         "chief": "Chief",
         "coach": "Coach",
         "athlete": "Athlete"
+      },
+      "toast": {
+        "updateSuccess": "League updated successfully.",
+        "updateError": "Failed to update league.",
+        "archiveSuccess": "League archived successfully.",
+        "archiveError": "Failed to archive league.",
+        "roleSuccess": "Role updated successfully.",
+        "roleError": "Failed to update role.",
+        "removeSuccess": "Member removed successfully.",
+        "removeError": "Failed to remove member."
       }
     }
   },
@@ -453,7 +471,12 @@
     "title": "SportsHub",
     "subtitle": "Create, join, and follow sports leagues.",
     "popularLeagues": "Popular leagues",
-    "recentLeagues": "Recent leagues"
+    "recentLeagues": "Recent leagues",
+    "charts": {
+      "topLeagues": "Top leagues by members",
+      "statusBreakdown": "League status",
+      "creationTimeline": "Leagues created (last 6 months)"
+    }
   },
   "leagues": {
     "listTitle": "Leagues",
@@ -1489,5 +1512,7 @@
   "result.form.sportFallback": "Sport",
   "result.form.modalityFallback": "Modality #{id}",
   "result.form.rankLabel": "Rank",
-  "result.form.jsonError": "Invalid JSON in result payload."
+  "result.form.jsonError": "Invalid JSON in result payload.",
+  "terms.title": "Terms of Use",
+  "privacy.title": "Privacy Policy"
 }

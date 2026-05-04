@@ -5,13 +5,6 @@ import { toast } from "sonner";
 
 import { Badge } from "@sports-system/ui/components/badge";
 import { Button } from "@sports-system/ui/components/button";
-import {
-  Card,
-  CardContent,
-  CardDescription,
-  CardHeader,
-  CardTitle,
-} from "@sports-system/ui/components/card";
 import { Checkbox } from "@sports-system/ui/components/checkbox";
 import { Input } from "@sports-system/ui/components/input";
 import { Label } from "@sports-system/ui/components/label";
@@ -40,14 +33,23 @@ import {
 import { sportListQueryOptions } from "@/features/sports/api/queries";
 import { ImageUpload } from "@/shared/components/ui/image-upload";
 import { TableLayout } from "@/shared/components/ui/table-layout";
+import { Title } from "@/shared/components/ui/title";
 import type { LeagueMemberRole } from "@/types/leagues";
+import * as m from "@/paraglide/messages";
+import { CardWrapper } from "@/shared/components/ui/card-wrapper";
 
-const roleLabel: Record<LeagueMemberRole, string> = {
-  LEAGUE_ADMIN: "Administrador",
-  CHIEF: "Chefe",
-  COACH: "Técnico",
-  ATHLETE: "Atleta",
-};
+function getRoleLabel(role: LeagueMemberRole): string {
+  switch (role) {
+    case "LEAGUE_ADMIN":
+      return m["league.settings.role.admin"]();
+    case "CHIEF":
+      return m["league.settings.role.chief"]();
+    case "COACH":
+      return m["league.settings.role.coach"]();
+    case "ATHLETE":
+      return m["league.settings.role.athlete"]();
+  }
+}
 
 export const Route = createFileRoute("/leagues/$leagueId/_authenticated/_league_admin/settings/")({
   component: LeagueSettingsPage,
@@ -79,9 +81,9 @@ function LeagueSettingsPage() {
     if (!searchQuery.trim()) return members;
     const lower = searchQuery.toLowerCase();
     return members.filter(
-      (m) =>
-        String(m.user_id).includes(lower) ||
-        roleLabel[m.role].toLowerCase().includes(lower),
+      (member) =>
+        String(member.user_id).includes(lower) ||
+        getRoleLabel(member.role).toLowerCase().includes(lower),
     );
   }, [members, searchQuery]);
 
@@ -108,10 +110,10 @@ function LeagueSettingsPage() {
       ),
     onSuccess: async () => {
       await queryClient.invalidateQueries({ queryKey: queryKeys.leagues.detail(lid) });
-      toast.success("Liga atualizada com sucesso.");
+      toast.success(m["league.settings.toast.updateSuccess"]());
     },
     onError: (error) => {
-      toast.error(error instanceof ApiError ? error.message : "Falha ao atualizar liga.");
+      toast.error(error instanceof ApiError ? error.message : m["league.settings.toast.updateError"]());
     },
   });
 
@@ -120,11 +122,11 @@ function LeagueSettingsPage() {
       unwrap(client.DELETE("/leagues/{league_id}", { params: { path: { league_id: lid } } })),
     onSuccess: async () => {
       await queryClient.invalidateQueries({ queryKey: queryKeys.leagues.all() });
-      toast.success("Liga arquivada com sucesso.");
+      toast.success(m["league.settings.toast.archiveSuccess"]());
       await navigate({ to: "/leagues" });
     },
     onError: (error) => {
-      toast.error(error instanceof ApiError ? error.message : "Falha ao arquivar liga.");
+      toast.error(error instanceof ApiError ? error.message : m["league.settings.toast.archiveError"]());
     },
   });
 
@@ -138,10 +140,10 @@ function LeagueSettingsPage() {
       ),
     onSuccess: async () => {
       await queryClient.invalidateQueries({ queryKey: queryKeys.leagues.members(lid) });
-      toast.success("Função atualizada com sucesso.");
+      toast.success(m["league.settings.toast.roleSuccess"]());
     },
     onError: (error) => {
-      toast.error(error instanceof ApiError ? error.message : "Falha ao atualizar função.");
+      toast.error(error instanceof ApiError ? error.message : m["league.settings.toast.roleError"]());
     },
   });
 
@@ -154,10 +156,10 @@ function LeagueSettingsPage() {
       ),
     onSuccess: async () => {
       await queryClient.invalidateQueries({ queryKey: queryKeys.leagues.members(lid) });
-      toast.success("Membro removido com sucesso.");
+      toast.success(m["league.settings.toast.removeSuccess"]());
     },
     onError: (error) => {
-      toast.error(error instanceof ApiError ? error.message : "Falha ao remover membro.");
+      toast.error(error instanceof ApiError ? error.message : m["league.settings.toast.removeError"]());
     },
   });
 
@@ -181,196 +183,189 @@ function LeagueSettingsPage() {
   };
 
   return (
-    <div className="container mx-auto max-w-4xl px-4 py-10 space-y-10">
-      <h1 className="text-2xl font-bold">Configurações da Liga</h1>
+    <div className="flex min-w-0 flex-1 flex-col">
+      <div className="min-h-screen bg-background">
+        <div className="flex flex-1 flex-col">
+          <div className="flex-1 overflow-y-auto">
+            <div className="mx-auto w-full max-w-4xl px-3 pt-2 pb-24 lg:px-4 lg:pt-8 lg:pb-12">
+              <Title title={m["league.settings.title"]()} />
 
-      <Card>
-        <CardHeader>
-          <CardTitle>Informações gerais</CardTitle>
-          <CardDescription>Atualize os dados principais da liga.</CardDescription>
-        </CardHeader>
-        <CardContent>
-          <form onSubmit={handleSubmit} className="space-y-6">
-            <div className="space-y-2">
-              <Label htmlFor="name">Nome</Label>
-              <Input id="name" value={name} onChange={(e) => setName(e.target.value)} required />
-            </div>
-            <div className="space-y-2">
-              <Label htmlFor="slug">Slug</Label>
-              <Input id="slug" value={slug} onChange={(e) => setSlug(e.target.value)} required />
-            </div>
-            <div className="space-y-2">
-              <Label htmlFor="description">Descrição</Label>
-              <textarea
-                id="description"
-                value={description}
-                onChange={(e) => setDescription(e.target.value)}
-                className="flex min-h-20 w-full rounded-md border border-input bg-transparent px-3 py-2 text-sm shadow-sm placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring disabled:cursor-not-allowed disabled:opacity-50"
-              />
-            </div>
-            <ImageUpload
-              value={logoUrl}
-              onChange={setLogoUrl}
-              label="Logo da liga"
-              fallback={name.charAt(0) || "?"}
-            />
-            <div className="space-y-2">
-              <Label htmlFor="timezone">Fuso horário</Label>
-              <Select value={timezone} onValueChange={(v) => v && setTimezone(v)}>
-                <SelectTrigger>
-                  <SelectValue />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="America/Sao_Paulo">America/Sao_Paulo</SelectItem>
-                  <SelectItem value="America/New_York">America/New_York</SelectItem>
-                  <SelectItem value="Europe/London">Europe/London</SelectItem>
-                  <SelectItem value="UTC">UTC</SelectItem>
-                </SelectContent>
-              </Select>
-            </div>
-            <div className="space-y-2">
-              <Label>Esportes</Label>
-              <div className="flex flex-wrap gap-4">
-                {sports.data.map((sport) => (
-                  <label key={sport.id} className="flex items-center gap-2">
-                    <Checkbox
-                      checked={selectedSports.includes(sport.id)}
-                      onCheckedChange={() => toggleSport(sport.id)}
-                    />
-                    <span className="text-sm">{sport.name}</span>
-                  </label>
-                ))}
-              </div>
-            </div>
-            <div className="flex items-center justify-between rounded-lg border p-4">
-              <div>
-                <Label>Janela de transferência</Label>
-                <p className="text-sm text-muted-foreground">
-                  Permitir transferências entre delegações
-                </p>
-              </div>
-              <Checkbox
-                checked={transferWindow}
-                onCheckedChange={(checked) => setTransferWindow(checked === true)}
-              />
-            </div>
-            <Button type="submit" disabled={updateMutation.isPending}>
-              {updateMutation.isPending ? "Salvando..." : "Salvar alterações"}
-            </Button>
-          </form>
-        </CardContent>
-      </Card>
-
-      <div className="space-y-4">
-        <div>
-          <h2 className="text-lg font-semibold">Membros</h2>
-          <p className="text-sm text-muted-foreground">
-            Gerencie os membros e suas funções na liga.
-          </p>
-        </div>
-
-        <TableLayout
-          title="Membros"
-          countLabel="membros"
-          visibleCount={pagedData.length}
-          totalCount={filteredData.length}
-          searchPlaceholder="Buscar membros…"
-          searchQuery={searchQuery}
-          onSearchChange={(value) => {
-            setSearchQuery(value);
-            setPageIndex(0);
-          }}
-          activeFilterCount={searchQuery ? 1 : 0}
-          onClearFilters={() => {
-            setSearchQuery("");
-            setPageIndex(0);
-          }}
-          pageIndex={pageIndex}
-          pageSize={pageSize}
-          onPageChange={setPageIndex}
-          onPageSizeChange={setPageSize}
-        >
-          <Table>
-            <TableHeader>
-              <TableRow>
-                <TableHead className="ps-4 w-24">Usuário</TableHead>
-                <TableHead className="w-32">Função</TableHead>
-                <TableHead className="pe-4 text-right">Ações</TableHead>
-              </TableRow>
-            </TableHeader>
-            <TableBody>
-              {pagedData.length === 0 && (
-                <TableRow>
-                  <TableCell
-                    colSpan={3}
-                    className="h-24 text-center text-muted-foreground"
-                  >
-                    Nenhum membro encontrado.
-                  </TableCell>
-                </TableRow>
-              )}
-              {pagedData.map((member) => (
-                <TableRow key={member.id}>
-                  <TableCell className="ps-4 font-medium">
-                    #{member.user_id}
-                  </TableCell>
-                  <TableCell>
-                    <Badge variant="outline">{roleLabel[member.role]}</Badge>
-                  </TableCell>
-                  <TableCell className="pe-4 text-right">
-                    <div className="flex items-center justify-end gap-2">
-                      <Select
-                        value={member.role}
-                        onValueChange={(role) =>
-                          updateRoleMutation.mutate({
-                            userId: member.user_id,
-                            role: role as LeagueMemberRole,
-                          })
-                        }
-                      >
-                        <SelectTrigger className="w-36">
-                          <SelectValue />
-                        </SelectTrigger>
-                        <SelectContent>
-                          {Object.entries(roleLabel).map(([value, label]) => (
-                            <SelectItem key={value} value={value}>
-                              {label}
-                            </SelectItem>
+              <div className="mt-3 animate-[fadeInContent_200ms_ease-out] lg:mt-6">
+                <div className="space-y-3 lg:space-y-6">
+                  <CardWrapper title={m["league.settings.card.general.title"]()} description={m["league.settings.card.general.desc"]()} >
+                    <form onSubmit={handleSubmit} className="space-y-6">
+                      <div className="space-y-2">
+                        <Label htmlFor="name">{m["league.settings.label.name"]()}</Label>
+                        <Input id="name" value={name} onChange={(e) => setName(e.target.value)} required />
+                      </div>
+                      <div className="space-y-2">
+                        <Label htmlFor="slug">{m["league.settings.label.slug"]()}</Label>
+                        <Input id="slug" value={slug} onChange={(e) => setSlug(e.target.value)} required />
+                      </div>
+                      <div className="space-y-2">
+                        <Label htmlFor="description">{m["league.settings.label.description"]()}</Label>
+                        <textarea
+                          id="description"
+                          value={description}
+                          onChange={(e) => setDescription(e.target.value)}
+                          className="flex min-h-20 w-full rounded-md border border-input bg-transparent px-3 py-2 text-sm shadow-sm placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring disabled:cursor-not-allowed disabled:opacity-50"
+                        />
+                      </div>
+                      <ImageUpload
+                        value={logoUrl}
+                        onChange={setLogoUrl}
+                        label={m["league.settings.label.logo"]()}
+                        fallback={name.charAt(0) || "?"}
+                      />
+                      <div className="space-y-2">
+                        <Label htmlFor="timezone">{m["league.settings.label.timezone"]()}</Label>
+                        <Select value={timezone} onValueChange={(v) => v && setTimezone(v)}>
+                          <SelectTrigger>
+                            <SelectValue />
+                          </SelectTrigger>
+                          <SelectContent>
+                            <SelectItem value="America/Sao_Paulo">{m["league.settings.timezone.saoPaulo"]()}</SelectItem>
+                            <SelectItem value="America/New_York">{m["league.settings.timezone.newYork"]()}</SelectItem>
+                            <SelectItem value="Europe/London">{m["league.settings.timezone.london"]()}</SelectItem>
+                            <SelectItem value="UTC">{m["league.settings.timezone.utc"]()}</SelectItem>
+                          </SelectContent>
+                        </Select>
+                      </div>
+                      <div className="space-y-2">
+                        <Label>{m["league.settings.label.sports"]()}</Label>
+                        <div className="flex flex-wrap gap-4">
+                          {sports.data.map((sport) => (
+                            <label key={sport.id} className="flex items-center gap-2">
+                              <Checkbox
+                                checked={selectedSports.includes(sport.id)}
+                                onCheckedChange={() => toggleSport(sport.id)}
+                              />
+                              <span className="text-sm">{sport.name}</span>
+                            </label>
                           ))}
-                        </SelectContent>
-                      </Select>
-                      <Button
-                        variant="ghost"
-                        size="sm"
-                        onClick={() => removeMemberMutation.mutate(member.user_id)}
-                        disabled={removeMemberMutation.isPending}
-                      >
-                        Remover
+                        </div>
+                      </div>
+                      <div className="flex items-center justify-between rounded-lg border p-4">
+                        <div>
+                          <Label>{m["league.settings.label.transferWindow"]()}</Label>
+                          <p className="text-sm text-muted-foreground">
+                            {m["league.settings.transferWindowDesc"]()}
+                          </p>
+                        </div>
+                        <Checkbox
+                          checked={transferWindow}
+                          onCheckedChange={(checked) => setTransferWindow(checked === true)}
+                        />
+                      </div>
+                      <Button type="submit" disabled={updateMutation.isPending}>
+                        {updateMutation.isPending ? m["league.settings.submitting"]() : m["league.settings.submit"]()}
                       </Button>
-                    </div>
-                  </TableCell>
-                </TableRow>
-              ))}
-            </TableBody>
-          </Table>
-        </TableLayout>
-      </div>
+                    </form>
+                  </CardWrapper>
 
-      <Card className="border-destructive/50">
-        <CardHeader>
-          <CardTitle className="text-destructive">Zona de perigo</CardTitle>
-          <CardDescription>Ações irreversíveis para esta liga.</CardDescription>
-        </CardHeader>
-        <CardContent>
-          <Button
-            variant="destructive"
-            onClick={() => archiveMutation.mutate()}
-            disabled={archiveMutation.isPending}
-          >
-            {archiveMutation.isPending ? "Arquivando..." : "Arquivar liga"}
-          </Button>
-        </CardContent>
-      </Card>
+                  <CardWrapper title={m["league.settings.membersHeading"]()} description={m["league.settings.membersDesc"]()} >
+                    <TableLayout
+                      title={m["league.settings.membersHeading"]()}
+                      countLabel={m["league.settings.membersCountLabel"]()}
+                      visibleCount={pagedData.length}
+                      totalCount={filteredData.length}
+                      searchPlaceholder={m["league.settings.searchPlaceholder"]()}
+                      searchQuery={searchQuery}
+                      onSearchChange={(value) => {
+                        setSearchQuery(value);
+                        setPageIndex(0);
+                      }}
+                      activeFilterCount={searchQuery ? 1 : 0}
+                      onClearFilters={() => {
+                        setSearchQuery("");
+                        setPageIndex(0);
+                      }}
+                      pageIndex={pageIndex}
+                      pageSize={pageSize}
+                      onPageChange={setPageIndex}
+                      onPageSizeChange={setPageSize}
+                    >
+                      <Table>
+                        <TableHeader>
+                          <TableRow>
+                            <TableHead className="ps-4 w-24">{m["league.settings.table.user"]()}</TableHead>
+                            <TableHead className="w-32">{m["league.settings.table.role"]()}</TableHead>
+                            <TableHead className="pe-4 text-right">{m["league.settings.table.actions"]()}</TableHead>
+                          </TableRow>
+                        </TableHeader>
+                        <TableBody>
+                          {pagedData.length === 0 && (
+                            <TableRow>
+                              <TableCell
+                                colSpan={3}
+                                className="h-24 text-center text-muted-foreground"
+                              >
+                                {m["league.settings.membersEmpty"]()}
+                              </TableCell>
+                            </TableRow>
+                          )}
+                          {pagedData.map((member) => (
+                            <TableRow key={member.id}>
+                              <TableCell className="ps-4 font-medium">
+                                #{member.user_id}
+                              </TableCell>
+                              <TableCell>
+                                <Badge variant="outline">{getRoleLabel(member.role)}</Badge>
+                              </TableCell>
+                              <TableCell className="pe-4 text-right">
+                                <div className="flex items-center justify-end gap-2">
+                                  <Select
+                                    value={member.role}
+                                    onValueChange={(role) =>
+                                      updateRoleMutation.mutate({
+                                        userId: member.user_id,
+                                        role: role as LeagueMemberRole,
+                                      })
+                                    }
+                                  >
+                                    <SelectTrigger className="w-36">
+                                      <SelectValue />
+                                    </SelectTrigger>
+                                    <SelectContent>
+                                      {(["LEAGUE_ADMIN", "CHIEF", "COACH", "ATHLETE"] as LeagueMemberRole[]).map((role) => (
+                                        <SelectItem key={role} value={role}>
+                                          {getRoleLabel(role)}
+                                        </SelectItem>
+                                      ))}
+                                    </SelectContent>
+                                  </Select>
+                                  <Button
+                                    variant="ghost"
+                                    size="sm"
+                                    onClick={() => removeMemberMutation.mutate(member.user_id)}
+                                    disabled={removeMemberMutation.isPending}
+                                  >
+                                    {m["common.actions.remove"]()}
+                                  </Button>
+                                </div>
+                              </TableCell>
+                            </TableRow>
+                          ))}
+                        </TableBody>
+                      </Table>
+                    </TableLayout>
+                  </CardWrapper>
+
+                  <CardWrapper title={m["league.settings.danger.title"]()} description={m["league.settings.danger.desc"]()}>
+                    <Button
+                      variant="destructive"
+                      onClick={() => archiveMutation.mutate()}
+                      disabled={archiveMutation.isPending}
+                    >
+                      {archiveMutation.isPending ? m["league.settings.archiving"]() : m["league.settings.archive"]()}
+                    </Button>
+                  </CardWrapper>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
     </div>
   );
 }

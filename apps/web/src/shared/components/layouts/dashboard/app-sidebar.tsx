@@ -18,7 +18,8 @@ import type { Session } from "@/types/auth";
 import type { LeagueMemberResponse, LeagueResponse } from "@/types/leagues";
 
 import { NavGroup } from "./nav-group";
-import { Home, Trophy, SquareDotIcon, Shield, PlusCircle, Users } from "lucide-react";
+import { Home, Trophy, Shield, PlusCircle, Users } from "lucide-react";
+import logoSvg from "@/assets/logo.svg";
 import { Link } from "@tanstack/react-router";
 
 interface AppSidebarProps extends React.ComponentProps<typeof Sidebar> {
@@ -135,9 +136,9 @@ export function AppSidebar({
 	return (
 		<Sidebar collapsible="icon" variant="inset" {...props}>
 			<SidebarHeader>
-				<Link to={"/"} className={`flex items-center w-full h-full px-2 ${state === "expanded" ? "justify-start" : ""}`}>
-					<SquareDotIcon size={20} />
-				</Link>
+			<Link to={"/"} className={`flex items-center w-full h-full px-2 ${state === "expanded" ? "justify-start" : ""}`}>
+				<img src={logoSvg} alt="Logo" className="size-5" />
+			</Link>
 			</SidebarHeader>
 			<SidebarContent>
 				<NavGroup items={mainItems} />

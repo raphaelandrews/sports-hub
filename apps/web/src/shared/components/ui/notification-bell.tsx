@@ -1,5 +1,6 @@
 import { useState } from "react";
 import { Bell } from "lucide-react";
+import { useRouter } from "@tanstack/react-router";
 import { Button } from "@sports-system/ui/components/button";
 import { Badge } from "@sports-system/ui/components/badge";
 import { Popover, PopoverContent, PopoverTrigger } from "@sports-system/ui/components/popover";
@@ -8,122 +9,8 @@ import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { notificationsQueryOptions } from "@/features/notifications/api/queries";
 import { queryKeys } from "@/features/keys";
 import { client, unwrap } from "@/shared/lib/api";
-import { formatEventDate } from "@/shared/lib/date";
-import type { InvitePayload, NotificationResponse, NotificationType } from "@/types/notifications";
+import { NotificationItem } from "@/features/notifications/components/notification-item";
 import * as m from "@/paraglide/messages";
-
-function notifTitle(type: NotificationType): string {
-  switch (type) {
-    case "INVITE":
-      return m["notification.title.invite"]();
-    case "REQUEST_REVIEWED":
-      return m["notification.title.requestReviewed"]();
-    case "MATCH_REMINDER":
-      return m["notification.title.matchReminder"]();
-    case "RESULT":
-      return m["notification.title.result"]();
-    case "TRANSFER":
-      return m["notification.title.transfer"]();
-    case "PARTICIPATION_REQUEST":
-      return m["notification.title.participation"]();
-  }
-}
-
-function notifDescription(notif: NotificationResponse): string {
-  const p = notif.payload;
-  switch (notif.notification_type) {
-    case "INVITE":
-      return `${m["notification.desc.invite"]() } ${p.delegation_name as string}`;
-    case "REQUEST_REVIEWED":
-      return p.status === "APPROVED"
-        ? `${m["notification.desc.requestApproved"]() } ${p.delegation_name as string}`
-        : `${m["notification.desc.requestRejected"]() } ${p.delegation_name as string}`;
-    case "MATCH_REMINDER":
-      return `${m["notification.desc.matchReminderPrefix"]() } ${p.event_name as string} ${m["notification.desc.matchReminderSuffix"]() }`;
-    case "RESULT":
-      return `${m["notification.desc.resultPrefix"]() } ${p.event_name as string} ${m["notification.desc.resultSuffix"]() }`;
-    case "TRANSFER":
-      return p.status === "ACCEPTED"
-        ? `${m["notification.desc.transferPrefix"]() } ${p.delegation_name as string} ${m["notification.desc.transferAccepted"]() }`
-        : `${m["notification.desc.transferPrefix"]() } ${p.delegation_name as string} ${m["notification.desc.transferRefused"]() }`;
-    case "PARTICIPATION_REQUEST":
-      return `${m["notification.desc.participationPrefix"]() } ${p.delegation_name as string} ${m["notification.desc.participationMid"]() } ${p.league_name as string}`;
-    default:
-      return "";
-  }
-}
-
-interface NotificationItemProps {
-  notif: NotificationResponse;
-  onMarkRead: (id: number) => void;
-}
-
-function NotificationItem({ notif, onMarkRead }: NotificationItemProps) {
-  const queryClient = useQueryClient();
-
-  const acceptMutation = useMutation({
-    mutationFn: (inviteId: number) =>
-      unwrap(
-        client.POST("/invites/{invite_id}/accept", { params: { path: { invite_id: inviteId } } }),
-      ),
-    onSuccess: () => {
-      onMarkRead(notif.id);
-      void queryClient.invalidateQueries({
-        queryKey: ["delegations"],
-      });
-    },
-  });
-
-  const refuseMutation = useMutation({
-    mutationFn: (inviteId: number) =>
-      unwrap(
-        client.POST("/invites/{invite_id}/refuse", { params: { path: { invite_id: inviteId } } }),
-      ),
-    onSuccess: () => onMarkRead(notif.id),
-  });
-
-  const isInvite = notif.notification_type === "INVITE";
-  const invitePayload = notif.payload as unknown as InvitePayload;
-
-  return (
-    <div
-      className={`px-4 py-3 border-b last:border-0 transition-colors ${!notif.read ? "bg-muted/40" : ""
-        }`}
-    >
-      <div className="flex items-start gap-2">
-        <div className="flex-1 min-w-0">
-          <p className="text-sm font-medium leading-none">{notifTitle(notif.notification_type)}</p>
-          <p className="text-xs text-muted-foreground mt-1">{notifDescription(notif)}</p>
-          <p className="text-xs text-muted-foreground/60 mt-1">
-            {formatEventDate(notif.created_at)}
-          </p>
-        </div>
-        {!notif.read && <div className="w-2 h-2 rounded-full bg-blue-500 mt-1 shrink-0" />}
-      </div>
-      {isInvite && !notif.read && (
-        <div className="flex gap-2 mt-2">
-          <Button
-            size="sm"
-            className="h-7 text-xs px-3"
-            onClick={() => acceptMutation.mutate(invitePayload.invite_id)}
-            disabled={acceptMutation.isPending || refuseMutation.isPending}
-          >
-            {m["notification.action.accept"]() }
-          </Button>
-          <Button
-            size="sm"
-            variant="outline"
-            className="h-7 text-xs px-3"
-            onClick={() => refuseMutation.mutate(invitePayload.invite_id)}
-            disabled={acceptMutation.isPending || refuseMutation.isPending}
-          >
-            {m["notification.action.refuse"]() }
-          </Button>
-        </div>
-      )}
-    </div>
-  );
-}
 
 interface NotificationBellProps {
   userId: number;
@@ -131,6 +18,7 @@ interface NotificationBellProps {
 
 export function NotificationBell({ userId }: NotificationBellProps) {
   const [open, setOpen] = useState(false);
+  const router = useRouter();
   const queryClient = useQueryClient();
   const { data } = useQuery({
     ...notificationsQueryOptions(userId),
@@ -165,23 +53,18 @@ export function NotificationBell({ userId }: NotificationBellProps) {
 
   return (
     <Popover open={open} onOpenChange={setOpen}>
-      <PopoverTrigger>
-        <Button
-          variant="ghost"
-          size="icon"
-          className="relative size-8 hover:bg-muted">
-          <Bell className="h-4 w-4" />
-          {unreadCount > 0 && (
-            <Badge
-              variant="destructive"
-              className="absolute -top-1 -right-1 h-4 w-4 p-0 flex items-center justify-center text-[10px] pointer-events-none"
-            >
-              {unreadCount > 9 ? "9+" : unreadCount}
-            </Badge>
-          )}
-        </Button>
+      <PopoverTrigger className="relative inline-flex size-8 items-center justify-center rounded-md hover:bg-muted cursor-pointer">
+        <Bell className="h-4 w-4" />
+        {unreadCount > 0 && (
+          <Badge
+            variant="destructive"
+            className="absolute -top-1 -right-1 h-4 w-4 p-0 flex items-center justify-center text-[10px] pointer-events-none"
+          >
+            {unreadCount > 9 ? "9+" : unreadCount}
+          </Badge>
+        )}
       </PopoverTrigger>
-      <PopoverContent className="w-80 p-0" align="end">
+      <PopoverContent className="w-80 p-0 gap-0" align="end">
         <div className="flex items-center justify-between px-4 py-3 border-b">
           <p className="text-sm font-semibold">{m["notification.panelTitle"]()}</p>
           {unreadCount > 0 && (
@@ -205,6 +88,10 @@ export function NotificationBell({ userId }: NotificationBellProps) {
                 key={notif.id}
                 notif={notif}
                 onMarkRead={(id) => markReadMutation.mutate(id)}
+                onClick={() => {
+                  setOpen(false);
+                  void router.navigate({ to: "/notifications" });
+                }}
               />
             ))
           )}

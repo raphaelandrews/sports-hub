@@ -21,7 +21,7 @@ import {
 } from "@/features/leagues/api/queries";
 import { LeagueCard } from "@/shared/components/ui/league-card";
 import { Title } from "@/shared/components/ui/title";
-import { PageLayout } from "@/shared/components/layouts/page-layout";
+import { PageAsideLayout } from "@/shared/components/layouts/page-aside-layout";
 import { LeaguesSidebar } from "@/shared/components/ui/leagues-sidebar";
 
 export const Route = createFileRoute("/_authenticated/my-leagues/")({
@@ -49,7 +49,7 @@ function MyLeaguesPage() {
   });
 
   return (
-    <PageLayout sidebar={<LeaguesSidebar leagues={allLeagues} />}>
+    <PageAsideLayout sidebar={<LeaguesSidebar leagues={allLeagues} />}>
       <div className="flex items-center justify-between mb-8">
         <Title title={m['myLeagues.title']()}/>
 
@@ -58,7 +58,7 @@ function MyLeaguesPage() {
         </Link>
       </div>
 
-      <div className="grid grid-cols-3 gap-3 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-3">
+      <div className="grid grid-cols-3 gap-4 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-3">
         {myLeagues.map((league, index) => {
           const membership = membershipQueries[index]?.data;
           return (
@@ -100,6 +100,6 @@ function MyLeaguesPage() {
           </EmptyContent>
         </Empty>
       )}
-    </PageLayout>
+    </PageAsideLayout>
   );
 }

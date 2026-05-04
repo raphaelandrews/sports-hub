@@ -1,4 +1,6 @@
 import { createFileRoute } from "@tanstack/react-router";
+import * as m from "@/paraglide/messages";
+import { PageSingleLayout } from "@/shared/components/layouts/page-single-layout";
 
 export const Route = createFileRoute("/terms")({
   component: TermsPage,
@@ -6,8 +8,7 @@ export const Route = createFileRoute("/terms")({
 
 function TermsPage() {
   return (
-    <div className="mx-auto max-w-2xl px-6 py-12">
-      <h1 className="mb-6 text-3xl font-bold">Termos de Uso</h1>
+    <PageSingleLayout title={m["terms.title"]()}>
       <div className="space-y-4 text-muted-foreground">
         <p>
           Bem-vindo ao nosso sistema. Ao utilizar esta plataforma, você concorda com os seguintes
@@ -39,6 +40,6 @@ function TermsPage() {
           significativas serão notificadas.
         </p>
       </div>
-    </div>
+    </PageSingleLayout>
   );
 }

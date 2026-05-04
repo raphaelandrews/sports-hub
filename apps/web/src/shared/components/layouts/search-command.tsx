@@ -164,12 +164,14 @@ export function SearchCommand({
 			<Button
 				variant="secondary"
 				size="sm"
-				className="text-muted-foreground justify-between text-sm h-10"
+				className="h-12 justify-between w-full rounded-xl border-none border-input bg-card pl-4! pr-3 text-sm text-foreground placeholder:text-placeholder outline-none transition-colors focus:border-primary"
 				onClick={() => setOpen(true)}
 			>
-				<div className="flex justify-center gap-1">
+				<div className="flex justify-center gap-1 text-muted-foreground">
 					<Search data-icon="inline-start" className="mt-0.5" />
-					{m['search.buttonLabel']()}
+					<span>
+						{m['search.buttonLabel']()}
+					</span>
 				</div>
 				<kbd className="pointer-events-none bg-card ml-2 inline-flex h-5 select-none items-center gap-1 rounded border px-1.5 font-mono text-[10px] font-medium opacity-100">
 					<span className="text-xs">⌘</span>K

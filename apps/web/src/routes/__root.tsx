@@ -1,6 +1,5 @@
 import { Toaster } from "@sports-system/ui/components/sonner";
 import type { QueryClient } from "@tanstack/react-query";
-import { ReactQueryDevtools } from "@tanstack/react-query-devtools";
 import {
   HeadContent,
   Outlet,
@@ -8,7 +7,6 @@ import {
   createRootRouteWithContext,
   useRouterState,
 } from "@tanstack/react-router";
-import { TanStackRouterDevtools } from "@tanstack/react-router-devtools";
 import { ThemeProvider } from "next-themes";
 
 import { getLocale } from "@/paraglide/runtime";
@@ -73,8 +71,6 @@ function RootDocument() {
             </SocialLayout>
           )}
           <Toaster richColors />
-          <ReactQueryDevtools buttonPosition="bottom-right" />
-          <TanStackRouterDevtools position="top-right" />
           <Scripts />
         </ThemeProvider>
       </body>

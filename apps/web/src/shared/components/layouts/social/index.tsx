@@ -8,8 +8,18 @@ import {
   Shield,
   PlusCircle,
   Users,
-  SquareDotIcon,
+  Menu,
 } from "lucide-react";
+import logoSvg from "@/assets/logo.svg";
+
+import {
+  Sheet,
+  SheetContent,
+  SheetHeader,
+  SheetTitle,
+  SheetTrigger,
+} from "@sports-system/ui/components/sheet";
+import { Button } from "@sports-system/ui/components/button";
 
 import { ApiError } from "@/shared/lib/api";
 import { DashboardContentLoading } from "@/shared/components/layouts/dashboard-content-loading";
@@ -161,19 +171,13 @@ export function SocialLayout({
     })),
   ];
 
-  const breadcrumbTitle = leagueQuery.data
-    ? leagueQuery.data.name
-    : scope === "site-authenticated"
-      ? m["header.siteTitle"]()
-      : m["header.breadcrumbHome"]();
-
   const leagueIdStr = leagueQuery.data ? String(leagueQuery.data.id) : undefined;
 
   return (
     <div className="mx-auto flex min-h-screen max-w-480 bg-background lg:border-x lg:border-input">
       <aside className="sticky top-0 z-40 hidden h-screen w-65 shrink-0 flex-col border-r border-input bg-background lg:flex">
         <Link to="/" className="flex h-18 items-center gap-3 px-6 transition-opacity hover:opacity-80">
-          <SquareDotIcon size={20} />
+          <img src={logoSvg} alt="Logo" className="size-6" />
         </Link>
 
         <div className="flex flex-col p-4">
@@ -253,18 +257,27 @@ export function SocialLayout({
         </div>
       </aside >
 
-      <header className="safe-top fixed inset-x-0 top-0 z-40 flex min-h-14 items-end justify-between px-4 pb-2 transition-all duration-300 ease-out lg:hidden translate-y-0 opacity-100 border-b border-transparent bg-background/90 backdrop-blur-md">
-        <span className="text-sm font-medium">{breadcrumbTitle}</span>
+      {/* Mobile Header */}
+      <header className="safe-top fixed inset-x-0 top-0 z-40 flex min-h-14 items-center justify-between px-4 transition-all duration-300 ease-out lg:hidden translate-y-0 opacity-100 border-border bg-background/90 backdrop-blur-md">
+        <Link to="/" className="flex items-center gap-2 transition-opacity hover:opacity-80">
+          <img src={logoSvg} alt="Logo" className="size-5" />
+          <span className="text-sm font-semibold">{m["header.siteTitle"]()}</span>
+        </Link>
         <div className="flex items-center gap-2">
-          <LocaleSwitcher />
-          {session ? <NavUser session={session} /> : (
+          {session ? (
+            <NavUser session={session} avatarOnly />
+          ) : (
             <Link
               to="/login"
               className="inline-flex h-7 items-center justify-center rounded-md bg-primary px-2 text-xs font-medium text-primary-foreground hover:bg-primary/90"
             >
-              {m["header.loginButton"]()}
+              {m["header.loginButton"]}
             </Link>
           )}
+          {session && (
+            <NotificationBell userId={session.id} />)
+          }
+          <MobileNavigation mainItems={mainItems} secondaryItems={secondaryItems} />
         </div>
       </header>
 
@@ -276,5 +289,84 @@ export function SocialLayout({
         </React.Suspense>
       </main>
     </div >
+  );
+}
+
+function MobileNavigation({
+  mainItems,
+  secondaryItems,
+}: {
+  mainItems: Array<{ title: string; url: string; icon: React.ElementType; isActive: boolean }>;
+  secondaryItems: Array<{ title: string; url: string; icon: React.ElementType; isActive: boolean }>;
+}) {
+  const [open, setOpen] = React.useState(false);
+
+  return (
+    <Sheet open={open} onOpenChange={setOpen}>
+      <SheetTrigger>
+        <Button variant="ghost" size="icon" className="size-8">
+          <Menu size={20} className="size-5" />
+          <span className="sr-only">Open navigation</span>
+        </Button>
+      </SheetTrigger>
+      <SheetContent side="right" className="w-70 p-0 gap-0">
+        <SheetHeader className="border-b px-4 py-3">
+          <div className="flex items-center gap-2">
+            <img src={logoSvg} alt="Logo" className="size-6" />
+            <SheetTitle className="text-sm font-semibold">{m["header.siteTitle"]()}</SheetTitle>
+          </div>
+        </SheetHeader>
+        <nav className="flex flex-1 flex-col gap-1 px-3 py-2 overflow-y-auto">
+          {mainItems.map((item) => (
+            <Link
+              key={item.title}
+              to={item.url}
+              onClick={() => setOpen(false)}
+              className={`relative flex h-11 items-center gap-3 rounded-xl px-3 transition-colors hover:bg-card/50 hover:text-foreground ${item.isActive
+                ? "bg-card text-foreground"
+                : "text-muted-foreground hover:bg-muted hover:text-foreground"
+                }`}
+            >
+              <item.icon size={18} />
+              <span>{item.title}</span>
+              {item.isActive && (
+                <div className="absolute top-1.5 bottom-1.5 left-0 w-0.75 rounded-r-full bg-primary" />
+              )}
+            </Link>
+          ))}
+
+          {secondaryItems.length > 0 && (
+            <>
+              <div className="my-2 h-px bg-border" />
+              {secondaryItems.map((item) => (
+                <Link
+                  key={item.title}
+                  to={item.url}
+                  onClick={() => setOpen(false)}
+                  className={`relative flex h-11 items-center gap-3 rounded-xl px-3 transition-colors hover:bg-card/50 hover:text-foreground ${item.isActive
+                    ? "bg-card text-foreground"
+                    : "text-muted-foreground hover:bg-muted hover:text-foreground"
+                    }`}
+                >
+                  <item.icon size={18} />
+                  <span>{item.title}</span>
+                  {item.isActive && (
+                    <div className="absolute top-1.5 bottom-1.5 left-0 w-0.75 rounded-r-full bg-primary" />
+                  )}
+                </Link>
+              ))}
+            </>
+          )}
+        </nav>
+        <div className="flex items-center gap-2 border-t border-input p-4">
+          <LocaleSwitcher />
+          <AnimatedThemeToggler
+            variant="ghost"
+            size="icon"
+            className="size-8 hover:bg-muted"
+          />
+        </div>
+      </SheetContent>
+    </Sheet>
   );
 }

@@ -1,6 +1,7 @@
 import { useEffect, useState } from "react";
 import { Activity, Medal, RadioTower, TimerReset } from "lucide-react";
 import { Link } from "@tanstack/react-router";
+import { Badge } from "@sports-system/ui/components/badge";
 
 import { buildApiUrl } from "@/shared/lib/url";
 import type { ActivityFeedItem, ActivityFeedItemType } from "@/types/activity";
@@ -94,7 +95,6 @@ export function ActivityFeed({
                     </div>
 
                     <div className="shrink-0 text-right text-xs text-muted-foreground">
-                      <div>{formatTimestamp(item.created_at)}</div>
                       {showMatchLink && item.match_id != null && leagueId != null ? (
                         <Link
                           to="/leagues/$leagueId/matches/$matchId"
@@ -107,14 +107,22 @@ export function ActivityFeed({
                     </div>
                   </div>
 
-                    <div className="flex flex-wrap gap-2 pt-1 text-xs text-muted-foreground">
-                      {item.competition_number != null ? (
-                        <span>Competição {item.competition_number}</span>
-                      ) : null}
-                      {item.sport_name ? <span>{item.sport_name}</span> : null}
-                      {item.modality_name ? <span>{item.modality_name}</span> : null}
-                      {item.minute != null ? <span>{item.minute}min</span> : null}
-                    </div>
+                  <div className="flex flex-wrap gap-2 pt-1 text-xs text-muted-foreground">
+                    {item.competition_number != null ? (
+                      <Badge variant="default">Competição {item.competition_number}</Badge>
+                    ) : null}
+                    {item.sport_name ? (
+                      <Badge className="bg-blue-100 text-blue-800 hover:bg-blue-200">{item.sport_name}</Badge>
+                    ) : null}
+                    {item.modality_name ? (
+                      <Badge className="bg-emerald-100 text-emerald-800 hover:bg-emerald-200">{item.modality_name}</Badge>
+                    ) : null}
+                    {item.minute != null ? (
+                      <Badge className="bg-amber-100 text-amber-800 hover:bg-amber-200">{item.minute}min</Badge>
+                    ) : null}
+                  </div>
+
+                  <div className="text-xs text-muted-foreground mt-1">{formatTimestamp(item.created_at)}</div>
                 </div>
               );
             })}

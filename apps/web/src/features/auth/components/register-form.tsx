@@ -2,7 +2,7 @@ import { Button } from "@sports-system/ui/components/button";
 import { Field, FieldLabel } from "@sports-system/ui/components/field";
 import { Input } from "@sports-system/ui/components/input";
 import { useForm } from "@tanstack/react-form";
-import { useNavigate, useRouter } from "@tanstack/react-router";
+import { useNavigate, useRouter, Link } from "@tanstack/react-router";
 import { useState } from "react";
 import { toast } from "sonner";
 
@@ -46,9 +46,9 @@ export function RegisterForm() {
       switchText={
         <>
           {m['auth.register.hasAccount']()}{" "}
-          <a href="/login" className="underline underline-offset-4 hover:text-foreground">
+          <Link to="/login" className="text-sm font-semibold text-primary no-underline! hover:underline!">
             {m['auth.register.loginLink']()}
-          </a>
+          </Link>
         </>
       }
       onFormSubmit={(e) => {
@@ -64,7 +64,7 @@ export function RegisterForm() {
       >
         {(field) => (
           <Field>
-            <FieldLabel htmlFor="name">{m['register_name']()}</FieldLabel>
+            <FieldLabel className="text-xs font-medium text-muted-foreground" htmlFor="name">{m['register_name']()}</FieldLabel>
             <Input
               id="name"
               type="text"
@@ -73,6 +73,7 @@ export function RegisterForm() {
               value={field.state.value}
               onChange={(e) => field.handleChange(e.target.value)}
               onBlur={field.handleBlur}
+              className="h-12 w-full rounded-lg border border-input bg-input px-6 pr-4 border-none! text-sm text-foreground placeholder:text-placeholder outline-none transition-colors focus:border-primary"
             />
             {field.state.meta.errors.length > 0 && (
               <p className="text-destructive-foreground text-xs">{field.state.meta.errors[0]}</p>
@@ -93,7 +94,7 @@ export function RegisterForm() {
       >
         {(field) => (
           <Field>
-            <FieldLabel htmlFor="email">{m['login_email']()}</FieldLabel>
+            <FieldLabel className="text-xs font-medium text-muted-foreground" htmlFor="email">{m['login_email']()}</FieldLabel>
             <Input
               id="email"
               type="email"
@@ -102,6 +103,7 @@ export function RegisterForm() {
               value={field.state.value}
               onChange={(e) => field.handleChange(e.target.value)}
               onBlur={field.handleBlur}
+              className="h-12 w-full rounded-lg border border-input bg-input px-6 pr-4 border-none! text-sm text-foreground placeholder:text-placeholder outline-none transition-colors focus:border-primary"
             />
             {field.state.meta.errors.length > 0 && (
               <p className="text-destructive-foreground text-xs">{field.state.meta.errors[0]}</p>
@@ -130,7 +132,7 @@ export function RegisterForm() {
           ];
           return (
             <Field>
-              <FieldLabel htmlFor="password">{m['auth.register.passwordLabel']()}</FieldLabel>
+              <FieldLabel className="text-xs font-medium text-muted-foreground" htmlFor="password">{m['auth.register.passwordLabel']()}</FieldLabel>
               <Input
                 id="password"
                 type="password"
@@ -138,6 +140,7 @@ export function RegisterForm() {
                 value={v}
                 onChange={(e) => field.handleChange(e.target.value)}
                 onBlur={field.handleBlur}
+                className="h-12 w-full rounded-lg border border-input bg-input px-6 pr-4 border-none! text-sm text-foreground placeholder:text-placeholder outline-none transition-colors focus:border-primary"
               />
               {(touched || v.length > 0) && (
                 <ul className="mt-1 space-y-0.5">
@@ -171,7 +174,7 @@ export function RegisterForm() {
       >
         {(field) => (
           <Field>
-            <FieldLabel htmlFor="confirmPassword">{m['auth.register.confirmPasswordLabel']()}</FieldLabel>
+            <FieldLabel className="text-xs font-medium text-muted-foreground" htmlFor="confirmPassword">{m['auth.register.confirmPasswordLabel']()}</FieldLabel>
             <Input
               id="confirmPassword"
               type="password"
@@ -179,6 +182,7 @@ export function RegisterForm() {
               value={field.state.value}
               onChange={(e) => field.handleChange(e.target.value)}
               onBlur={field.handleBlur}
+              className="h-12 w-full rounded-lg border border-input bg-input px-6 pr-4 border-none! text-sm text-foreground placeholder:text-placeholder outline-none transition-colors focus:border-primary"
             />
             {field.state.meta.errors.length > 0 && (
               <p className="text-destructive-foreground text-xs">{field.state.meta.errors[0]}</p>
@@ -192,7 +196,7 @@ export function RegisterForm() {
       <Field>
         <form.Subscribe selector={(s) => s.isSubmitting}>
           {(isSubmitting) => (
-            <Button type="submit" disabled={isSubmitting}>
+            <Button type="submit" className="flex h-12 w-full items-center justify-center rounded-xl bg-primary text-[15px] font-semibold text-white transition-opacity hover:opacity-90 disabled:pointer-events-none disabled:opacity-50" disabled={isSubmitting}>
               {isSubmitting ? m['auth.register.submitting']() : m['register_submit']()}
             </Button>
           )}

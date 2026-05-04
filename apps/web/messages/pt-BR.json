@@ -287,6 +287,8 @@
       "refuse": "Recusar"
     },
     "panelTitle": "Notificações",
+    "pageTitle": "Notificações",
+    "pageDescription": "Mantenha-se atualizado.",
     "markAllRead": "Marcar tudo como lido",
     "empty": "Nenhuma notificação"
   },
@@ -381,10 +383,10 @@
       "empty": "Nenhuma atividade global foi registrada ainda."
     },
     "settings": {
-      "title": "Configurações da liga",
+      "title": "Configurações da Liga",
       "card": {
         "general": {
-          "title": "informações gerais",
+          "title": "Informações gerais",
           "desc": "Atualize os dados da liga principal."
         },
         "members": {
@@ -407,6 +409,12 @@
         "utc": "UTC"
       },
       "membersHeading": "Membros",
+      "membersDesc": "Gerencie os membros e suas funções na liga.",
+      "membersCountLabel": "membros",
+      "searchPlaceholder": "Buscar membros…",
+      "transferWindowDesc": "Permitir transferências entre delegações",
+      "submit": "Salvar alterações",
+      "submitting": "Salvando...",
       "table": {
         "user": "Usuário",
         "role": "Papel",
@@ -417,11 +425,23 @@
         "title": "Zona de perigo",
         "desc": "Ações irreversíveis para esta liga."
       },
+      "archive": "Arquivar liga",
+      "archiving": "Arquivando...",
       "role": {
         "admin": "Administrador da Liga",
         "chief": "Chefe",
         "coach": "Treinador",
         "athlete": "Atleta"
+      },
+      "toast": {
+        "updateSuccess": "Liga atualizada com sucesso.",
+        "updateError": "Falha ao atualizar liga.",
+        "archiveSuccess": "Liga arquivada com sucesso.",
+        "archiveError": "Falha ao arquivar liga.",
+        "roleSuccess": "Função atualizada com sucesso.",
+        "roleError": "Falha ao atualizar função.",
+        "removeSuccess": "Membro removido com sucesso.",
+        "removeError": "Falha ao remover membro."
       }
     }
   },
@@ -443,7 +463,12 @@
     "title": "SportsHub",
     "subtitle": "Crie, participe e siga ligas esportivas.",
     "popularLeagues": "Ligas populares",
-    "recentLeagues": "Ligas recentes"
+    "recentLeagues": "Ligas recentes",
+    "charts": {
+      "topLeagues": "Ligas com mais membros",
+      "statusBreakdown": "Status das ligas",
+      "creationTimeline": "Ligas criadas (ultimos 6 meses)"
+    }
   },
   "leagues": {
     "listTitle": "Ligas",
@@ -1470,5 +1495,7 @@
   "result.form.sportFallback": "Esporte",
   "result.form.modalityFallback": "Modalidade #{id}",
   "result.form.rankLabel": "Colocação",
-  "result.form.jsonError": "JSON inválido no payload do resultado."
+  "result.form.jsonError": "JSON inválido no payload do resultado.",
+  "terms.title": "Termos de Uso",
+  "privacy.title": "Política de Privacidade"
 }

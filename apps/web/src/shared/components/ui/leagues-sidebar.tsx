@@ -4,8 +4,10 @@ import { LeagueSideCard } from "@/shared/components/ui/league-side-card";
 import { SideCard } from "@/shared/components/ui/side-card";
 import { buttonVariants } from "@sports-system/ui/components/button";
 import type { components } from "@/types/api.gen";
+import { ActivityFeed } from "@/features/activities";
+import type { ActivityFeedItem } from "@/types/activity";
 
-export function LeaguesSidebar({ leagues }: { leagues: components["schemas"]["LeagueResponse"][] }) {
+export function LeaguesSidebar({ leagues, feedItems }: { leagues: components["schemas"]["LeagueResponse"][]; feedItems?: ActivityFeedItem[] }) {
   const latestLeagues = [...leagues]
     .sort((left, right) => right.created_at.localeCompare(left.created_at))
     .slice(0, 9);
@@ -65,6 +67,16 @@ export function LeaguesSidebar({ leagues }: { leagues: components["schemas"]["Le
               Ver todas
             </Link>
           </div>
+        </SideCard>
+      )}
+
+      {feedItems && (
+        <SideCard title={<>📡 Feed de atividades</>}>
+          <ActivityFeed
+            initialItems={feedItems}
+            limit={6}
+            live={true}
+          />
         </SideCard>
       )}
     </>

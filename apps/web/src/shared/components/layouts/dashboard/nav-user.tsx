@@ -1,4 +1,4 @@
-import { LogOutIcon, Sparkles, UserIcon } from "lucide-react";
+import { EllipsisIcon, LogOutIcon, Sparkles, UserIcon } from "lucide-react";
 import { useRouter } from "@tanstack/react-router";
 import { toast } from "sonner";
 
@@ -18,13 +18,13 @@ import {
 import * as m from "@/paraglide/messages";
 import { logoutFn } from "@/features/auth/server/auth";
 import type { Session } from "@/types/auth";
-import { Button } from "@sports-system/ui/components/button";
 
 interface NavUserProps {
 	session: Session | null;
+	avatarOnly?: boolean;
 }
 
-export function NavUser({ session }: NavUserProps) {
+export function NavUser({ session, avatarOnly = false }: NavUserProps) {
 	const router = useRouter();
 	const user = session
 		? { name: session.name, email: session.email, avatar: session.avatar_url ?? "" }
@@ -39,20 +39,24 @@ export function NavUser({ session }: NavUserProps) {
 
 	return (
 		<DropdownMenu>
-			<DropdownMenuTrigger className="flex h-11 items-center gap-3 px-3">
-				<Avatar className="flex h-9 w-9 shrink-0 items-center justify-center overflow-hidden rounded-full bg-primary">
+			<DropdownMenuTrigger className={`flex items-center ${avatarOnly ? "h-8 w-8 justify-center rounded-full p-0" : "h-11 gap-3 px-3"}`}>
+				<Avatar className={`flex shrink-0 items-center justify-center overflow-hidden rounded-full bg-primary ${avatarOnly ? "h-8 w-8" : "h-9 w-9"}`}>
 					<AvatarImage src={user.avatar} alt={user.name} />
 					<AvatarFallback className="font-semibold text-xs rounded-md">
 						{user.name ? user.name.charAt(0) : m['nav.user.fallbackInitials']()}
 					</AvatarFallback>
 				</Avatar>
-				<div className="flex min-w-0 flex-1 flex-col items-start overflow-hidden">
-					<span className="w-full truncate text-sm font-semibold text-foreground">{user.name}</span>
-					<span className="w-full truncate text-xs text-muted-foreground">{user.email}</span>
-				</div>
-				<Button variant="ghost" size="sm" className="w-8 text-muted-foreground transition-colors duration-150 hover:bg-red-950/40 hover:text-red-400 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-red-400/50">
-					<LogOutIcon size={16} />
-				</Button>
+				{!avatarOnly && (
+					<>
+						<div className="flex min-w-0 flex-1 flex-col items-start overflow-hidden">
+							<span className="w-full truncate text-sm font-semibold text-foreground">{user.name}</span>
+							<span className="w-full truncate text-xs text-muted-foreground">{user.email}</span>
+						</div>
+						<span className="inline-flex h-8 w-8 items-center justify-center rounded-md text-muted-foreground transition-colors duration-150 hover:bg-red-950/40 hover:text-foreground">
+							<EllipsisIcon size={16} />
+						</span>
+					</>
+				)}
 			</DropdownMenuTrigger>
 			<DropdownMenuContent
 				className="min-w-56 rounded-lg"

@@ -1,6 +1,7 @@
 import { createFileRoute, redirect } from "@tanstack/react-router";
 
 import { RegisterForm } from "@/features/auth/components/register-form";
+import { AuthSplitLayout } from "@/features/auth/components/auth-split-layout";
 
 export const Route = createFileRoute("/register")({
   beforeLoad: ({ context }) => {
@@ -13,10 +14,8 @@ export const Route = createFileRoute("/register")({
 
 function RegisterPage() {
   return (
-    <div className="flex min-h-svh flex-col items-center justify-center p-6 md:p-10">
-      <div className="w-full max-w-sm md:max-w-4xl">
-        <RegisterForm />
-      </div>
-    </div>
+    <AuthSplitLayout>
+      <RegisterForm />
+    </AuthSplitLayout>
   );
 }
