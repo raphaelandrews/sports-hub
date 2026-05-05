@@ -18,7 +18,7 @@ import type { Session } from "@/types/auth";
 import type { LeagueMemberResponse, LeagueResponse } from "@/types/leagues";
 
 import { NavGroup } from "./nav-group";
-import { Home, Trophy, Shield, PlusCircle, Users } from "lucide-react";
+import { LayoutDashboard, Trophy, Shield, PlusCircle, Users } from "lucide-react";
 import { useThemeAssets } from "@/shared/hooks/use-theme-assets";
 import { Link } from "@tanstack/react-router";
 
@@ -63,7 +63,7 @@ export function AppSidebar({
 		{
 			title: m['sidebar.home'](),
 			url: "/",
-			icon: Home,
+			icon: LayoutDashboard,
 			isActive: pathname === "/",
 		},
 		{

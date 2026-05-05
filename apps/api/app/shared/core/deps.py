@@ -7,6 +7,7 @@ from app.config import settings
 from app.database import get_session
 from app.domain.models.league import LeagueMember, LeagueMemberRole
 from app.domain.models.user import User, UserRole
+from app.features.leagues import repository as league_repository
 from app.features.leagues import service as league_service
 
 _bearer = HTTPBearer()
@@ -84,6 +85,13 @@ def require_league_admin():
         user: User = Depends(get_current_user),
         session: AsyncSession = Depends(get_session),
     ) -> LeagueMember:
+        if user.role in {UserRole.ADMIN, UserRole.SUPERADMIN}:
+            member = await league_repository.get_member(session, league_id, user.id)
+            if member is None:
+                member = await league_service.add_member(
+                    session, league_id, user.id, LeagueMemberRole.LEAGUE_ADMIN, user
+                )
+            return member
         return await league_service.require_league_admin(session, league_id, user)
 
     return _require_league_admin

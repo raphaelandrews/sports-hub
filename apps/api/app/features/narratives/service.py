@@ -5,6 +5,7 @@ from fastapi import HTTPException, status
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 
+from app.domain.models.competition import Competition
 from app.domain.models.event import Event, Match, MatchStatus
 from app.domain.models.narrative import AIGeneration, Narrative
 from app.domain.models.result import Medal, Result

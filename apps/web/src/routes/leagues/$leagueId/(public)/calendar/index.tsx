@@ -1,6 +1,6 @@
 import { useMemo, useState } from "react";
 import { useSuspenseQuery } from "@tanstack/react-query";
-import { createFileRoute } from "@tanstack/react-router";
+import { Link, createFileRoute } from "@tanstack/react-router";
 import type { ColumnDef } from "@tanstack/react-table";
 import { Badge } from "@sports-system/ui/components/badge";
 import { Button } from "@sports-system/ui/components/button";
@@ -19,6 +19,8 @@ import {
   CheckIcon,
   TrophyIcon,
   FunnelIcon,
+  Sparkles,
+  CalendarPlus2,
 } from "lucide-react";
 
 import * as m from "@/paraglide/messages";
@@ -224,6 +226,26 @@ function CalendarPage() {
 
   return (
     <PageSingleLayout title={m['calendar.public.title']()}>
+      <div className="mb-4 flex flex-wrap items-center gap-2">
+        <Link
+          to="/leagues/$leagueId/dashboard/calendar"
+          params={{ leagueId }}
+        >
+          <Button variant="outline" size="sm">
+            <CalendarPlus2 className="mr-2 size-4" />
+            Criar evento
+          </Button>
+        </Link>
+        <Link
+          to="/leagues/$leagueId/dashboard/calendar"
+          params={{ leagueId }}
+        >
+          <Button variant="secondary" size="sm">
+            <Sparkles className="mr-2 size-4" />
+            Gerar calendário com IA
+          </Button>
+        </Link>
+      </div>
       <TableLayout
         countLabel="eventos"
         columns={columns}
