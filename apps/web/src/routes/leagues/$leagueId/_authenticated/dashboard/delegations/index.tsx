@@ -172,7 +172,7 @@ function DelegationsPage() {
   return (
     <div className="space-y-6">
       <section className="grid gap-4 xl:grid-cols-[1.65fr_1fr]">
-        <Card className="border border-border/70 bg-[radial-gradient(circle_at_top_left,hsl(var(--primary)/0.18),transparent_46%),linear-gradient(135deg,hsl(var(--card)),hsl(var(--card)),hsl(var(--muted)/0.28))]">
+        <Card className="bg-[radial-gradient(circle_at_top_left,hsl(var(--primary)/0.18),transparent_46%),linear-gradient(135deg,hsl(var(--card)),hsl(var(--card)),hsl(var(--muted)/0.28))]">
           <CardHeader className="gap-3">
             <Badge variant="outline" className="w-fit">
               {m['delegations.public.title']()}
@@ -209,7 +209,7 @@ function DelegationsPage() {
         </Card>
 
         {isAdmin ? (
-          <Card className="border border-border/70">
+          <Card>
             <CardHeader>
               <CardTitle>{m["nav.admin.ai"]()}</CardTitle>
               <CardDescription>
@@ -256,7 +256,7 @@ function DelegationsPage() {
         ) : null}
       </section>
 
-      <Card className="border border-border/70">
+      <Card>
         <CardHeader className="gap-4">
           <div className="flex flex-col gap-4 lg:flex-row lg:items-end lg:justify-between">
             <div>

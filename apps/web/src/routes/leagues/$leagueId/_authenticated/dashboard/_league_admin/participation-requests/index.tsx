@@ -1,16 +1,10 @@
+import { useMemo, useState } from "react";
 import { useMutation, useQueryClient, useSuspenseQuery } from "@tanstack/react-query";
 import { createFileRoute } from "@tanstack/react-router";
 import { toast } from "sonner";
 
 import { Badge } from "@sports-system/ui/components/badge";
 import { Button } from "@sports-system/ui/components/button";
-import {
-  Card,
-  CardContent,
-  CardDescription,
-  CardHeader,
-  CardTitle,
-} from "@sports-system/ui/components/card";
 import {
   Table,
   TableBody,
@@ -23,6 +17,10 @@ import { Check, X } from "lucide-react";
 import { participationRequestsQueryOptions, type ParticipationRequest } from "@/features/delegations/api/queries";
 import { client, unwrap, ApiError } from "@/shared/lib/api";
 import * as m from "@/paraglide/messages";
+import { TableLayout } from "@/shared/components/ui/table-layout";
+import { Title } from "@/shared/components/ui/title";
+import { SideCard } from "@/shared/components/ui/side-card";
+import { PageAsideLayout } from "@/shared/components/layouts/page-aside-layout";
 
 export const Route = createFileRoute(
   "/leagues/$leagueId/_authenticated/dashboard/_league_admin/participation-requests/",
@@ -71,50 +69,95 @@ function ParticipationRequestsPage() {
     },
   });
 
+  const [pageIndex, setPageIndex] = useState(0);
+  const [pageSize, setPageSize] = useState(10);
+  const [searchQuery, setSearchQuery] = useState("");
+
+  const filteredData = useMemo(() => {
+    let data = [...requests];
+    if (searchQuery.trim()) {
+      const lower = searchQuery.toLowerCase();
+      data = data.filter((r) =>
+        String(r.delegation_id).includes(lower) ||
+        (statusLabel[r.status]?.toLowerCase() ?? "").includes(lower),
+      );
+    }
+    return data;
+  }, [requests, searchQuery]);
+
+  const pagedData = filteredData.slice(
+    pageIndex * pageSize,
+    (pageIndex + 1) * pageSize,
+  );
+
   const pendingRequests = requests.filter((r: ParticipationRequest) => r.status === "PENDING");
 
   return (
-    <div className="space-y-6">
-      <Card className="border border-border/70 bg-[radial-gradient(circle_at_top_left,hsl(var(--primary)/0.16),transparent_42%),linear-gradient(160deg,hsl(var(--card)),hsl(var(--card)),hsl(var(--muted)/0.22))]">
-        <CardHeader className="gap-3">
-          <Badge variant="outline" className="w-fit">{m["common.actions.submit"]() }</Badge>
-          <CardTitle className="text-2xl">{m["notification.title.participation"]()}</CardTitle>
-          <CardDescription className="max-w-2xl">
-            m["notification.desc.participationPrefix"]()
-          </CardDescription>
-        </CardHeader>
-        <CardContent className="grid gap-4 md:grid-cols-3">
-          <MetricCard label={m["enrollments.admin.stat.pending"]() } value={String(pendingRequests.length)} />
-          <MetricCard label={m["enrollments.admin.stat.total"]() } value={String(requests.length)} />
-        </CardContent>
-      </Card>
+    <PageAsideLayout
+      sidebar={
+        <SideCard title={m["notification.title.participation"]()}>
+          <p className="text-sm text-muted-foreground mb-4">
+            {m["notification.desc.participationPrefix"]()}
+          </p>
+          <div className="space-y-3">
+            <Badge variant="outline" className="w-full justify-center">
+              {m["common.actions.submit"]()
+            }</Badge>
+            <p className="text-xs text-muted-foreground">
+              {pendingRequests.length} {m["enrollments.admin.stat.pending"]()}
+            </p>
+          </div>
+        </SideCard>
+      }
+    >
+      <Title title={m["notification.title.participation"]()} description={m["notification.desc.participationPrefix"]()} />
 
-      <div className="rounded-xl border bg-card shadow-xs/5">
+      <div className="w-full flex justify-center mt-6">
+        <div className="flex gap-4">
+          <StatCard label={m["enrollments.admin.stat.pending"]()} value={String(pendingRequests.length)} />
+          <StatCard label={m["enrollments.admin.stat.total"]()} value={String(requests.length)} />
+        </div>
+      </div>
+
+      <div className="w-full mt-6">
+        <TableLayout
+        totalCount={filteredData.length}
+        visibleCount={pagedData.length}
+        searchQuery={searchQuery}
+        onSearchChange={(value) => {
+          setSearchQuery(value);
+          setPageIndex(0);
+        }}
+        pageIndex={pageIndex}
+        pageSize={pageSize}
+        onPageChange={setPageIndex}
+        onPageSizeChange={setPageSize}
+      >
         <Table>
           <TableHeader>
             <TableRow>
-              <TableHead className="ps-4">{m["delegations.public.title"]() }</TableHead>
-              <TableHead className="w-28">{m["enrollments.admin.table.status"]() }</TableHead>
-              <TableHead className="w-36">{m["enrollments.admin.table.validation"]() }</TableHead>
-              <TableHead className="pe-4 w-36 text-right">{m["enrollments.admin.table.actions"]() }</TableHead>
+              <TableHead className="ps-4">{m["delegations.public.title"]()}</TableHead>
+              <TableHead className="w-28">{m["enrollments.admin.table.status"]()}</TableHead>
+              <TableHead className="w-36">{m["enrollments.admin.table.validation"]()}</TableHead>
+              <TableHead className="pe-4 w-36 text-right">{m["enrollments.admin.table.actions"]()}</TableHead>
             </TableRow>
           </TableHeader>
           <TableBody>
-            {requests.length === 0 && (
+            {pagedData.length === 0 && (
               <TableRow>
                 <TableCell
                   colSpan={4}
                   className="h-24 text-center text-muted-foreground"
                 >
-                  {m["search.noResults"]() }
+                  {m["search.noResults"]()}
                 </TableCell>
               </TableRow>
             )}
-            {requests.map((request: ParticipationRequest) => (
+            {pagedData.map((request: ParticipationRequest) => (
               <TableRow key={request.id}>
                 <TableCell className="ps-4">
                   <span className="font-medium">
-                    {m["delegations.public.title"]() } #{request.delegation_id}
+                    {m["delegations.public.title"]()} #{request.delegation_id}
                   </span>
                 </TableCell>
                 <TableCell>
@@ -143,7 +186,7 @@ function ParticipationRequestsPage() {
                         }
                       >
                         <X className="size-3.5 mr-1" />
-                        {m["notification.action.refuse"]() }
+                        {m["notification.action.refuse"]()}
                       </Button>
                       <Button
                         variant="outline"
@@ -155,12 +198,12 @@ function ParticipationRequestsPage() {
                         }
                       >
                         <Check className="size-3.5 mr-1" />
-                        {m["notification.action.accept"]() }
+                        {m["notification.action.accept"]()}
                       </Button>
                     </div>
                   ) : (
                     <span className="text-muted-foreground text-xs">
-                      {request.status === "APPROVED" ? m["common.status.approved"]() : m["common.status.rejected"]() }
+                      {request.status === "APPROVED" ? m["common.status.approved"]() : m["common.status.rejected"]()}
                     </span>
                   )}
                 </TableCell>
@@ -168,16 +211,17 @@ function ParticipationRequestsPage() {
             ))}
           </TableBody>
         </Table>
+      </TableLayout>
       </div>
-    </div>
+    </PageAsideLayout>
   );
 }
 
-function MetricCard({ label, value }: { label: string; value: string }) {
+function StatCard({ label, value }: { label: string; value: string }) {
   return (
-    <div className="rounded-3xl border border-border/70 bg-background/75 p-4">
-      <div className="text-xs uppercase tracking-[0.2em] text-muted-foreground">{label}</div>
-      <div className="mt-2 text-lg font-semibold">{value}</div>
+    <div className="flex flex-col items-center gap-1 w-25 rounded-lg bg-input px-3 py-2 min-w-11">
+      <div className="text-[9px] uppercase tracking-widest text-placeholder leading-none">{label}</div>
+      <div className="text-xl font-bold tabular-nums text-foreground leading-none">{value}</div>
     </div>
   );
 }

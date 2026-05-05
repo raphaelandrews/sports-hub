@@ -1,12 +1,5 @@
 import { useMemo, useState } from "react";
 import { Badge } from "@sports-system/ui/components/badge";
-import {
-  Card,
-  CardContent,
-  CardDescription,
-  CardHeader,
-  CardTitle,
-} from "@sports-system/ui/components/card";
 import { useSuspenseQuery } from "@tanstack/react-query";
 import { Link, createFileRoute } from "@tanstack/react-router";
 import {
@@ -20,6 +13,8 @@ import {
 
 import { TableLayout } from "@/shared/components/ui/table-layout";
 import { Title } from "@/shared/components/ui/title";
+import { SideCard } from "@/shared/components/ui/side-card";
+import { PageAsideLayout } from "@/shared/components/layouts/page-aside-layout";
 import { medalBoardQueryOptions } from "@/features/results/api/queries";
 import { sportListQueryOptions } from "@/features/sports/api/queries";
 import type { MedalBoardEntry } from "@/types/results";
@@ -60,45 +55,17 @@ function ResultsPage() {
     pageIndex * pageSize,
     (pageIndex + 1) * pageSize,
   );
-
   return (
-    <div className="container mx-auto max-w-6xl space-y-8 px-4 py-8">
-      <Title title={m["results.public.title"]()} />
-      <section className="grid gap-4 lg:grid-cols-[1.25fr_0.75fr]">
-        <Card className="border border-border/70 bg-[radial-gradient(circle_at_top_left,hsl(var(--primary)/0.16),transparent_42%),linear-gradient(180deg,hsl(var(--card)),hsl(var(--muted)/0.18))]">
-          <CardHeader className="gap-3">
-            <div className="flex flex-wrap items-center gap-2">
-              <Badge variant="secondary">{m["results.public.badge.refresh"]()}</Badge>
-            </div>
-            <CardTitle className="text-3xl">{m["results.public.card.title"]()}</CardTitle>
-            <CardDescription className="max-w-2xl">
-              m["results.public.section.medalBoard"]()
-            </CardDescription>
-          </CardHeader>
-          <CardContent className="grid gap-3 md:grid-cols-3">
-            <QuickPill label={m["results.public.pill.ranking"]()} value={String(data.length)} />
-            <QuickPill
-              label={m["results.public.pill.golds"]()}
-              value={String(data.reduce((sum, entry) => sum + entry.gold, 0))}
-            />
-            <QuickPill
-              label={m["results.public.pill.total"]()}
-              value={String(data.reduce((sum, entry) => sum + entry.total, 0))}
-            />
-          </CardContent>
-        </Card>
-
-        <Card className="border border-border/70">
-          <CardHeader>
-            <CardTitle>{m["results.public.card.nav.title"]()}</CardTitle>
-          </CardHeader>
-          <CardContent className="space-y-3">
+    <PageAsideLayout
+      sidebar={
+        <SideCard title={m["results.public.card.nav.title"]()}>
+          <div className="space-y-3">
             <Link
               to="/leagues/$leagueId/results/records"
               params={{ leagueId }}
               className="block text-sm text-muted-foreground hover:text-foreground hover:underline"
             >
-              m["results.records.title"]()
+              {m["results.records.title"]()}
             </Link>
             {sports.data.slice(0, 6).map((sport) => (
               <Link
@@ -110,34 +77,40 @@ function ResultsPage() {
                 {sport.name}
               </Link>
             ))}
-          </CardContent>
-        </Card>
-      </section>
+          </div>
+        </SideCard>
+      }
+    >
+      <Title title={m["results.public.title"]()}
+        description={m["results.public.section.medalBoard"]()}
+      />
 
-      <TableLayout
-        title={m["results.public.card.title"]()}
-        countLabel={m["delegations.public.title"]()}
-        visibleCount={pagedData.length}
-        totalCount={filteredData.length}
-        searchPlaceholder={m["common.table.searchPlaceholder"]()}
-        searchQuery={searchQuery}
-        onSearchChange={(value) => {
-          setSearchQuery(value);
-          setPageIndex(0);
-        }}
-        activeFilterCount={searchQuery ? 1 : 0}
-        onClearFilters={() => {
-          setSearchQuery("");
-          setPageIndex(0);
-        }}
-        pageIndex={pageIndex}
-        pageSize={pageSize}
-        onPageChange={setPageIndex}
-        onPageSizeChange={setPageSize}
-      >
-        <MedalBoardTable entries={pagedData} />
-      </TableLayout>
-    </div>
+      <div className="w-full flex justify-center mt-6">
+        <div className="flex gap-4">
+          <StatCard label={m["results.public.pill.ranking"]()} value={String(data.length)} />
+          <StatCard label={m["results.public.pill.golds"]()} value={String(data.reduce((sum, entry) => sum + entry.gold, 0))} />
+          <StatCard label={m["results.public.pill.total"]()} value={String(data.reduce((sum, entry) => sum + entry.total, 0))} />
+        </div>
+      </div>
+
+      <div className="w-full mt-6">
+        <TableLayout
+          totalCount={filteredData.length}
+          visibleCount={pagedData.length}
+          searchQuery={searchQuery}
+          onSearchChange={(value) => {
+            setSearchQuery(value);
+            setPageIndex(0);
+          }}
+          pageIndex={pageIndex}
+          pageSize={pageSize}
+          onPageChange={setPageIndex}
+          onPageSizeChange={setPageSize}
+        >
+          <MedalBoardTable entries={pagedData} />
+        </TableLayout>
+      </div>
+    </PageAsideLayout>
   );
 }
 
@@ -187,11 +160,11 @@ function MedalBoardTable({ entries }: { entries: MedalBoardEntry[] }) {
   );
 }
 
-function QuickPill({ label, value }: { label: string; value: string }) {
+function StatCard({ label, value }: { label: string; value: string }) {
   return (
-    <div className="rounded-3xl border border-border/70 bg-background/80 p-4">
-      <div className="text-xs uppercase tracking-[0.24em] text-muted-foreground">{label}</div>
-      <div className="mt-2 text-lg font-semibold">{value}</div>
+    <div className="flex flex-col items-center gap-1 w-25 rounded-lg bg-input px-3 py-2 min-w-11">
+      <div className="text-[9px] uppercase tracking-widest text-placeholder leading-none">{label}</div>
+      <div className="text-xl font-bold tabular-nums text-foreground leading-none">{value}</div>
     </div>
   );
 }

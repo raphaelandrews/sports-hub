@@ -1,3 +1,4 @@
+import type { LocalizedString } from "@inlang/paraglide-js";
 import { Link, createFileRoute } from "@tanstack/react-router";
 import { Badge } from "@sports-system/ui/components/badge";
 import {
@@ -32,6 +33,8 @@ import {
   delegationDetailQueryOptions,
   delegationStatisticsQueryOptions,
 } from "@/features/delegations/api/queries";
+import { PageAsideLayout } from "@/shared/components/layouts/page-aside-layout";
+import { Title } from "@/shared/components/ui/title";
 
 export const Route = createFileRoute("/leagues/$leagueId/(public)/delegations/$delegationId")({
   loader: ({ context: { queryClient }, params: { leagueId, delegationId } }) => {
@@ -69,9 +72,41 @@ function DelegationDetailPage() {
     : false;
 
   return (
-    <div className="container mx-auto max-w-6xl space-y-8 px-4 py-6">
-      <section className="grid gap-4 xl:grid-cols-[1.4fr_0.9fr]">
-        <Card className="border border-border/70 bg-[radial-gradient(circle_at_top_left,hsl(var(--primary)/0.16),transparent_42%),linear-gradient(160deg,hsl(var(--card)),hsl(var(--card)),hsl(var(--muted)/0.22))]">
+    <PageAsideLayout
+      sidebar={
+        <div className="space-y-4">
+          <Card>
+            <CardHeader>
+              <CardTitle>{m['delegation.detail.card.summary.title']()}</CardTitle>
+              <CardDescription>
+                {m['delegation.stats.defaultDesc']()}
+              </CardDescription>
+            </CardHeader>
+            <CardContent className="space-y-3 text-sm">
+              <div className="rounded-xl border border-border/70 bg-muted/25 p-4">
+                <div className="font-medium">{stats.total_medals} {m['delegation.stats.label.medals']()}</div>
+                <div className="text-muted-foreground">
+                  {stats.gold} {m['common.medal.gold']()} · {stats.silver} {m['common.medal.silver']()} · {stats.bronze} {m['common.medal.bronze']()}
+                </div>
+              </div>
+              <div className="rounded-xl border border-border/70 bg-muted/25 p-4">
+                <div className="font-medium">{stats.athlete_count} {m['delegation.stats.label.athletes']()}</div>
+                <div className="text-muted-foreground">
+                  {stats.active_athlete_count} {m['common.status.active']()} · {stats.total_matches} {m['delegation.stats.label.matches']()}
+                </div>
+              </div>
+            </CardContent>
+          </Card>
+        </div>
+      }
+    >
+      <Title
+        title={data.name as LocalizedString}
+        description={m['delegation.detail.campaign.desc']()}
+      />
+
+      <section className="mt-6">
+        <Card className="bg-[radial-gradient(circle_at_top_left,hsl(var(--primary)/0.16),transparent_42%),linear-gradient(160deg,hsl(var(--card)),hsl(var(--card)),hsl(var(--muted)/0.22))]">
           <CardHeader className="gap-3">
             <div className="flex items-center gap-3 mb-1">
               <span className="font-mono text-sm text-muted-foreground bg-muted px-2 py-0.5 rounded">
@@ -103,33 +138,7 @@ function DelegationDetailPage() {
                 )}
               </div>
             </div>
-            <CardDescription className="max-w-2xl">
-              {m['delegation.detail.campaign.desc']()}
-            </CardDescription>
           </CardHeader>
-        </Card>
-
-        <Card className="border border-border/70">
-          <CardHeader>
-            <CardTitle>{m['delegation.detail.card.summary.title']()}</CardTitle>
-            <CardDescription>
-              {m['delegation.stats.defaultDesc']()}
-            </CardDescription>
-          </CardHeader>
-          <CardContent className="space-y-3 text-sm">
-            <div className="rounded-xl border border-border/70 bg-muted/25 p-4">
-              <div className="font-medium">{stats.total_medals} {m['delegation.stats.label.medals']()}</div>
-              <div className="text-muted-foreground">
-                {stats.gold} {m['common.medal.gold']()} · {stats.silver} {m['common.medal.silver']()} · {stats.bronze} {m['common.medal.bronze']()}
-              </div>
-            </div>
-            <div className="rounded-xl border border-border/70 bg-muted/25 p-4">
-              <div className="font-medium">{stats.athlete_count} {m['delegation.stats.label.athletes']()}</div>
-              <div className="text-muted-foreground">
-                {stats.active_athlete_count} {m['common.status.active']()} · {stats.total_matches} {m['delegation.stats.label.matches']()}
-              </div>
-            </div>
-          </CardContent>
         </Card>
       </section>
 
@@ -139,7 +148,7 @@ function DelegationDetailPage() {
         description={m['delegation.detail.campaign.desc']()}
       />
 
-      <div>
+      <div className="mt-6">
         <h2 className="text-lg font-medium mb-3">{m['delegation.detail.section.members']()}</h2>
         <div className="rounded-xl border bg-card shadow-xs/5">
           <Table>
@@ -171,7 +180,7 @@ function DelegationDetailPage() {
       </div>
 
       {formerMembers.length > 0 && (
-        <div>
+        <div className="mt-6">
           <h2 className="text-lg font-medium mb-3">{m['common.actions.previous']()}</h2>
           <div className="rounded-xl border bg-card shadow-xs/5">
             <Table>
@@ -204,6 +213,6 @@ function DelegationDetailPage() {
           </div>
         </div>
       )}
-    </div>
+    </PageAsideLayout>
   );
 }

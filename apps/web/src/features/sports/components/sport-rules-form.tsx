@@ -48,7 +48,7 @@ export function SportRulesForm({
   });
 
   return (
-    <Card className="border border-border/70">
+    <Card>
       <CardHeader>
         <CardTitle>{m['sport.rules.title']()}</CardTitle>
         <CardDescription>{m['sport.rules.desc']()}</CardDescription>

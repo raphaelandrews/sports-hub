@@ -131,7 +131,7 @@ function ResultsPage() {
   return (
     <div className="space-y-6">
       <section className="grid gap-4 xl:grid-cols-[1.4fr_1fr]">
-        <Card className="border border-border/70 bg-[radial-gradient(circle_at_top_left,hsl(var(--primary)/0.14),transparent_42%),linear-gradient(160deg,hsl(var(--card)),hsl(var(--card)),hsl(var(--muted)/0.20))]">
+        <Card className="bg-[radial-gradient(circle_at_top_left,hsl(var(--primary)/0.14),transparent_42%),linear-gradient(160deg,hsl(var(--card)),hsl(var(--card)),hsl(var(--muted)/0.20))]">
           <CardHeader className="gap-3">
             <Badge variant="outline" className="w-fit">
               Resultados
@@ -154,7 +154,7 @@ function ResultsPage() {
           </CardContent>
         </Card>
 
-        <Card className="border border-border/70">
+        <Card>
           <CardHeader>
             <CardTitle>{m["results.admin.card.actions.title"]()}</CardTitle>
             <CardDescription>
@@ -207,7 +207,7 @@ function ResultsPage() {
         </Card>
       </section>
 
-      <Card className="border border-border/70">
+      <Card>
         <CardHeader>
           <CardTitle className="flex items-center gap-2 text-base">
             <Trophy className="size-4" />{m["results.public.card.title"]() }
@@ -218,7 +218,7 @@ function ResultsPage() {
         </CardContent>
       </Card>
 
-      <Card className="border border-border/70">
+      <Card>
         <CardHeader>
           <CardTitle>{m["results.admin.card.manual.title"]()}</CardTitle>
           <CardDescription>

@@ -34,7 +34,7 @@ export function GeneratorCard({
   footer: React.ReactNode;
 }) {
   return (
-    <Card className="border border-border/70 bg-[linear-gradient(180deg,hsl(var(--card)),hsl(var(--muted)/0.12))]">
+    <Card className="bg-[linear-gradient(180deg,hsl(var(--card)),hsl(var(--muted)/0.12))]">
       <CardHeader className="gap-3">
         <div className="flex items-center justify-between gap-3">
           <Badge variant="outline">{badge}</Badge>

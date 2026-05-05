@@ -125,7 +125,7 @@ function TransferPanelPage() {
       delegation={delegation}
     >
       <section className="grid gap-6 xl:grid-cols-[1.05fr_0.95fr]">
-        <Card className="border border-border/70">
+        <Card>
           <CardHeader>
             <CardTitle>{m["nav.chief.transfers"]()}</CardTitle>
             <CardDescription>
@@ -166,7 +166,7 @@ function TransferPanelPage() {
           </CardContent>
         </Card>
 
-        <Card className="border border-border/70">
+        <Card>
           <CardHeader>
             <CardTitle>{m["enrollments.admin.stat.pending"]()}</CardTitle>
             <CardDescription>
@@ -200,7 +200,7 @@ function TransferPanelPage() {
         </Card>
       </section>
 
-      <Card className="border border-border/70">
+      <Card>
         <CardHeader>
           <CardTitle>{m["delegation.detail.campaign.title"]()}</CardTitle>
           <CardDescription>

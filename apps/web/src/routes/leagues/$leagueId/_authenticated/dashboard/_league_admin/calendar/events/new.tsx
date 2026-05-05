@@ -114,7 +114,7 @@ function NewCalendarEventPage() {
 
   return (
     <div className="mx-auto w-full max-w-4xl">
-      <Card className="border border-border/70 bg-[radial-gradient(circle_at_top_right,hsl(var(--primary)/0.16),transparent_38%),linear-gradient(180deg,hsl(var(--card)),hsl(var(--muted)/0.18))]">
+      <Card className="bg-[radial-gradient(circle_at_top_right,hsl(var(--primary)/0.16),transparent_38%),linear-gradient(180deg,hsl(var(--card)),hsl(var(--muted)/0.18))]">
         <CardHeader>
           <CardTitle>{m['event.form.title']()}</CardTitle>
           <CardDescription>

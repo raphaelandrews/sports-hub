@@ -52,7 +52,7 @@ export function NavUser({ session, avatarOnly = false }: NavUserProps) {
 							<span className="w-full truncate text-sm font-semibold text-foreground">{user.name}</span>
 							<span className="w-full truncate text-xs text-muted-foreground">{user.email}</span>
 						</div>
-						<span className="inline-flex h-8 w-8 items-center justify-center rounded-md text-muted-foreground transition-colors duration-150 hover:bg-red-950/40 hover:text-foreground">
+						<span className="inline-flex h-8 w-8 items-center justify-center rounded-md text-muted-foreground transition-colors duration-150 hover:bg-muted hover:text-foreground">
 							<EllipsisIcon size={16} />
 						</span>
 					</>

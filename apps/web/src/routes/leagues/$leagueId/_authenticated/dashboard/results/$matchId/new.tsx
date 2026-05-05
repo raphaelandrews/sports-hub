@@ -183,7 +183,7 @@ function MatchResultEntryPage() {
   return (
     <div className="space-y-6">
       <section className="grid gap-4 xl:grid-cols-[1.35fr_0.65fr]">
-        <Card className="border border-border/70 bg-[radial-gradient(circle_at_top_left,hsl(var(--primary)/0.14),transparent_42%),linear-gradient(160deg,hsl(var(--card)),hsl(var(--card)),hsl(var(--muted)/0.20))]">
+        <Card className="bg-[radial-gradient(circle_at_top_left,hsl(var(--primary)/0.14),transparent_42%),linear-gradient(160deg,hsl(var(--card)),hsl(var(--card)),hsl(var(--muted)/0.20))]">
           <CardHeader className="gap-3">
             <div className="flex flex-wrap items-center gap-2">
               <Badge variant="outline">{m["result.form.badge.manual"]()}</Badge>
@@ -217,7 +217,7 @@ function MatchResultEntryPage() {
           </CardContent>
         </Card>
 
-        <Card className="border border-border/70">
+        <Card>
           <CardHeader>
             <CardTitle>{m["results.admin.card.actions.title"]()}</CardTitle>
           </CardHeader>
@@ -234,7 +234,7 @@ function MatchResultEntryPage() {
       </section>
 
       <section className="grid gap-4 xl:grid-cols-[1fr_0.9fr]">
-        <Card className="border border-border/70">
+        <Card>
           <CardHeader>
             <CardTitle>{editable ? m["result.form.title.edit"]() : m["result.form.title.create"]() }</CardTitle>
             <CardDescription>{m["result.form.desc"]()}</CardDescription>
@@ -333,7 +333,7 @@ function MatchResultEntryPage() {
           </CardContent>
         </Card>
 
-        <Card className="border border-border/70">
+        <Card>
           <CardHeader>
             <CardTitle>{m["results.admin.title"]()}</CardTitle>
             <CardDescription>{m["results.admin.card.manual.title"]()}</CardDescription>

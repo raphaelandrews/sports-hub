@@ -2,7 +2,7 @@
 
 import { motion, useMotionValue, useMotionValueEvent, useSpring, useTransform } from "motion/react";
 import { ResponsiveContainer, AreaChart, Area, LineChart, Line, BarChart, Bar } from "recharts";
-import { ChartStyle, getColorsCount, type ChartConfig } from "@/components/evilcharts/ui/chart";
+import { ChartStyle, getColorsCount, type ChartConfig } from "@/shared/components/evilcharts/ui/chart";
 import type { MotionValue } from "motion/react";
 import { useCallback, useEffect, type ComponentProps } from "react";
 import { cn } from "@sports-system/ui/lib/utils";

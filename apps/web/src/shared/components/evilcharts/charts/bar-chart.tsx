@@ -6,18 +6,18 @@ import {
   getColorsCount,
   getLoadingData,
   LoadingIndicator,
-} from "@/components/evilcharts/ui/chart";
-import { EvilBrush, useEvilBrush, type EvilBrushRange } from "@/components/evilcharts/ui/evil-brush";
+} from "@/shared/components/evilcharts/ui/chart";
+import { EvilBrush, useEvilBrush, type EvilBrushRange } from "@/shared/components/evilcharts/ui/evil-brush";
 import {
   ChartTooltip,
   ChartTooltipContent,
   type TooltipRoundness,
   type TooltipVariant,
-} from "@/components/evilcharts/ui/tooltip";
-import { ChartLegend, ChartLegendContent, type ChartLegendVariant } from "@/components/evilcharts/ui/legend";
+} from "@/shared/components/evilcharts/ui/tooltip";
+import { ChartLegend, ChartLegendContent, type ChartLegendVariant } from "@/shared/components/evilcharts/ui/legend";
 import { Bar, BarChart, CartesianGrid, Rectangle, ReferenceLine, XAxis, YAxis } from "recharts";
 import { useCallback, useId, useMemo, useRef, useState, type ComponentProps } from "react";
-import { ChartBackground, type BackgroundVariant } from "@/components/evilcharts/ui/background";
+import { ChartBackground, type BackgroundVariant } from "@/shared/components/evilcharts/ui/background";
 import type { RectRadius } from "recharts/types/shape/Rectangle";
 import { motion } from "motion/react";
 

@@ -25,7 +25,7 @@ function HomePage() {
   return (
     <PageAsideLayout sidebar={<LeaguesSidebar leagues={leagues} feedItems={feedItems} />}>
       <Title title={m['home.title']()} description={m['home.subtitle']()} />
-      <HomeCharts />
+      <HomeCharts leagues={leagues} feedItems={feedItems} />
     </PageAsideLayout>
   );
 }

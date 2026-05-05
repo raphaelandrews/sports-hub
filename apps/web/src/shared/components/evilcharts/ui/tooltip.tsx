@@ -1,4 +1,4 @@
-import { getPayloadConfigFromPayload, getColorsCount, useChart } from "@/components/evilcharts/ui/chart";
+import { getPayloadConfigFromPayload, getColorsCount, useChart } from "@/shared/components/evilcharts/ui/chart";
 import type { NameType, ValueType } from "recharts/types/component/DefaultTooltipContent";
 import * as RechartsPrimitive from "recharts";
 import { cn } from "@sports-system/ui/lib/utils";

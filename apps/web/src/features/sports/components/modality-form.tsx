@@ -90,7 +90,7 @@ export function ModalityForm({
 
   return (
     <div className="mx-auto flex w-full max-w-4xl flex-col gap-6">
-      <Card className="border border-border/70 bg-gradient-to-br from-card via-card to-muted/20">
+      <Card className="bg-gradient-to-br from-card via-card to-muted/20">
         <CardHeader>
           <CardTitle>{mode === "create" ? m['modality.form.title.create']() : m['modality.form.title.edit']()}</CardTitle>
           <CardDescription>

@@ -8,7 +8,7 @@ import {
   TableRow,
 } from "@sports-system/ui/components/table";
 import { useSuspenseQuery } from "@tanstack/react-query";
-import { Link, createFileRoute } from "@tanstack/react-router";
+import { Link, Outlet, createFileRoute } from "@tanstack/react-router";
 
 import { resolveRosterSize } from "@/shared/lib/sports";
 import { sportDetailQueryOptions } from "@/features/sports/api/queries";
@@ -46,8 +46,8 @@ function SportDetailPage() {
     <div className="container mx-auto max-w-5xl px-4 py-6 space-y-8">
       <div>
         <div className="flex items-center gap-3 mb-1">
-                <Badge variant="secondary">{getTypeLabel(data.sport_type)}</Badge>
-          {!data.is_active &&                 <Badge variant="destructive">{m['sport.detail.status.inactive']()}</Badge>}
+          <Badge variant="secondary">{getTypeLabel(data.sport_type)}</Badge>
+          {!data.is_active && <Badge variant="destructive">{m['sport.detail.status.inactive']()}</Badge>}
         </div>
         <h1 className="text-2xl font-semibold">{data.name}</h1>
         {data.description && <p className="text-muted-foreground mt-2">{data.description}</p>}
@@ -95,6 +95,7 @@ function SportDetailPage() {
           </TableBody>
         </Table>
       </div>
+      <Outlet />
     </div>
   );
 }

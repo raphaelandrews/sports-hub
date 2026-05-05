@@ -122,7 +122,7 @@ function MyDelegationOverviewPage() {
       </section>
 
       <section className="grid gap-6 xl:grid-cols-[1.1fr_0.9fr]">
-        <Card className="border border-border/70">
+        <Card>
           <CardHeader>
             <CardTitle>{m["delegation.detail.section.members"]()}</CardTitle>
             <CardDescription>
@@ -152,7 +152,7 @@ function MyDelegationOverviewPage() {
           </CardContent>
         </Card>
 
-        <Card className="border border-border/70">
+        <Card>
           <CardHeader>
             <CardTitle>{m["common.actions.next"]()}</CardTitle>
             <CardDescription>
@@ -216,7 +216,7 @@ function OverviewStat({
   hint: string;
 }) {
   return (
-    <Card className="border border-border/70">
+    <Card>
       <CardContent className="flex items-start justify-between gap-3 p-5">
         <div>
           <div className="text-sm text-muted-foreground">{label}</div>

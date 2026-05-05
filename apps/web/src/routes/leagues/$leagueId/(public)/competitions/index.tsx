@@ -32,6 +32,7 @@ import { formatDate } from "@/shared/lib/date";
 import { competitionListQueryOptions } from "@/features/competitions/api/queries";
 import type { CompetitionStatus } from "@/types/competitions";
 import { TableLayout } from "@/shared/components/ui/table-layout";
+import { PageSingleLayout } from "@/shared/components/layouts/page-single-layout";
 
 export const Route = createFileRoute("/leagues/$leagueId/(public)/competitions/")({
   loader: ({ context: { queryClient }, params: { leagueId } }) =>
@@ -126,8 +127,8 @@ function CompetitionsPage() {
   };
 
   return (
+    <PageSingleLayout title={m['competitions.public.title']()}>
     <TableLayout
-      title={m['competitions.public.title']()}
       countLabel="competições"
       visibleCount={pagedData.length}
       totalCount={filteredData.length}
@@ -263,6 +264,7 @@ function CompetitionsPage() {
         </TableBody>
       </Table>
     </TableLayout>
+    </PageSingleLayout>
   );
 }
 

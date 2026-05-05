@@ -62,7 +62,7 @@ export function CompetitionForm({
 
   return (
     <div className="mx-auto flex w-full max-w-4xl flex-col gap-6">
-      <Card className="border border-border/70 bg-gradient-to-br from-card via-card to-muted/20">
+      <Card className="bg-gradient-to-br from-card via-card to-muted/20">
         <CardHeader>
           <CardTitle>{m['competition.form.title']()}</CardTitle>
           <CardDescription>

@@ -306,7 +306,7 @@ function NewEnrollmentPage() {
 
   return (
     <div className="mx-auto w-full max-w-5xl space-y-6">
-      <Card className="border border-border/70 bg-[radial-gradient(circle_at_top_left,hsl(var(--primary)/0.16),transparent_42%),linear-gradient(165deg,hsl(var(--card)),hsl(var(--card)),hsl(var(--muted)/0.18))]">
+      <Card className="bg-[radial-gradient(circle_at_top_left,hsl(var(--primary)/0.16),transparent_42%),linear-gradient(165deg,hsl(var(--card)),hsl(var(--card)),hsl(var(--muted)/0.18))]">
         <CardHeader>
           <CardTitle>{m["enrollment.form.title"]()}</CardTitle>
           <CardDescription>
@@ -439,7 +439,7 @@ function NewEnrollmentPage() {
             </FieldGroup>
 
             <div className="grid gap-4 xl:grid-cols-[1.15fr_0.85fr]">
-              <Card className="border border-border/70">
+              <Card>
                 <CardHeader>
                   <CardTitle className="text-base">{m["enrollment.form.card.summary.title"]()}</CardTitle>
                 </CardHeader>
@@ -471,7 +471,7 @@ function NewEnrollmentPage() {
                 </CardContent>
               </Card>
 
-              <Card className="border border-border/70">
+              <Card>
                 <CardHeader>
                   <CardTitle className="text-base">{m["enrollment.form.card.validation.title"]()}</CardTitle>
                 </CardHeader>

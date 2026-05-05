@@ -1,11 +1,15 @@
 import type { LucideIcon } from "lucide-react";
 import {
+  ArrowLeftRight,
   BarChart3,
   CalendarDays,
+  ClipboardList,
   Compass,
+  Dumbbell,
   Flag,
-  Hand,
   Home,
+  Inbox,
+  MailPlus,
   Medal,
   PlusCircle,
   Settings,
@@ -13,6 +17,7 @@ import {
   Sparkles,
   Trophy,
   UserCheck,
+  Users,
 } from "lucide-react";
 
 import * as m from "@/paraglide/messages";
@@ -99,11 +104,11 @@ function buildPublicNav(leagueBase: string): ShellNavItem[] {
 
   return [
     { href: leagueBase, label: m['nav.overview'](), icon: Home, exact: true },
-    { href: `${leagueBase}/competitions`, label: m['nav.competitions'](), icon: CalendarDays },
+    { href: `${leagueBase}/competitions`, label: m['nav.competitions'](), icon: Trophy },
     { href: `${leagueBase}/results`, label: m['nav.results'](), icon: Medal },
     { href: `${leagueBase}/calendar`, label: m['nav.calendar'](), icon: CalendarDays },
     { href: `${leagueBase}/delegations`, label: m['nav.delegations'](), icon: Flag },
-    { href: `${leagueBase}/sports`, label: m['nav.sports'](), icon: Trophy },
+    { href: `${leagueBase}/sports`, label: m['nav.sports'](), icon: Dumbbell },
   ];
 }
 
@@ -125,10 +130,10 @@ function buildMemberNav(dash: string): ShellNavItem[] {
 
 function buildAdminNav(dash: string, leagueBase: string): ShellNavItem[] {
   return [
-    { href: `${dash}/competitions`, label: m['nav.admin.competitions'](), icon: Settings },
+    { href: `${dash}/competitions`, label: m['nav.admin.competitions'](), icon: Trophy },
     { href: `${dash}/athletes`, label: m['nav.admin.athletes'](), icon: UserCheck },
-    { href: `${dash}/enrollments`, label: m['nav.admin.enrollments'](), icon: Medal },
-    { href: `${dash}/participation-requests`, label: m['nav.admin.requests'](), icon: Hand },
+    { href: `${dash}/enrollments`, label: m['nav.admin.enrollments'](), icon: ClipboardList },
+    { href: `${dash}/participation-requests`, label: m['nav.admin.requests'](), icon: Inbox },
     { href: `${dash}/ai`, label: m['nav.admin.ai'](), icon: Sparkles },
     { href: `${leagueBase}/settings`, label: m['nav.admin.settings'](), icon: Settings },
     { href: `${leagueBase}/report`, label: m['nav.admin.report'](), icon: BarChart3 },
@@ -137,11 +142,11 @@ function buildAdminNav(dash: string, leagueBase: string): ShellNavItem[] {
 
 function buildChiefNav(dash: string): ShellNavItem[] {
   return [
-    { href: `${dash}/my-delegation`, label: m['nav.chief.myDelegation'](), icon: UserCheck },
-    { href: `${dash}/my-delegation/members`, label: m['nav.chief.members'](), icon: Shield },
-    { href: `${dash}/my-delegation/invite`, label: m['nav.chief.invites'](), icon: PlusCircle },
-    { href: `${dash}/my-delegation/transfers`, label: m['nav.chief.transfers'](), icon: Compass },
-    { href: `${dash}/enrollments`, label: m['nav.chief.enrollments'](), icon: Medal },
+    { href: `${dash}/my-delegation`, label: m['nav.chief.myDelegation'](), icon: Flag },
+    { href: `${dash}/my-delegation/members`, label: m['nav.chief.members'](), icon: Users },
+    { href: `${dash}/my-delegation/invite`, label: m['nav.chief.invites'](), icon: MailPlus },
+    { href: `${dash}/my-delegation/transfers`, label: m['nav.chief.transfers'](), icon: ArrowLeftRight },
+    { href: `${dash}/enrollments`, label: m['nav.chief.enrollments'](), icon: ClipboardList },
     { href: `${dash}/athletes`, label: m['nav.chief.athletes'](), icon: UserCheck },
   ];
 }

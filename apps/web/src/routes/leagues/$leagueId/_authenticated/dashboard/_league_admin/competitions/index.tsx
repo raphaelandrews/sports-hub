@@ -1,15 +1,8 @@
-import { useMemo } from "react";
+import { useMemo, useState } from "react";
 import { useSuspenseQuery } from "@tanstack/react-query";
 import { Link, createFileRoute } from "@tanstack/react-router";
 import { Badge } from "@sports-system/ui/components/badge";
 import { buttonVariants } from "@sports-system/ui/components/button";
-import {
-  Card,
-  CardContent,
-  CardDescription,
-  CardHeader,
-  CardTitle,
-} from "@sports-system/ui/components/card";
 import {
   Table,
   TableBody,
@@ -24,6 +17,10 @@ import * as m from "@/paraglide/messages";
 import { formatDate } from "@/shared/lib/date";
 import { sportListQueryOptions } from "@/features/sports/api/queries";
 import { competitionListQueryOptions } from "@/features/competitions/api/queries";
+import { TableLayout } from "@/shared/components/ui/table-layout";
+import { Title } from "@/shared/components/ui/title";
+import { SideCard } from "@/shared/components/ui/side-card";
+import { PageAsideLayout } from "@/shared/components/layouts/page-aside-layout";
 import type { CompetitionStatus } from "@/types/competitions";
 
 export const Route = createFileRoute(
@@ -50,58 +47,43 @@ function AdminCompetitionsPage() {
   const { data: competitions } = useSuspenseQuery(competitionListQueryOptions(Number(leagueId)));
   const { data: sports } = useSuspenseQuery(sportListQueryOptions());
 
+  const [pageIndex, setPageIndex] = useState(0);
+  const [pageSize, setPageSize] = useState(10);
+  const [searchQuery, setSearchQuery] = useState("");
+
   const sportNamesById = useMemo(
     () => new Map(sports.data.map((sport) => [sport.id, sport.name])),
     [sports.data],
   );
   const transferInfo = getTransferWindowInfo();
 
-  return (
-    <div className="space-y-6">
-      <section className="grid gap-4 xl:grid-cols-[1.6fr_1fr]">
-        <Card className="border border-border/70 bg-[radial-gradient(circle_at_top_left,hsl(var(--primary)/0.16),transparent_42%),linear-gradient(160deg,hsl(var(--card)),hsl(var(--card)),hsl(var(--muted)/0.22))]">
-          <CardHeader className="gap-3">
-            <Badge variant="outline" className="w-fit">
-              {m['competitions.admin.title']()}
-            </Badge>
-            <CardTitle className="text-2xl">{m['competitions.admin.title']()}</CardTitle>
-            <CardDescription className="max-w-2xl">
-              {m['competitions.admin.card.transfer.desc']()}
-            </CardDescription>
-          </CardHeader>
-          <CardContent className="grid gap-4 md:grid-cols-3">
-            <MetricCard
-              label={m['competitions.admin.stat.total']()}
-              value={String(competitions.data.length)}
-              hint="Competições cadastradas"
-            />
-            <MetricCard
-              label={m['competitions.admin.stat.active']()}
-              value={String(competitions.data.filter((c) => c.status === "ACTIVE").length)}
-              hint="Competição em andamento"
-            />
-            <MetricCard
-              label={m['competitions.admin.stat.locked']()}
-              value={String(
-                competitions.data.filter((c) =>
-                  ["LOCKED", "ACTIVE", "COMPLETED"].includes(c.status),
-                ).length,
-              )}
-              hint="Fora da edição livre"
-            />
-          </CardContent>
-        </Card>
+  const filteredData = useMemo(() => {
+    if (!searchQuery.trim()) return competitions.data;
+    const lower = searchQuery.toLowerCase();
+    return competitions.data.filter((c) =>
+      String(c.number).includes(lower) ||
+      statusLabel[c.status].toLowerCase().includes(lower) ||
+      formatDate(c.start_date).toLowerCase().includes(lower),
+    );
+  }, [competitions.data, searchQuery]);
 
-        <Card className="border border-border/70">
-          <CardHeader>
-            <CardTitle>{m['competitions.admin.card.transfer.title']()}</CardTitle>
-            <CardDescription>{m['competitions.admin.card.transfer.desc']()}</CardDescription>
-          </CardHeader>
-          <CardContent className="space-y-3">
-            <Badge variant={transferInfo.open ? "secondary" : "outline"}>
+  const pagedData = filteredData.slice(
+    pageIndex * pageSize,
+    (pageIndex + 1) * pageSize,
+  );
+
+  return (
+    <PageAsideLayout
+      sidebar={
+        <SideCard title={m['competitions.admin.card.transfer.title']()}>
+          <p className="text-sm text-muted-foreground mb-4">
+            {m['competitions.admin.card.transfer.desc']()}
+          </p>
+          <div className="space-y-3">
+            <Badge variant={transferInfo.open ? "secondary" : "outline"} className="w-full justify-center">
               {transferInfo.open ? m['chief.shell.badge.open']() : m['chief.shell.badge.closed']()}
             </Badge>
-            <p className="text-sm text-muted-foreground">
+            <p className="text-xs text-muted-foreground">
               {transferInfo.open
                 ? m['transferWindow.openMessage']()
                 : `Próxima janela: ${transferInfo.nextLabel}.`}
@@ -113,18 +95,34 @@ function AdminCompetitionsPage() {
             >
               {m['competition.form.title']()}
             </Link>
-          </CardContent>
-        </Card>
-      </section>
+          </div>
+        </SideCard>
+      }
+    >
+      <Title title={m['competitions.admin.title']()} description={m['competitions.admin.card.transfer.desc']()} />
 
-      <Card className="border border-border/70">
-        <CardHeader>
-          <CardTitle>{m['competitions.admin.card.list.title']()}</CardTitle>
-          <CardDescription>
-            Veja período, status e esportes foco antes de abrir o detalhe.
-          </CardDescription>
-        </CardHeader>
-        <CardContent>
+      <div className="w-full flex justify-center mt-6">
+        <div className="flex gap-4">
+          <StatCard label={m['competitions.admin.stat.total']()} value={String(competitions.data.length)} />
+          <StatCard label={m['competitions.admin.stat.active']()} value={String(competitions.data.filter((c) => c.status === "ACTIVE").length)} />
+          <StatCard label={m['competitions.admin.stat.locked']()} value={String(competitions.data.filter((c) => ["LOCKED", "ACTIVE", "COMPLETED"].includes(c.status)).length)} />
+        </div>
+      </div>
+
+      <div className="w-full mt-6">
+        <TableLayout
+          totalCount={filteredData.length}
+          visibleCount={pagedData.length}
+          searchQuery={searchQuery}
+          onSearchChange={(value) => {
+            setSearchQuery(value);
+            setPageIndex(0);
+          }}
+          pageIndex={pageIndex}
+          pageSize={pageSize}
+          onPageChange={setPageIndex}
+          onPageSizeChange={setPageSize}
+        >
           <Table>
             <TableHeader>
               <TableRow>
@@ -136,7 +134,14 @@ function AdminCompetitionsPage() {
               </TableRow>
             </TableHeader>
             <TableBody>
-              {competitions.data.map((competition) => (
+              {pagedData.length === 0 && (
+                <TableRow>
+                  <TableCell colSpan={5} className="h-24 text-center text-muted-foreground">
+                    {m['search.noResults']()}
+                  </TableCell>
+                </TableRow>
+              )}
+              {pagedData.map((competition) => (
                 <TableRow key={competition.id}>
                   <TableCell className="font-medium">#{competition.number}</TableCell>
                   <TableCell>
@@ -168,18 +173,17 @@ function AdminCompetitionsPage() {
               ))}
             </TableBody>
           </Table>
-        </CardContent>
-      </Card>
-    </div>
+        </TableLayout>
+      </div>
+    </PageAsideLayout>
   );
 }
 
-function MetricCard({ label, value, hint }: { label: string; value: string; hint: string }) {
+function StatCard({ label, value }: { label: string; value: string }) {
   return (
-    <div className="rounded-2xl border border-border/70 bg-background/80 p-4">
-      <div className="text-sm text-muted-foreground">{label}</div>
-      <div className="mt-3 text-2xl font-semibold">{value}</div>
-      <div className="mt-1 text-xs text-muted-foreground">{hint}</div>
+    <div className="flex flex-col items-center gap-1 w-25 rounded-lg bg-input px-3 py-2 min-w-11">
+      <div className="text-[9px] uppercase tracking-widest text-placeholder leading-none">{label}</div>
+      <div className="text-xl font-bold tabular-nums text-foreground leading-none">{value}</div>
     </div>
   );
 }

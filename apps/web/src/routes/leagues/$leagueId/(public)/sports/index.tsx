@@ -16,6 +16,7 @@ import { resolveRosterSize } from "@/shared/lib/sports";
 import { sportListQueryOptions } from "@/features/sports/api/queries";
 import type { SportType } from "@/types/sports";
 import { TableLayout } from "@/shared/components/ui/table-layout";
+import { PageSingleLayout } from "@/shared/components/layouts/page-single-layout";
 
 export const Route = createFileRoute("/leagues/$leagueId/(public)/sports/")({
   loader: ({ context: { queryClient } }) => queryClient.ensureQueryData(sportListQueryOptions()),
@@ -53,8 +54,8 @@ function SportsPage() {
   );
 
   return (
+    <PageSingleLayout title={m['sports.public.title']()}>
     <TableLayout
-      title={m['sports.public.title']()}
       countLabel={m['sports.public.title']()}
       visibleCount={pagedData.length}
       totalCount={filteredData.length}
@@ -119,5 +120,6 @@ function SportsPage() {
         </TableBody>
       </Table>
     </TableLayout>
+    </PageSingleLayout>
   );
 }

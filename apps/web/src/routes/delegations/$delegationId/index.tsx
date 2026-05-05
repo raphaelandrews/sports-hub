@@ -54,7 +54,7 @@ function StandaloneDelegationPage() {
 
   return (
     <div className="container mx-auto max-w-4xl space-y-8 px-4 py-6">
-      <Card className="border border-border/70 bg-[radial-gradient(circle_at_top_left,hsl(var(--primary)/0.16),transparent_42%),linear-gradient(160deg,hsl(var(--card)),hsl(var(--card)),hsl(var(--muted)/0.22))]">
+      <Card className="bg-[radial-gradient(circle_at_top_left,hsl(var(--primary)/0.16),transparent_42%),linear-gradient(160deg,hsl(var(--card)),hsl(var(--card)),hsl(var(--muted)/0.22))]">
         <CardHeader className="gap-3">
           <div className="flex items-center gap-3 mb-1">
             <span className="font-mono text-sm text-muted-foreground bg-muted px-2 py-0.5 rounded">

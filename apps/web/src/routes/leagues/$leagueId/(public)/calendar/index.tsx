@@ -34,6 +34,7 @@ import { allEventsQueryOptions } from "@/features/events/api/queries";
 import { competitionListQueryOptions } from "@/features/competitions/api/queries";
 import type { EventStatus } from "@/types/events";
 import { TableLayout } from "@/shared/components/ui/table-layout";
+import { PageSingleLayout } from "@/shared/components/layouts/page-single-layout";
 
 export const Route = createFileRoute("/leagues/$leagueId/(public)/calendar/")({
   loader: ({ context: { queryClient }, params: { leagueId } }) =>
@@ -165,8 +166,8 @@ function CalendarPage() {
   };
 
   return (
+    <PageSingleLayout title={m['calendar.public.title']()}>
     <TableLayout
-      title={m['calendar.public.title']()}
       countLabel="eventos"
       visibleCount={pagedData.length}
       totalCount={filteredData.length}
@@ -324,6 +325,7 @@ function CalendarPage() {
         </TableBody>
       </Table>
     </TableLayout>
+    </PageSingleLayout>
   );
 }
 

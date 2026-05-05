@@ -130,7 +130,7 @@ function MatchLivePage() {
   return (
     <div className="container mx-auto max-w-6xl space-y-6 px-4 py-6">
       <section className="grid gap-4 xl:grid-cols-[1.2fr_0.8fr]">
-        <Card className="border border-border/70 bg-[radial-gradient(circle_at_top_left,hsl(var(--primary)/0.2),transparent_36%),linear-gradient(180deg,hsl(var(--card)),hsl(var(--muted)/0.18))]">
+        <Card className="bg-[radial-gradient(circle_at_top_left,hsl(var(--primary)/0.2),transparent_36%),linear-gradient(180deg,hsl(var(--card)),hsl(var(--muted)/0.18))]">
           <CardHeader className="gap-3">
             <div className="flex flex-wrap items-center gap-2">
               <Badge variant="outline">{m["competition.detail.table.teamA"]() } #{match.id}</Badge>
@@ -161,7 +161,7 @@ function MatchLivePage() {
           </CardContent>
         </Card>
 
-        <Card className="border border-border/70">
+        <Card>
           <CardHeader>
             <CardTitle>{m["competition.detail.table.teamA"]() }</CardTitle>
           </CardHeader>
@@ -192,7 +192,7 @@ function MatchLivePage() {
       </section>
 
       <section className="grid gap-4 xl:grid-cols-[1fr_0.95fr]">
-        <Card className="border border-border/70">
+        <Card>
           <CardHeader>
             <CardTitle>{m["league.feed.badge.live"]() }</CardTitle>
             <CardDescription>m["results.public.badge.refresh"]()</CardDescription>
@@ -240,7 +240,7 @@ function MatchLivePage() {
           </CardContent>
         </Card>
 
-        <Card className="border border-border/70">
+        <Card>
           <CardHeader>
             <CardTitle>{m["nav.admin.settings"]() }</CardTitle>
             <CardDescription>m["results.admin.card.manual.title"]()</CardDescription>

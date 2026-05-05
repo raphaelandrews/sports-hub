@@ -20,6 +20,7 @@ import { createFileRoute } from "@tanstack/react-router";
 import { formatEventDate } from "@/shared/lib/date";
 import { recordsQueryOptions } from "@/features/results/api/queries";
 import * as m from "@/paraglide/messages";
+import { PageSingleLayout } from "@/shared/components/layouts/page-single-layout";
 
 export const Route = createFileRoute("/leagues/$leagueId/(public)/results/records/")({
   loader: ({ context: { queryClient }, params: { leagueId } }) =>
@@ -32,19 +33,22 @@ function RecordsPage() {
   const { data } = useSuspenseQuery(recordsQueryOptions(Number(leagueId)));
 
   return (
-    <div className="container mx-auto max-w-6xl space-y-8 px-4 py-8">
-      <Card className="border border-border/70 bg-[radial-gradient(circle_at_top_left,hsl(var(--primary)/0.16),transparent_42%),linear-gradient(180deg,hsl(var(--card)),hsl(var(--muted)/0.18))]">
+    <PageSingleLayout title={m["results.records.title"]()} description={m["results.records.desc"]()}>
+    <div className="space-y-8">
+      <Card className="bg-[radial-gradient(circle_at_top_left,hsl(var(--primary)/0.16),transparent_42%),linear-gradient(180deg,hsl(var(--card)),hsl(var(--muted)/0.18))]">
         <CardHeader className="gap-3">
           <div className="flex flex-wrap items-center gap-2">
             <Badge variant="outline">{m["results.records.badge"]()}</Badge>
             <Badge variant="secondary">{data.length} marca(s)</Badge>
           </div>
           <CardTitle className="text-3xl">{m["results.records.title"]()}</CardTitle>
-          <CardDescription>m["results.records.desc"]()</CardDescription>
+          <CardDescription>
+            {m["results.records.desc"]()}
+          </CardDescription>
         </CardHeader>
       </Card>
 
-      <Card className="border border-border/70">
+      <Card>
         <CardContent className="pt-6">
           <Table>
             <TableHeader>
@@ -82,5 +86,6 @@ function RecordsPage() {
         </CardContent>
       </Card>
     </div>
+    </PageSingleLayout>
   );
 }

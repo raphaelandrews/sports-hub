@@ -66,7 +66,7 @@ function FeedPage() {
   return (
     <div className="container mx-auto max-w-6xl space-y-8 px-4 py-8">
       <section className="grid gap-4 lg:grid-cols-[1.2fr_0.8fr]">
-        <Card className="border border-border/70 bg-[radial-gradient(circle_at_top_left,hsl(var(--primary)/0.16),transparent_42%),linear-gradient(180deg,hsl(var(--card)),hsl(var(--muted)/0.18))]">
+        <Card className="bg-[radial-gradient(circle_at_top_left,hsl(var(--primary)/0.16),transparent_42%),linear-gradient(180deg,hsl(var(--card)),hsl(var(--muted)/0.18))]">
           <CardHeader className="gap-3">
             <CardTitle className="text-3xl">Feed de atividades</CardTitle>
             <CardDescription className="max-w-2xl">
@@ -87,7 +87,7 @@ function FeedPage() {
           </CardContent>
         </Card>
 
-        <Card className="border border-border/70">
+        <Card>
           <CardHeader>
             <CardTitle>Navegação</CardTitle>
           </CardHeader>
@@ -117,7 +117,7 @@ function FeedPage() {
         </Card>
       </section>
 
-      <Card className="border border-border/70">
+      <Card>
         <CardHeader className="flex flex-row items-center justify-between gap-3">
           <CardTitle className="text-xl">Linha do tempo</CardTitle>
           <Badge variant="secondary">Ao vivo</Badge>

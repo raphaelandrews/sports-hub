@@ -56,7 +56,7 @@ export function TableLayout({
         ) : null}
       </header>
 
-      <div className="rounded-xl border bg-card shadow-xs/5">
+      <div className="rounded-xl bg-card shadow-xs/5">
         {/* Filter bar */}
         <div className="flex flex-wrap items-center gap-2 border-b p-3">
           <InputGroup className="w-64">

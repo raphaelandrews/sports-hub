@@ -13,6 +13,7 @@ import {
   EmptyTitle,
 } from "@sports-system/ui/components/empty";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@sports-system/ui/components/tabs";
+import type { LocalizedString } from "@inlang/paraglide-js";
 import { useSuspenseQueries, useSuspenseQuery } from "@tanstack/react-query";
 import { createFileRoute } from "@tanstack/react-router";
 
@@ -24,6 +25,7 @@ import {
 } from "@/features/results/api/queries";
 import { sportDetailQueryOptions } from "@/features/sports/api/queries";
 import * as m from "@/paraglide/messages";
+import { PageSingleLayout } from "@/shared/components/layouts/page-single-layout";
 
 export const Route = createFileRoute("/leagues/$leagueId/(public)/results/sports/$sportId/")({
   loader: async ({ context: { queryClient }, params: { leagueId, sportId } }) => {
@@ -58,9 +60,10 @@ function SportResultsPage() {
   const defaultTab = sport.modalities[0]?.id ? String(sport.modalities[0].id) : "overview";
 
   return (
-    <div className="container mx-auto max-w-6xl space-y-8 px-4 py-8">
+    <PageSingleLayout title={sport.name as LocalizedString} description={sport.description ? (sport.description as LocalizedString) : undefined}>
+    <div className="space-y-8">
       <section className="grid gap-4 lg:grid-cols-[1.25fr_0.75fr]">
-        <Card className="border border-border/70 bg-[radial-gradient(circle_at_top_left,hsl(var(--primary)/0.16),transparent_42%),linear-gradient(180deg,hsl(var(--card)),hsl(var(--muted)/0.18))]">
+        <Card className="bg-[radial-gradient(circle_at_top_left,hsl(var(--primary)/0.16),transparent_42%),linear-gradient(180deg,hsl(var(--card)),hsl(var(--muted)/0.18))]">
           <CardHeader className="gap-3">
             <div className="flex flex-wrap items-center gap-2">
               <Badge variant="outline">{m["results.sport.badge"]()}</Badge>
@@ -79,7 +82,7 @@ function SportResultsPage() {
           </CardContent>
         </Card>
 
-        <Card className="border border-border/70">
+        <Card>
           <CardHeader>
             <CardTitle>{m["results.sport.card.title"]()}</CardTitle>
           </CardHeader>
@@ -89,11 +92,11 @@ function SportResultsPage() {
         </Card>
       </section>
 
-      <Card className="border border-border/70">
+      <Card>
         <CardHeader>
           <CardTitle>{m["results.sport.section.standings"]()}</CardTitle>
           <CardDescription>
-            m["results.sport.section.standings"]()
+            {m["results.sport.section.standings"]()}
           </CardDescription>
         </CardHeader>
         <CardContent>
@@ -131,6 +134,7 @@ function SportResultsPage() {
         </CardContent>
       </Card>
     </div>
+    </PageSingleLayout>
   );
 }
 

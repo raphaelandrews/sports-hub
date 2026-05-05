@@ -78,7 +78,7 @@ export function DelegationStatisticsPanel({
         />
       </section>
 
-      <Card className="border border-border/70">
+      <Card>
         <CardHeader>
           <CardTitle>{title}</CardTitle>
           <CardDescription>{description}</CardDescription>
@@ -251,7 +251,7 @@ function StatCard({
   hint: string;
 }) {
   return (
-    <Card className="border border-border/70">
+    <Card>
       <CardContent className="flex items-start justify-between gap-3 p-5">
         <div>
           <div className="text-sm text-muted-foreground">{label}</div>

@@ -100,7 +100,7 @@ function DelegationDetailPage() {
   return (
     <div className="space-y-6">
       <section className="grid gap-4 xl:grid-cols-[1.5fr_1fr]">
-        <Card className="border border-border/70 bg-[radial-gradient(circle_at_top_left,hsl(var(--primary)/0.16),transparent_42%),linear-gradient(160deg,hsl(var(--card)),hsl(var(--card)),hsl(var(--muted)/0.22))]">
+        <Card className="bg-[radial-gradient(circle_at_top_left,hsl(var(--primary)/0.16),transparent_42%),linear-gradient(160deg,hsl(var(--card)),hsl(var(--card)),hsl(var(--muted)/0.22))]">
           <CardHeader className="gap-3">
             <div className="flex flex-wrap items-center gap-2">
               <Badge variant="outline" className="font-mono uppercase">
@@ -138,7 +138,7 @@ function DelegationDetailPage() {
           </CardContent>
         </Card>
 
-        <Card className="border border-border/70">
+        <Card>
           <CardHeader>
             <CardTitle>{m["results.admin.card.actions.title"]()}</CardTitle>
             <CardDescription>
@@ -173,7 +173,7 @@ function DelegationDetailPage() {
       </section>
 
       <section className="grid gap-6 xl:grid-cols-[1.25fr_1fr]">
-        <Card className="border border-border/70">
+        <Card>
           <CardHeader>
             <CardTitle>{m["delegation.detail.section.members"]()}</CardTitle>
             <CardDescription>
@@ -211,7 +211,7 @@ function DelegationDetailPage() {
           </CardContent>
         </Card>
 
-        <Card className="border border-border/70">
+        <Card>
           <CardHeader>
             <CardTitle>{m["delegation.detail.campaign.title"]()}</CardTitle>
             <CardDescription>
@@ -245,7 +245,7 @@ function DelegationDetailPage() {
       </section>
 
       <section className="grid gap-6 xl:grid-cols-[1.15fr_0.85fr]">
-        <Card className="border border-border/70">
+        <Card>
           <CardHeader>
             <CardTitle>{m["competition.detail.stat.matches"]()}</CardTitle>
             <CardDescription>
@@ -290,7 +290,7 @@ function DelegationDetailPage() {
           </CardContent>
         </Card>
 
-        <Card className="border border-border/70">
+        <Card>
           <CardHeader>
             <CardTitle>{m["delegation.detail.empty.former"]()}</CardTitle>
             <CardDescription>

@@ -119,7 +119,7 @@ function AthletesPage() {
   return (
     <div className="space-y-6">
       <section className="grid gap-4 xl:grid-cols-[1.6fr_1fr]">
-        <Card className="border border-border/70 bg-[radial-gradient(circle_at_top_left,hsl(var(--primary)/0.16),transparent_42%),linear-gradient(160deg,hsl(var(--card)),hsl(var(--card)),hsl(var(--muted)/0.22))]">
+        <Card className="bg-[radial-gradient(circle_at_top_left,hsl(var(--primary)/0.16),transparent_42%),linear-gradient(160deg,hsl(var(--card)),hsl(var(--card)),hsl(var(--muted)/0.22))]">
           <CardHeader className="gap-3">
             <CardTitle className="text-2xl">
               {isAdmin ? m['nav.admin.athletes']() : m['nav.chief.athletes']()}
@@ -153,7 +153,7 @@ function AthletesPage() {
           </CardContent>
         </Card>
 
-        <Card className="border border-border/70">
+        <Card>
           <CardHeader>
             <CardTitle>{m['athletes.admin.card.actions.title']()}</CardTitle>
             <CardDescription>
@@ -184,7 +184,7 @@ function AthletesPage() {
         </Card>
       </section>
 
-      <Card className="border border-border/70">
+      <Card>
         <CardHeader className="gap-4">
           <div>
             <CardTitle>{isAdmin ? m['athletes.admin.list.global']() : m['athletes.admin.list.my']()}</CardTitle>

@@ -13,13 +13,6 @@ function itemIcon(type: ActivityFeedItemType) {
   return Activity;
 }
 
-function formatTimestamp(value: string) {
-  return new Intl.DateTimeFormat("pt-BR", {
-    dateStyle: "short",
-    timeStyle: "short",
-  }).format(new Date(value));
-}
-
 function mergeItems(current: ActivityFeedItem[], incoming: ActivityFeedItem, limit: number) {
   const deduped = [incoming, ...current.filter((item) => item.id !== incoming.id)];
   deduped.sort((a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime());
@@ -84,10 +77,9 @@ export function ActivityFeed({
               return (
                 <div
                   key={item.id}
-                  className="rounded-[20px] bg-card p-5"
                 >
                   <div className="flex items-center justify-between gap-3">
-                    <div className="flex items-center gap-3">
+                    <div className="flex items-center gap-1 text-sm">
                       <Icon className="h-4 w-4" />
                       <span>
                         {item.title}
@@ -107,22 +99,20 @@ export function ActivityFeed({
                     </div>
                   </div>
 
-                  <div className="flex flex-wrap gap-2 pt-1 text-xs text-muted-foreground">
+                  <div className="flex flex-wrap gap-2 pt-1 text-xs text-muted-foreground mt-1">
                     {item.competition_number != null ? (
-                      <Badge variant="default">Competição {item.competition_number}</Badge>
+                      <Badge className="bg-cyan-500/15 text-cyan-400">Competição {item.competition_number}</Badge>
                     ) : null}
                     {item.sport_name ? (
-                      <Badge className="bg-blue-100 text-blue-800 hover:bg-blue-200">{item.sport_name}</Badge>
+                      <Badge className="bg-green-500/15 text-green-400">{item.sport_name}</Badge>
                     ) : null}
                     {item.modality_name ? (
-                      <Badge className="bg-emerald-100 text-emerald-800 hover:bg-emerald-200">{item.modality_name}</Badge>
+                      <Badge className="bg-indigo-500/15 text-indigo-300">{item.modality_name}</Badge>
                     ) : null}
                     {item.minute != null ? (
-                      <Badge className="bg-amber-100 text-amber-800 hover:bg-amber-200">{item.minute}min</Badge>
+                      <Badge className="bg-red-500/15 text-red-400">{item.minute}min</Badge>
                     ) : null}
                   </div>
-
-                  <div className="text-xs text-muted-foreground mt-1">{formatTimestamp(item.created_at)}</div>
                 </div>
               );
             })}

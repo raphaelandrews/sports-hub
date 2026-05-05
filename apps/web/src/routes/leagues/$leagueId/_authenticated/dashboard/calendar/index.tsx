@@ -197,7 +197,7 @@ function CalendarPage() {
   return (
     <div className="space-y-6">
       <section className="grid gap-4 xl:grid-cols-[1.45fr_1fr]">
-        <Card className="border border-border/70 bg-[radial-gradient(circle_at_top_left,hsl(var(--primary)/0.18),transparent_38%),linear-gradient(165deg,hsl(var(--card)),hsl(var(--card)),hsl(var(--muted)/0.2))]">
+        <Card className="bg-[radial-gradient(circle_at_top_left,hsl(var(--primary)/0.18),transparent_38%),linear-gradient(165deg,hsl(var(--card)),hsl(var(--card)),hsl(var(--muted)/0.2))]">
           <CardHeader className="gap-3">
             <div className="flex flex-wrap items-center gap-2">
               <Badge variant="outline">{m['calendar.public.title']()}</Badge>
@@ -227,7 +227,7 @@ function CalendarPage() {
           </CardContent>
         </Card>
 
-        <Card className="border border-border/70">
+        <Card>
           <CardHeader>
             <CardTitle>{m['calendar.admin.card.controls.title']()}</CardTitle>
             <CardDescription>

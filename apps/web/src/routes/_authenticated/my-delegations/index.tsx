@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useMemo, useState } from "react";
 import { useMutation, useQueryClient, useSuspenseQuery } from "@tanstack/react-query";
 import { Link, createFileRoute } from "@tanstack/react-router";
 import { toast } from "sonner";
@@ -6,13 +6,7 @@ import { toast } from "sonner";
 import * as m from "@/paraglide/messages";
 import { Badge } from "@sports-system/ui/components/badge";
 import { Button, buttonVariants } from "@sports-system/ui/components/button";
-import {
-  Card,
-  CardContent,
-  CardDescription,
-  CardHeader,
-  CardTitle,
-} from "@sports-system/ui/components/card";
+import { SideCard } from "@/shared/components/ui/side-card";
 import {
   Dialog,
   DialogContent,
@@ -43,12 +37,15 @@ import {
   TableRow,
 } from "@sports-system/ui/components/table";
 import { cn } from "@sports-system/ui/lib/utils";
-import { MoreHorizontal, Pencil, ExternalLink, Hand, Sparkles, ChevronLeft, ChevronRight, Bot, Send } from "lucide-react";
+import { MoreHorizontal, Pencil, ExternalLink, Hand, Sparkles, Bot, Send } from "lucide-react";
+import { PageAsideLayout } from "@/shared/components/layouts/page-aside-layout";
+import { TableLayout } from "@/shared/components/ui/table-layout";
 import { myDelegationsQueryOptions } from "@/features/delegations/api/queries";
 import { leagueListQueryOptions } from "@/features/leagues/api/queries";
 import { client, unwrap, ApiError } from "@/shared/lib/api";
 import { queryKeys } from "@/features/keys";
 import type { DelegationResponse } from "@/types/delegations";
+import { Title } from "@/shared/components/ui/title";
 
 export const Route = createFileRoute("/_authenticated/my-delegations/")({
   loader: ({ context: { queryClient } }) =>
@@ -73,49 +70,41 @@ const statusVariant: Record<string, string> = {
   REJECTED: "border-destructive/30 text-destructive",
 };
 
-const ITEMS_PER_PAGE = 10;
-
 function MyDelegationsPage() {
   const { data: delegations } = useSuspenseQuery(myDelegationsQueryOptions());
   const [dialogOpen, setDialogOpen] = useState(false);
   const [aiDialogOpen, setAiDialogOpen] = useState(false);
   const [selectedDelegation, setSelectedDelegation] = useState<DelegationResponse | null>(null);
-  const [page, setPage] = useState(1);
+  const [pageIndex, setPageIndex] = useState(0);
+  const [pageSize, setPageSize] = useState(10);
+  const [searchQuery, setSearchQuery] = useState("");
 
-  const totalPages = Math.ceil(delegations.length / ITEMS_PER_PAGE);
-  const startIndex = (page - 1) * ITEMS_PER_PAGE;
-  const paginatedDelegations = delegations.slice(startIndex, startIndex + ITEMS_PER_PAGE);
+  const filteredData = useMemo(() => {
+    let data = [...delegations];
+    if (searchQuery.trim()) {
+      const lower = searchQuery.toLowerCase();
+      data = data.filter(
+        (d) =>
+          d.name.toLowerCase().includes(lower) ||
+          d.code.toLowerCase().includes(lower),
+      );
+    }
+    return data;
+  }, [delegations, searchQuery]);
+
+  const pagedData = filteredData.slice(
+    pageIndex * pageSize,
+    (pageIndex + 1) * pageSize,
+  );
 
   return (
-    <div className="space-y-6">
-      <section className="grid gap-4 xl:grid-cols-[1.45fr_1fr]">
-        <Card className="border border-border/70 bg-[radial-gradient(circle_at_top_left,hsl(var(--primary)/0.18),transparent_38%),linear-gradient(165deg,hsl(var(--card)),hsl(var(--card)),hsl(var(--muted)/0.2))]">
-          <CardHeader className="gap-3">
-            <Badge variant="outline">{m['myDelegations.badge']()}</Badge>
-            <CardTitle className="text-2xl">{m['myDelegations.card.title']()}</CardTitle>
-            <CardDescription className="max-w-2xl">
-              {m['myDelegations.card.controls.desc']()}
-            </CardDescription>
-          </CardHeader>
-          <CardContent className="grid gap-4 md:grid-cols-3">
-            <StatCard label={m['myDelegations.stat.total']()} value={String(delegations.length)} />
-            <StatCard
-              label={m['myDelegations.stat.independent']()}
-              value={String(delegations.filter((d) => d.status === "INDEPENDENT").length)}
-            />
-            <StatCard
-              label={m['myDelegations.stat.inLeague']()}
-              value={String(delegations.filter((d) => d.league_id != null).length)}
-            />
-          </CardContent>
-        </Card>
-
-        <Card className="border border-border/70">
-          <CardHeader>
-            <CardTitle>{m['myDelegations.card.controls.title']()}</CardTitle>
-            <CardDescription>{m['myDelegations.card.controls.desc']()}</CardDescription>
-          </CardHeader>
-          <CardContent className="space-y-3">
+    <PageAsideLayout
+      sidebar={
+        <SideCard title={m['myDelegations.card.controls.title']()}>
+          <p className="text-sm text-muted-foreground mb-4">
+            {m['myDelegations.card.controls.desc']()}
+          </p>
+          <div className="space-y-3">
             <Link
               to="/delegations/new"
               className={cn(buttonVariants({ variant: "default" }), "w-full justify-start")}
@@ -131,21 +120,42 @@ function MyDelegationsPage() {
               <Bot className="mr-2 size-4" />
               {m['common.actions.create']()}
             </Button>
-          </CardContent>
-        </Card>
-      </section>
-
-      <div className="mx-auto max-w-6xl">
-        <header className="mb-4 flex items-end justify-between gap-4">
-          <div>
-            <h1 className="text-xl font-semibold">{m['myDelegations.listHeading']()}</h1>
-            <p className="text-muted-foreground text-sm">
-              {delegations.length} {m['myDelegations.badge']()}
-            </p>
           </div>
-        </header>
+        </SideCard>
+      }
+    >
+      <Title title={m['myDelegations.card.title']()} description={m['myDelegations.card.controls.desc']()} />
 
-        <div className="rounded-xl border bg-card shadow-xs/5">
+      <div className="w-full flex justify-center mt-6">
+        <div className="flex gap-4">
+          <StatCard label={m['myDelegations.stat.total']()} value={String(delegations.length)} />
+          <StatCard
+            label={m['myDelegations.stat.independent']()}
+            value={String(delegations.filter((d) => d.status === "INDEPENDENT").length)}
+          />
+          <StatCard
+            label={m['myDelegations.stat.inLeague']()}
+            value={String(delegations.filter((d) => d.league_id != null).length)}
+          />
+        </div>
+      </div>
+
+      <div className="w-full mt-6">
+        <h2 className="mb-3 text-sm font-semibold uppercase tracking-wide text-placeholder">{m['myDelegations.listHeading']()}</h2>
+
+        <TableLayout
+          totalCount={filteredData.length}
+          visibleCount={pagedData.length}
+          searchQuery={searchQuery}
+          onSearchChange={(value) => {
+            setSearchQuery(value);
+            setPageIndex(0);
+          }}
+          pageIndex={pageIndex}
+          pageSize={pageSize}
+          onPageChange={setPageIndex}
+          onPageSizeChange={setPageSize}
+        >
           <Table>
             <TableHeader>
               <TableRow>
@@ -157,7 +167,7 @@ function MyDelegationsPage() {
               </TableRow>
             </TableHeader>
             <TableBody>
-              {paginatedDelegations.length === 0 && (
+              {pagedData.length === 0 && (
                 <TableRow>
                   <TableCell
                     colSpan={5}
@@ -167,7 +177,7 @@ function MyDelegationsPage() {
                   </TableCell>
                 </TableRow>
               )}
-              {paginatedDelegations.map((delegation: DelegationResponse) => (
+              {pagedData.map((delegation: DelegationResponse) => (
                 <TableRow key={delegation.id}>
                   <TableCell className="ps-4">
                     <div className="flex items-center gap-3">
@@ -178,7 +188,7 @@ function MyDelegationsPage() {
                           className="h-8 w-8 rounded-md object-cover"
                         />
                       ) : (
-                        <div className="flex h-8 w-8 items-center justify-center rounded-md bg-primary text-primary-foreground text-sm font-bold">
+                        <div className="flex h-8 w-8 items-center justify-center rounded-md bg-muted text-muted-foreground text-sm font-semibold">
                           {delegation.name.charAt(0)}
                         </div>
                       )}
@@ -272,33 +282,7 @@ function MyDelegationsPage() {
               ))}
             </TableBody>
           </Table>
-        </div>
-
-        {totalPages > 1 && (
-          <div className="mt-4 flex items-center justify-between">
-            <p className="text-sm text-muted-foreground">
-              {m['common.table.paginationShow']()} {page} {m['common.table.paginationOf']()} {totalPages} ({delegations.length} {m['common.table.paginationShow']()})
-            </p>
-            <div className="flex items-center gap-2">
-              <Button
-                variant="outline"
-                size="sm"
-                onClick={() => setPage((p) => Math.max(1, p - 1))}
-                disabled={page === 1}
-              >
-                <ChevronLeft className="size-4" />
-              </Button>
-              <Button
-                variant="outline"
-                size="sm"
-                onClick={() => setPage((p) => Math.min(totalPages, p + 1))}
-                disabled={page === totalPages}
-              >
-                <ChevronRight className="size-4" />
-              </Button>
-            </div>
-          </div>
-        )}
+        </TableLayout>
       </div>
 
       {selectedDelegation && (
@@ -310,15 +294,15 @@ function MyDelegationsPage() {
       )}
 
       <AIGenerateDialog open={aiDialogOpen} onOpenChange={setAiDialogOpen} />
-    </div>
+    </PageAsideLayout>
   );
 }
 
 function StatCard({ label, value }: { label: string; value: string }) {
   return (
-    <div className="rounded-3xl border border-border/70 bg-background/75 p-4">
-      <div className="text-xs uppercase tracking-[0.2em] text-muted-foreground">{label}</div>
-      <div className="mt-2 text-lg font-semibold">{value}</div>
+    <div className="flex flex-col items-center gap-1 w-25 rounded-lg bg-input px-3 py-2 min-w-11">
+      <div className="text-[9px] uppercase tracking-widest text-placeholder leading-none">{label}</div>
+      <div className="text-xl font-bold tabular-nums text-foreground leading-none">{value}</div>
     </div>
   );
 }

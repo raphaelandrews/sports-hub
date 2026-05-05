@@ -70,7 +70,7 @@ export function AdminDelegationForm({
 
   return (
     <div className="mx-auto flex w-full max-w-3xl flex-col gap-6">
-      <Card className="border border-border/70 bg-linear-to-br from-card via-card to-muted/20">
+      <Card className="bg-linear-to-br from-card via-card to-muted/20">
         <CardHeader>
           <CardTitle>{mode === "create" ? m['delegation.form.title.create']() : m['delegation.form.title.edit']()}</CardTitle>
           <CardDescription>

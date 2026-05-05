@@ -5,16 +5,16 @@ import {
   ChartTooltipContent,
   type TooltipRoundness,
   type TooltipVariant,
-} from "@/components/evilcharts/ui/tooltip";
+} from "@/shared/components/evilcharts/ui/tooltip";
 import {
   type ChartConfig,
   ChartContainer,
   getColorsCount,
   LoadingIndicator,
-} from "@/components/evilcharts/ui/chart";
-import { ChartLegend, ChartLegendContent, type ChartLegendVariant } from "@/components/evilcharts/ui/legend";
+} from "@/shared/components/evilcharts/ui/chart";
+import { ChartLegend, ChartLegendContent, type ChartLegendVariant } from "@/shared/components/evilcharts/ui/legend";
 import { LabelList, Pie, PieChart, Sector, type PieSectorShapeProps } from "recharts";
-import { ChartBackground, type BackgroundVariant } from "@/components/evilcharts/ui/background";
+import { ChartBackground, type BackgroundVariant } from "@/shared/components/evilcharts/ui/background";
 import { useCallback, useId, useState, type ComponentProps } from "react";
 import { motion } from "motion/react";
 

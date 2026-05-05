@@ -19,7 +19,7 @@ import {
 import * as m from "@/paraglide/messages";
 import { delegationListQueryOptions } from "@/features/delegations/api/queries";
 import { TableLayout } from "@/shared/components/ui/table-layout";
-import { Title } from "@/shared/components/ui/title";
+import { PageSingleLayout } from "@/shared/components/layouts/page-single-layout";
 
 export const Route = createFileRoute("/leagues/$leagueId/(public)/delegations/")({
   loader: ({ context: { queryClient }, params: { leagueId } }) =>
@@ -52,11 +52,8 @@ function DelegationsPage() {
   );
 
   return (
-    <>
-      <Title title={m['delegations.public.title']()} />
-
+    <PageSingleLayout title={m['delegations.public.title']()}>
       <TableLayout
-        title={m['delegations.public.card.title']()}
         countLabel="delegações"
         visibleCount={pagedData.length}
         totalCount={filteredData.length}
@@ -121,6 +118,6 @@ function DelegationsPage() {
           </TableBody>
         </Table>
       </TableLayout>
-    </>
+    </PageSingleLayout>
   );
 }

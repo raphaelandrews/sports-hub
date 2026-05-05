@@ -121,7 +121,7 @@ function DelegationMembersPage() {
       delegation={delegation}
     >
       <section className="grid gap-6 xl:grid-cols-[1.1fr_0.9fr]">
-        <Card className="border border-border/70">
+        <Card>
           <CardHeader>
             <CardTitle>{m["delegation.detail.section.members"]()}</CardTitle>
             <CardDescription>m["chief.shell.delegationDesc"]()</CardDescription>
@@ -163,7 +163,7 @@ function DelegationMembersPage() {
           </CardContent>
         </Card>
 
-        <Card className="border border-border/70">
+        <Card>
           <CardHeader>
             <CardTitle>{m["notification.title.invite"]()}</CardTitle>
             <CardDescription>
@@ -206,7 +206,7 @@ function DelegationMembersPage() {
         </Card>
       </section>
 
-      <Card className="border border-border/70">
+      <Card>
         <CardHeader>
           <CardTitle>{m["delegation.detail.campaign.title"]()}</CardTitle>
           <CardDescription>m["chief.shell.delegationDesc"]()</CardDescription>

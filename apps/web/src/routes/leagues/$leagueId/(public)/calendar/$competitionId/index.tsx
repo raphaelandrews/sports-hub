@@ -86,7 +86,7 @@ function PublicCompetitionCalendarPage() {
   return (
     <div className="container mx-auto max-w-6xl space-y-8 px-4 py-8">
       <section className="grid gap-4 lg:grid-cols-[1.3fr_0.7fr]">
-        <Card className="border border-border/70 bg-[radial-gradient(circle_at_top_left,hsl(var(--primary)/0.18),transparent_38%),linear-gradient(180deg,hsl(var(--card)),hsl(var(--muted)/0.18))]">
+        <Card className="bg-[radial-gradient(circle_at_top_left,hsl(var(--primary)/0.18),transparent_38%),linear-gradient(180deg,hsl(var(--card)),hsl(var(--muted)/0.18))]">
           <CardHeader className="gap-3">
             <div className="flex flex-wrap items-center gap-2">
               <Badge variant="outline">{m['calendar.competition.badge.official']()}</Badge>
@@ -107,7 +107,7 @@ function PublicCompetitionCalendarPage() {
           </CardContent>
         </Card>
 
-        <Card className="border border-border/70">
+        <Card>
           <CardHeader>
             <CardTitle>{m['calendar.competition.card.navTitle']()}</CardTitle>
           </CardHeader>
@@ -145,7 +145,7 @@ function PublicCompetitionCalendarPage() {
 
             <div className="grid gap-4">
               {items.map(({ event, detail }) => (
-                <Card key={event.id} className="border border-border/70">
+                <Card key={event.id} className="">
                   <CardContent className="grid gap-4 p-5 lg:grid-cols-[auto,1fr,auto]">
                     <div className="rounded-3xl bg-muted/40 px-4 py-3 text-center">
                       <div className="text-xs uppercase tracking-[0.24em] text-muted-foreground">

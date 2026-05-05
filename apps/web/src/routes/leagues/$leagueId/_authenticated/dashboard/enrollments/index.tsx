@@ -9,15 +9,7 @@ import { Link, createFileRoute, useNavigate } from "@tanstack/react-router";
 import { Bot, Check, Plus, Trash2, X } from "lucide-react";
 import { toast } from "sonner";
 import { z } from "zod";
-import { Badge } from "@sports-system/ui/components/badge";
 import { Button, buttonVariants } from "@sports-system/ui/components/button";
-import {
-  Card,
-  CardContent,
-  CardDescription,
-  CardHeader,
-  CardTitle,
-} from "@sports-system/ui/components/card";
 import { Separator } from "@sports-system/ui/components/separator";
 import {
   Select,
@@ -48,6 +40,9 @@ import { allEventsQueryOptions } from "@/features/events/api/queries";
 import { queryKeys } from "@/features/keys";
 import { sportDetailQueryOptions, sportListQueryOptions } from "@/features/sports/api/queries";
 import { TableLayout } from "@/shared/components/ui/table-layout";
+import { Title } from "@/shared/components/ui/title";
+import { SideCard } from "@/shared/components/ui/side-card";
+import { PageAsideLayout } from "@/shared/components/layouts/page-aside-layout";
 import type { CompetitionResponse } from "@/types/competitions";
 import type { EnrollmentReview, EnrollmentStatus } from "@/types/enrollments";
 import * as m from "@/paraglide/messages";
@@ -287,42 +282,17 @@ function EnrollmentsPage() {
   });
 
   return (
-    <div className="space-y-6">
-      <section className="grid gap-4 xl:grid-cols-[1.55fr_1fr]">
-        <Card className="border border-border/70 bg-[radial-gradient(circle_at_top_left,hsl(var(--primary)/0.16),transparent_44%),linear-gradient(165deg,hsl(var(--card)),hsl(var(--card)),hsl(var(--muted)/0.22))]">
-          <CardHeader className="gap-3">
-            <div className="flex flex-wrap items-center gap-2">
-              {isAdmin ? (
-                <Badge variant="secondary">{m["roles.admin"]()}</Badge>
-              ) : (
-                <Badge variant="secondary">{m["roles.chief"]()}</Badge>
-              )}
-            </div>
-            <CardTitle className="text-2xl">{m["enrollments.admin.title"]()}</CardTitle>
-            <CardDescription className="max-w-2xl">
-              {isAdmin
-                ? m["enrollments.admin.card.actions.title"]()
-                : m["chief.shell.delegationDesc"]()}
-            </CardDescription>
-          </CardHeader>
-          <CardContent className="grid gap-4 md:grid-cols-4">
-            <StatTile label={m["enrollments.admin.stat.total"]()} value={String(stats.total)} />
-            <StatTile label={m["enrollments.admin.stat.pending"]()} value={String(stats.pending)} />
-            <StatTile label={m["enrollments.admin.stat.approved"]()} value={String(stats.approved)} />
-            <StatTile label={m["enrollments.admin.stat.rejected"]()} value={String(stats.rejected)} />
-          </CardContent>
-        </Card>
-
-        <Card className="border border-border/70">
-          <CardHeader>
-            <CardTitle>{m["enrollments.admin.card.actions.title"]()}</CardTitle>
-            <CardDescription>
-              {isAdmin
-                ? m["enrollments.admin.card.actions.title"]()
-                : m["chief.shell.delegationDesc"]()}
-            </CardDescription>
-          </CardHeader>
-          <CardContent className="space-y-3">
+    <PageAsideLayout
+      sidebar={
+        <SideCard title={m["enrollments.admin.card.actions.title"]()}
+        >
+          <p className="text-sm text-muted-foreground mb-4">
+            {isAdmin
+              ? m["enrollments.admin.card.actions.title"]()
+              : m["chief.shell.delegationDesc"]()
+            }
+          </p>
+          <div className="space-y-3">
             {!isAdmin ? (
               <Link
                 to="/leagues/$leagueId/dashboard/enrollments/new"
@@ -348,43 +318,39 @@ function EnrollmentsPage() {
             ) : null}
 
             {chiefDelegation ? (
-              <div className="rounded-2xl border border-dashed border-border/70 p-4 text-sm text-muted-foreground">
+              <div className="text-sm text-muted-foreground">
                 {m["chief.shell.delegationDesc"]() }{" "}
                 <span className="font-medium text-foreground">{chiefDelegation.name}</span>.
               </div>
             ) : !isAdmin ? (
-              <div className="rounded-2xl border border-destructive/30 bg-destructive/5 p-4 text-sm text-destructive">
+              <div className="text-sm text-destructive">
                 {m["enrollments.admin.noDelegation"]() }
               </div>
             ) : (
-              <div className="rounded-2xl border border-dashed border-border/70 p-4 text-sm text-muted-foreground">
+              <div className="text-sm text-muted-foreground">
                 {m["chief.shell.delegationDesc"]() }
               </div>
             )}
-          </CardContent>
-        </Card>
-      </section>
+          </div>
+        </SideCard>
+      }
+    >
+      <Title
+        title={m["enrollments.admin.title"]()}
+        description={isAdmin ? m["enrollments.admin.card.actions.title"]() : m["chief.shell.delegationDesc"]()}
+      />
 
-      <header className="mb-1 flex items-end justify-between gap-4">
-        <div>
-          <h1 className="text-xl font-semibold">{m["enrollments.admin.table.actions"]()}</h1>
-          <p className="text-muted-foreground text-sm">
-            {pagedData.length} {m["common.table.paginationOf"]() } {filtered.length} {m["enrollments.admin.title"]() }
-          </p>
+      <div className="w-full flex justify-center mt-6">
+        <div className="flex gap-4">
+          <StatCard label={m["enrollments.admin.stat.total"]()} value={String(stats.total)} />
+          <StatCard label={m["enrollments.admin.stat.pending"]()} value={String(stats.pending)} />
+          <StatCard label={m["enrollments.admin.stat.approved"]()} value={String(stats.approved)} />
+          <StatCard label={m["enrollments.admin.stat.rejected"]()} value={String(stats.rejected)} />
         </div>
-        {!isAdmin ? (
-          <Link
-            to="/leagues/$leagueId/dashboard/enrollments/new"
-            params={{ leagueId }}
-            className={buttonVariants({ variant: "outline" })}
-          >
-            <Plus className="mr-2 size-4" />
-            {m["athlete.form.title.create"]() }
-          </Link>
-        ) : null}
-      </header>
+      </div>
 
-      <TableLayout
+      <div className="w-full mt-6">
+        <TableLayout
         searchPlaceholder={m["common.table.searchPlaceholder"]() }
         searchQuery={search}
         onSearchChange={(value) =>
@@ -631,21 +597,12 @@ function EnrollmentsPage() {
         </Table>
       </TableLayout>
 
-      {!isAdmin ? (
-        <div className="rounded-2xl border border-dashed border-border/70 p-4 text-sm text-muted-foreground">
-          m["chief.shell.delegationDesc"]()
-        </div>
-      ) : (
-        <div className="rounded-2xl border border-dashed border-border/70 p-4 text-sm text-muted-foreground">
-          Admin revisa {m["enrollments.admin.title"]() } pendentes e pode disparar geração automática para ambiente
-          demo.
-        </div>
-      )}
-    </div>
+      </div>
+    </PageAsideLayout>
   );
 }
 
-function StatTile({ label, value }: { label: string; value: string }) {
+function StatCard({ label, value }: { label: string; value: string }) {
   return (
     <div className="rounded-3xl border border-border/70 bg-background/80 p-4">
       <div className="text-xs uppercase tracking-[0.24em] text-muted-foreground">{label}</div>

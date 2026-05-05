@@ -104,7 +104,7 @@ function CompetitionDetailPage() {
   return (
     <div className="space-y-6">
       <section className="grid gap-4 xl:grid-cols-[1.45fr_1fr]">
-        <Card className="border border-border/70 bg-[radial-gradient(circle_at_top_left,hsl(var(--primary)/0.16),transparent_42%),linear-gradient(160deg,hsl(var(--card)),hsl(var(--card)),hsl(var(--muted)/0.22))]">
+        <Card className="bg-[radial-gradient(circle_at_top_left,hsl(var(--primary)/0.16),transparent_42%),linear-gradient(160deg,hsl(var(--card)),hsl(var(--card)),hsl(var(--muted)/0.22))]">
           <CardHeader className="gap-3">
             <div className="flex flex-wrap items-center gap-2">
               <Badge variant="outline">{m['competition.admin.badge.competition']({ "competition.number": competition.number })}</Badge>
@@ -128,7 +128,7 @@ function CompetitionDetailPage() {
           </CardContent>
         </Card>
 
-        <Card className="border border-border/70">
+        <Card>
           <CardHeader>
             <CardTitle>{m['competition.admin.card.actions.title']()}</CardTitle>
             <CardDescription>{m['competition.admin.card.actions.desc']()}</CardDescription>
@@ -165,7 +165,7 @@ function CompetitionDetailPage() {
       </section>
 
       <section className="grid gap-6 xl:grid-cols-[1.1fr_0.9fr]">
-        <Card className="border border-border/70">
+        <Card>
           <CardHeader>
             <CardTitle>{m['competition.admin.card.status.title']()}</CardTitle>
             <CardDescription>{m['competition.admin.card.status.desc']()}</CardDescription>
@@ -195,7 +195,7 @@ function CompetitionDetailPage() {
           </CardContent>
         </Card>
 
-        <Card className="border border-border/70">
+        <Card>
           <CardHeader>
             <CardTitle>{m['competition.admin.card.preview.title']()}</CardTitle>
             <CardDescription>
@@ -224,7 +224,7 @@ function CompetitionDetailPage() {
         </Card>
       </section>
 
-      <Card className="border border-border/70">
+      <Card>
         <CardHeader>
           <CardTitle>{m['competition.admin.card.events.title']()}</CardTitle>
           <CardDescription>
