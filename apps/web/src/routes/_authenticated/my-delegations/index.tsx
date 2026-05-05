@@ -377,12 +377,13 @@ function AIGenerateDialog({
     },
   ]);
   const [input, setInput] = useState("");
+  const [aiCount, setAiCount] = useState("5");
 
   const mutation = useMutation({
     mutationFn: async (prompt: string) =>
       unwrap(
         client.POST("/delegations/ai-generate", {
-          body: { prompt, count: 5 },
+          body: { prompt, count: Math.min(Math.max(Number(aiCount) || 5, 1), 30) },
         }),
       ),
     onSuccess: async (created: DelegationResponse[]) => {
@@ -460,6 +461,15 @@ function AIGenerateDialog({
               onKeyDown={(e) => e.key === "Enter" && handleSend()}
               placeholder={m['myDelegations.requestPlaceholder']()}
               className="flex-1 rounded-lg border bg-background px-3 py-2 text-sm outline-none focus:ring-2 focus:ring-primary/20"
+              disabled={mutation.isPending}
+            />
+            <input
+              type="number"
+              min="1"
+              max="30"
+              value={aiCount}
+              onChange={(e) => setAiCount(e.target.value)}
+              className="w-16 rounded-lg border bg-background px-2 py-2 text-sm outline-none focus:ring-2 focus:ring-primary/20"
               disabled={mutation.isPending}
             />
             <Button size="sm" onClick={handleSend} disabled={!input.trim() || mutation.isPending}>

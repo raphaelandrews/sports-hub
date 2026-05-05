@@ -258,6 +258,8 @@ function WorkflowGenerator({
   const [generatedNarrative, setGeneratedNarrative] = useState<string | null>(null);
   const [delegationChatOpen, setDelegationChatOpen] = useState(false);
   const [delegationChatInput, setDelegationChatInput] = useState("");
+  const [delegationChatCount, setDelegationChatCount] = useState("5");
+  const [delegationStepCount, setDelegationStepCount] = useState("5");
   const [delegationChatLoading, setDelegationChatLoading] = useState(false);
 
   const generate = async (step: number, fn: () => Promise<unknown>) => {
@@ -336,9 +338,10 @@ function WorkflowGenerator({
     if (!delegationChatInput.trim()) return;
     setDelegationChatLoading(true);
     try {
+      const count = Math.min(Math.max(Number(delegationChatCount) || 5, 1), 30);
       await unwrap(
         client.POST("/leagues/{league_id}/delegations/ai-generate", {
-          params: { path: { league_id: leagueId }, query: { count: 5 } },
+          params: { path: { league_id: leagueId }, query: { count } },
         }),
       );
       setDelegationChatInput("");
@@ -368,7 +371,10 @@ function WorkflowGenerator({
       desc: "Crie delegações participantes com IA",
       count: delegations.length,
       items: delegations.slice(0, 5).map((d) => d.name),
-      action: async () => generate(2, () => unwrap(client.POST("/leagues/{league_id}/delegations/ai-generate", { params: { path: { league_id: leagueId }, query: { count: 5 } } }))),
+      action: async () => {
+        const count = Math.min(Math.max(Number(delegationStepCount) || 5, 1), 30);
+        return generate(2, () => unwrap(client.POST("/leagues/{league_id}/delegations/ai-generate", { params: { path: { league_id: leagueId }, query: { count } } })));
+      },
       canGenerate: true,
       chatPlaceholder: "Descreva o tema das delegações (ex: times de futebol brasileiros, faculdades de SP...)",
       onChatSubmit: generateDelegationsWithTheme,
@@ -481,11 +487,21 @@ function WorkflowGenerator({
                   <p className="text-sm text-muted-foreground mt-1">{step.desc}</p>
 
                   {step.canGenerate && (
-                    <div className="mt-2 flex items-center gap-2">
+                    <div className="mt-2 flex items-center gap-2 flex-wrap">
                       <Button size="sm" variant="outline" disabled={generatingStep === stepNum} onClick={step.action}>
                         {generatingStep === stepNum ? <Loader2 className="size-4 animate-spin mr-2" /> : <Sparkles className="size-4 mr-2" />}
                         {generatingStep === stepNum ? "Gerando..." : isDone ? "Gerar mais" : "Gerar com IA"}
                       </Button>
+                      {stepNum === 2 && (
+                        <Input
+                          type="number"
+                          min="1"
+                          max="30"
+                          value={delegationStepCount}
+                          onChange={(e) => setDelegationStepCount(e.target.value)}
+                          className="w-20 h-8 text-sm"
+                        />
+                      )}
                       {step.count > 0 && (
                         <Button size="sm" variant="ghost" onClick={() => setExpandedStep(isExpanded ? null : stepNum)}>
                           <Eye className="size-4 mr-2" />
@@ -514,6 +530,15 @@ function WorkflowGenerator({
                             value={delegationChatInput}
                             onChange={(e) => setDelegationChatInput(e.target.value)}
                             onKeyDown={(e) => e.key === "Enter" && generateDelegationsWithTheme()}
+                            disabled={delegationChatLoading}
+                          />
+                          <Input
+                            type="number"
+                            min="1"
+                            max="30"
+                            value={delegationChatCount}
+                            onChange={(e) => setDelegationChatCount(e.target.value)}
+                            className="w-20"
                             disabled={delegationChatLoading}
                           />
                           <Button size="sm" disabled={!delegationChatInput.trim() || delegationChatLoading} onClick={generateDelegationsWithTheme}>

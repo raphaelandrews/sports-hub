@@ -223,11 +223,11 @@ function DelegationsPage() {
                     <SelectValue />
                   </SelectTrigger>
                   <SelectContent>
-                    {["3", "5", "8", "10", "15"].map((value) => (
+                  {["3", "5", "8", "10", "15", "20", "25", "30"].map((value) => (
                        <SelectItem key={value} value={value}>
                          {value} {m['common.items']()}
                        </SelectItem>
-                    ))}
+                  ))}
                   </SelectContent>
                 </Select>
                 <Button

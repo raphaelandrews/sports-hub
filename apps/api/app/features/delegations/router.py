@@ -66,7 +66,7 @@ async def create_delegation(
 )
 async def ai_generate_delegations(
     league_id: int,
-    count: int = Query(5, ge=1, le=15),
+    count: int = Query(5, ge=1, le=30),
     session: AsyncSession = Depends(get_session),
     _: LeagueMember = Depends(require_league_admin()),
 ) -> list[DelegationResponse]:
@@ -84,7 +84,7 @@ async def ai_generate_delegations(
 )
 async def ai_populate_delegations(
     league_id: int,
-    count: int = Query(5, ge=1, le=15),
+    count: int = Query(5, ge=1, le=30),
     session: AsyncSession = Depends(get_session),
     _: LeagueMember = Depends(require_league_admin()),
 ) -> list[DelegationResponse]:

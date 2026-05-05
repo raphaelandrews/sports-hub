@@ -217,7 +217,7 @@ function AiControlRoomPage() {
               <Input
                 type="number"
                 min="1"
-                max="15"
+                max="30"
                 value={delegationCount}
                 onChange={(event) => setDelegationCount(event.target.value)}
               />

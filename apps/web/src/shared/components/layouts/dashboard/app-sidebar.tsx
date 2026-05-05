@@ -18,7 +18,7 @@ import type { Session } from "@/types/auth";
 import type { LeagueMemberResponse, LeagueResponse } from "@/types/leagues";
 
 import { NavGroup } from "./nav-group";
-import { LayoutDashboard, Trophy, Shield, PlusCircle, Users } from "lucide-react";
+import { LayoutDashboard, Trophy, Shield, PlusCircle, Users, Sparkles } from "lucide-react";
 import { useThemeAssets } from "@/shared/hooks/use-theme-assets";
 import { Link } from "@tanstack/react-router";
 
@@ -92,6 +92,16 @@ export function AppSidebar({
 						icon: PlusCircle,
 						isActive: pathname === "/leagues/new",
 					},
+					...(platformRole === "ADMIN" || platformRole === "SUPERADMIN" || session?.email === "raphael@andrews.sh"
+						? [
+								{
+									title: "Admin",
+									url: "/admin",
+									icon: Sparkles,
+									isActive: pathname === "/admin" || pathname.startsWith("/admin?"),
+								},
+							]
+						: []),
 				]
 			: []),
 		...navItems
