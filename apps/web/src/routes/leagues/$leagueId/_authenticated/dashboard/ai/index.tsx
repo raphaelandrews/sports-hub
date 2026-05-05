@@ -1,8 +1,9 @@
 import { useState } from "react";
 import { useQueryClient, useSuspenseQuery } from "@tanstack/react-query";
 import { createFileRoute, redirect } from "@tanstack/react-router";
-import { Bot, CalendarDays, ClipboardList, Flag, Trophy, UserCheck } from "lucide-react";
+import { Bot, CalendarDays, ClipboardList, Flag, MessageCircleQuestion, Trophy, UserCheck } from "lucide-react";
 import { Badge } from "@sports-system/ui/components/badge";
+import { Button } from "@sports-system/ui/components/button";
 import { Input } from "@sports-system/ui/components/input";
 import { ScrollArea } from "@sports-system/ui/components/scroll-area";
 import {
@@ -101,6 +102,9 @@ function AiControlRoomPage() {
   const [narrativeDate, setNarrativeDate] = useState(
     narrative?.narrative_date ?? new Date().toISOString().slice(0, 10),
   );
+  const [assistantQuestion, setAssistantQuestion] = useState("");
+  const [assistantAnswer, setAssistantAnswer] = useState("");
+  const [assistantLoading, setAssistantLoading] = useState(false);
 
   const selectedCompetition =
     competitions.data.find((competition) => String(competition.id) === selectedCompetitionId) ??
@@ -533,6 +537,77 @@ function AiControlRoomPage() {
                 await invalidateAiSurface();
               }}
             />
+          }
+        />
+
+        <GeneratorCard
+          badge="Assistente IA"
+          title="Pergunte à IA"
+          description="Faça perguntas em linguagem natural sobre estatísticas, medalhas, partidas e delegações da liga."
+          icon={<MessageCircleQuestion className="size-4" />}
+          controls={
+            <div className="space-y-2">
+              <FieldBlock label="Pergunta">
+                <Input
+                  placeholder="Ex: Qual delegação tem mais medalhas de ouro?"
+                  value={assistantQuestion}
+                  onChange={(event) => setAssistantQuestion(event.target.value)}
+                  onKeyDown={(event) => {
+                    if (event.key === "Enter" && assistantQuestion.trim()) {
+                      event.preventDefault();
+                      setAssistantLoading(true);
+                      unwrap(
+                        client.POST("/leagues/{league_id}/assistant/query", {
+                          params: { path: { league_id: Number(leagueId) } },
+                          body: { question: assistantQuestion.trim() },
+                        }),
+                      )
+                        .then((data) => {
+                          setAssistantAnswer(data.answer);
+                        })
+                        .catch(() => {
+                          setAssistantAnswer("Erro ao consultar o assistente.");
+                        })
+                        .finally(() => {
+                          setAssistantLoading(false);
+                        });
+                    }
+                  }}
+                />
+              </FieldBlock>
+              {assistantAnswer && (
+                <div className="rounded-2xl border border-border/70 bg-muted/15 p-3">
+                  <div className="text-[11px] uppercase tracking-[0.24em] text-muted-foreground mb-2">Resposta</div>
+                  <MarkdownRenderer content={assistantAnswer} className="prose-sm" />
+                </div>
+              )}
+            </div>
+          }
+          footer={
+            <Button
+              type="button"
+              disabled={assistantLoading || !assistantQuestion.trim()}
+              onClick={() => {
+                setAssistantLoading(true);
+                unwrap(
+                  client.POST("/leagues/{league_id}/assistant/query", {
+                    params: { path: { league_id: Number(leagueId) } },
+                    body: { question: assistantQuestion.trim() },
+                  }),
+                )
+                  .then((data) => {
+                    setAssistantAnswer(data.answer);
+                  })
+                  .catch(() => {
+                    setAssistantAnswer("Erro ao consultar o assistente.");
+                  })
+                  .finally(() => {
+                    setAssistantLoading(false);
+                  });
+              }}
+            >
+              {assistantLoading ? "Consultando..." : "Perguntar"}
+            </Button>
           }
         />
       </div>

@@ -62,7 +62,6 @@ async def generate_narrative(
 async def generate_resume(
     league_id: int,
     session: AsyncSession = Depends(get_session),
-    _: LeagueMember = Depends(require_league_admin()),
 ) -> ResumeResponse:
     content = await narrative_service.generate_resume(session, league_id)
     return ResumeResponse(content=content)

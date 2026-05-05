@@ -34,7 +34,9 @@ from app.features.delegations.router import (
 )
 from app.features.enrollments.router import router as enrollments_router
 from app.features.events.router import events_router, matches_router
+from app.features.assistant.router import router as assistant_router
 from app.features.narratives.router import router as narratives_router
+from app.features.predictions.router import router as predictions_router
 from app.features.reports.router import router as reports_router
 from app.features.results.router import router as results_router
 from app.features.search.router import router as search_router
@@ -94,9 +96,9 @@ app = FastAPI(
     version="0.1.0",
     lifespan=lifespan,
     default_response_class=ORJSONResponse,
-    docs_url="/docs" if settings.DEBUG else None,
-    redoc_url="/redoc" if settings.DEBUG else None,
-    openapi_url="/openapi.json" if settings.DEBUG else None,
+    docs_url="/docs" if (settings.DEBUG or settings.ENABLE_DOCS) else None,
+    redoc_url="/redoc" if (settings.DEBUG or settings.ENABLE_DOCS) else None,
+    openapi_url="/openapi.json" if (settings.DEBUG or settings.ENABLE_DOCS) else None,
 )
 
 app.state.limiter = limiter
@@ -174,6 +176,8 @@ app.include_router(results_router)
 app.include_router(search_router)
 app.include_router(reports_router)
 app.include_router(narratives_router)
+app.include_router(assistant_router)
+app.include_router(predictions_router)
 app.include_router(admin_router)
 app.include_router(superadmin_router)
 
