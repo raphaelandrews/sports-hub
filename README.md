@@ -1,6 +1,6 @@
-# Sports System
+# SportsHub
 
-Multi-league sports competition platform with AI-powered narratives, automated scheduling, and real-time updates.
+Multi-league sports competition platform with AI-powered features.
 
 ## Repo
 
@@ -18,7 +18,7 @@ packages/infra/      Cloudflare deploy
 
 - **Frontend**: TanStack Start, TanStack Router, TanStack Query, Tailwind v4, shadcn/ui, openapi-fetch
 - **Backend**: FastAPI, SQLModel, Alembic, PostgreSQL, JWT auth, APScheduler, SSE
-- **AI**: Groq API (llama-3.3-70b-versatile) for free-tier narrative generation
+- **AI**: Groq API (llama-3.3-70b-versatile)
 - **Tooling**: Bun workspace, uv for Python, Turbo, oxlint, oxfmt
 
 ## Setup
@@ -33,11 +33,19 @@ Prereqs:
 Install:
 
 ```bash
+# 1. Install JS dependencies
 bun install
-cd apps/api && uv sync
-cd /home/raphael/Documents/projects/sports-system
+
+# 2. Install Python dependencies
+cd apps/api && uv sync && cd ../..
+
+# 3. Copy environment files
 cp apps/api/.env.example apps/api/.env
 cp apps/web/.env.example apps/web/.env
+cp packages/infra/.env.example packages/infra/.env
+
+# 4. Create PostgreSQL database
+createdb sports  # or via psql/psqladmin
 ```
 
 Minimum backend env (`apps/api/.env`):
@@ -47,8 +55,24 @@ DATABASE_URL=postgresql://user:pass@localhost:5432/sports
 SECRET_KEY=change-me
 FRONTEND_URL=http://localhost:3001
 BACKEND_PUBLIC_URL=http://localhost:3000
+PORT=3000
 TIMEZONE=America/Sao_Paulo
+DEBUG=true
 GROQ_API_KEY=gsk_...  # Optional - enables AI narratives and delegation generation
+```
+
+Minimum infra env (`packages/infra/.env`):
+
+```env
+VITE_SERVER_URL=http://localhost:3000
+CORS_ORIGIN=http://localhost:3001
+```
+
+Minimum frontend env (`apps/web/.env`):
+
+```env
+VITE_SERVER_URL=http://localhost:3000
+VITE_TIMEZONE=America/Sao_Paulo
 ```
 
 Run migrations:
@@ -84,7 +108,7 @@ bun run gen:types  # generates src/types/api.gen.ts from localhost:3000/openapi.
 Add to CI to detect schema drift:
 
 ```bash
-bun run check:api  # fails if backend spec differs from committed types
+bun run ci:api-types  # fails if backend spec differs from committed types
 ```
 
 ## Features
@@ -105,7 +129,7 @@ bun run check:api  # fails if backend spec differs from committed types
 - **Delegation Generation** - "Gerar com IA" creates random delegations for demo data
 - **Smart Population** - "Popular com IA" analyzes existing delegations and generates similar ones
 
-All AI features use **Groq's free tier** (llama-3.3-70b-versatile, ~1,400 req/day).
+All AI features use **Groq** (llama-3.3-70b-versatile).
 
 ## Frontend Architecture
 
@@ -264,17 +288,26 @@ League admins can generate demo data via dashboard:
 | `SECRET_KEY` | Yes | JWT signing key (min 32 bytes recommended) |
 | `FRONTEND_URL` | Yes | Frontend origin for CORS |
 | `BACKEND_PUBLIC_URL` | Yes | Backend public URL |
+| `PORT` | No | API port (default: 3000) |
 | `TIMEZONE` | No | Business timezone (default: America/Sao_Paulo) |
+| `DEBUG` | No | Enable docs UI and debug mode |
 | `GROQ_API_KEY` | No | Enables AI features (free tier at console.groq.com) |
 | `GOOGLE_OAUTH_CLIENT_ID` | No | Google OAuth |
+| `GOOGLE_OAUTH_CLIENT_SECRET` | No | Google OAuth |
 | `GITHUB_OAUTH_CLIENT_ID` | No | GitHub OAuth |
+| `GITHUB_OAUTH_CLIENT_SECRET` | No | GitHub OAuth |
 | `R2_*` | No | Cloudflare R2 for file storage |
+| `ALGORITHM` | No | JWT algorithm (default: HS256) |
+| `ACCESS_TOKEN_EXPIRE_MINUTES` | No | Access token TTL in minutes (default: 30) |
+| `REFRESH_TOKEN_EXPIRE_DAYS` | No | Refresh token TTL in days (default: 30) |
 
 ### Frontend (`apps/web/.env`)
 
 | Variable | Required | Description |
 |----------|----------|-------------|
-| `VITE_API_URL` | Yes | Backend URL |
+| `VITE_SERVER_URL` | Yes | Backend URL |
+| `VITE_TIMEZONE` | No | Business timezone (default: America/Sao_Paulo) |
+| `CORS_ORIGIN` | Yes | Allowed CORS origin (used by `packages/infra` deploy) |
 
 ## Important Notes
 
@@ -283,6 +316,4 @@ League admins can generate demo data via dashboard:
 - Railway backend must run one `uvicorn` process only (multiple workers break SSE)
 - Frontend types are generated from backend OpenAPI spec; run `gen:types` after schema changes
 - Week auto-lock runs via APScheduler every 5 minutes after first event time passes
-- `AUTO_SIMULATE=true` enables scheduler-driven auto-start/finish for matches
-- `POST /admin/simulate/match/{id}` works regardless of `AUTO_SIMULATE`
 - Transfer window is a pure service-layer time check in the configured business timezone

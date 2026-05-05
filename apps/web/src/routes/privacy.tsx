@@ -1,13 +1,16 @@
 import { createFileRoute } from "@tanstack/react-router";
+import * as m from "@/paraglide/messages";
+import { PageSingleLayout } from "@/shared/components/layouts/page-single-layout";
+import { seoMeta } from "@/shared/lib/seo";
 
 export const Route = createFileRoute("/privacy")({
+  head: () => seoMeta({ title: m["privacy.title"](), description: "Política de privacidade da plataforma." }),
   component: PrivacyPage,
 });
 
 function PrivacyPage() {
   return (
-    <div className="mx-auto max-w-2xl px-6 py-12">
-      <h1 className="mb-6 text-3xl font-bold">Política de Privacidade</h1>
+    <PageSingleLayout title={m["privacy.title"]()}>
       <div className="space-y-4 text-muted-foreground">
         <p>
           Sua privacidade é importante para nós. Esta política descreve como coletamos, usamos e
@@ -39,6 +42,6 @@ function PrivacyPage() {
           momento.
         </p>
       </div>
-    </div>
+    </PageSingleLayout>
   );
 }

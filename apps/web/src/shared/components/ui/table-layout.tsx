@@ -1,4 +1,12 @@
-import type React from "react";
+import { useState } from "react";
+import {
+  useReactTable,
+  getCoreRowModel,
+  getPaginationRowModel,
+  getFilteredRowModel,
+  flexRender,
+  type ColumnDef,
+} from "@tanstack/react-table";
 import { Button } from "@sports-system/ui/components/button";
 import {
   InputGroup,
@@ -7,13 +15,23 @@ import {
   InputGroupInput,
 } from "@sports-system/ui/components/input-group";
 import { Separator } from "@sports-system/ui/components/separator";
+import {
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
+} from "@sports-system/ui/components/table";
 import { SearchIcon, XIcon } from "lucide-react";
+import * as m from "@/paraglide/messages";
 
-interface TableLayoutProps {
+interface TableLayoutProps<TData> {
   title?: string;
   countLabel?: string;
-  visibleCount: number;
-  totalCount: number;
+  columns: ColumnDef<TData>[];
+  data: TData[];
+  emptyMessage?: string;
   searchPlaceholder?: string;
   searchQuery: string;
   onSearchChange: (value: string) => void;
@@ -21,31 +39,49 @@ interface TableLayoutProps {
   filterActions?: React.ReactNode;
   activeFilterCount?: number;
   onClearFilters?: () => void;
-  pageIndex: number;
-  pageSize: number;
+  pageSize?: number;
   pageSizeOptions?: number[];
-  onPageChange: (page: number) => void;
-  onPageSizeChange: (size: number) => void;
-  children: React.ReactNode;
+  onPageSizeChange?: (size: number) => void;
 }
 
-export function TableLayout({
-  totalCount,
-  searchPlaceholder = "Buscar…",
+export function TableLayout<TData>({
+  columns,
+  data,
+  emptyMessage = m["search.noResults"](),
+  searchPlaceholder = m["common.table.searchPlaceholder"](),
   searchQuery,
   onSearchChange,
   headerActions,
   filterActions,
   activeFilterCount = 0,
   onClearFilters,
-  pageIndex,
-  pageSize,
+  pageSize: initialPageSize = 10,
   pageSizeOptions = [5, 10, 25, 50],
-  onPageChange,
   onPageSizeChange,
-  children,
-}: TableLayoutProps) {
-  const totalPages = Math.ceil(totalCount / pageSize) || 1;
+}: TableLayoutProps<TData>) {
+  const [pagination, setPagination] = useState({
+    pageIndex: 0,
+    pageSize: initialPageSize,
+  });
+
+  const table = useReactTable({
+    data,
+    columns,
+    state: {
+      globalFilter: searchQuery,
+      pagination,
+    },
+    onGlobalFilterChange: onSearchChange,
+    onPaginationChange: setPagination,
+    getCoreRowModel: getCoreRowModel(),
+    getPaginationRowModel: getPaginationRowModel(),
+    getFilteredRowModel: getFilteredRowModel(),
+    globalFilterFn: "includesString",
+  });
+
+  const totalCount = table.getFilteredRowModel().rows.length;
+  const currentPageSize = table.getState().pagination.pageSize;
+  const currentPageIndex = table.getState().pagination.pageIndex;
 
   return (
     <>
@@ -55,7 +91,7 @@ export function TableLayout({
         ) : null}
       </header>
 
-      <div className="rounded-xl border bg-card shadow-xs/5">
+      <div className="rounded-xl bg-card shadow-xs/5">
         {/* Filter bar */}
         <div className="flex flex-wrap items-center gap-2 border-b p-3">
           <InputGroup className="w-64">
@@ -70,8 +106,8 @@ export function TableLayout({
             {searchQuery.length > 0 && (
               <InputGroupAddon align="inline-end">
                 <InputGroupButton
-                  aria-label="Limpar"
-                  title="Limpar"
+                  aria-label={m["common.actions.clearAria"]()}
+                  title={m["common.actions.clearTitle"]()}
                   size="icon-xs"
                   onClick={() => onSearchChange("")}
                 >
@@ -96,7 +132,7 @@ export function TableLayout({
               onClick={onClearFilters}
             >
               <XIcon className="size-3.5 mr-1" />
-              Limpar filtros
+              {m["common.actions.clearFilters"]()}
             </Button>
           ) : null}
 
@@ -108,7 +144,64 @@ export function TableLayout({
           </span>
         </div>
 
-        {children}
+        <Table>
+          <TableHeader>
+            {table.getHeaderGroups().map((headerGroup) => (
+              <TableRow key={headerGroup.id}>
+                {headerGroup.headers.map((header) => (
+                  <TableHead
+                    key={header.id}
+                    className={
+                      (header.column.columnDef.meta as { className?: string } | undefined)
+                        ?.className
+                    }
+                  >
+                    {header.isPlaceholder
+                      ? null
+                      : flexRender(
+                          header.column.columnDef.header,
+                          header.getContext(),
+                        )}
+                  </TableHead>
+                ))}
+              </TableRow>
+            ))}
+          </TableHeader>
+          <TableBody>
+            {table.getRowModel().rows.length ? (
+              table.getRowModel().rows.map((row) => (
+                <TableRow
+                  key={row.id}
+                  data-state={row.getIsSelected() && "selected"}
+                >
+                  {row.getVisibleCells().map((cell) => (
+                    <TableCell
+                      key={cell.id}
+                      className={
+                        (cell.column.columnDef.meta as { className?: string } | undefined)
+                          ?.className
+                      }
+                    >
+                      {flexRender(
+                        cell.column.columnDef.cell,
+                        cell.getContext(),
+                      )}
+                    </TableCell>
+                  ))}
+                </TableRow>
+              ))
+            ) : (
+              <TableRow>
+                <TableCell
+                  colSpan={columns.length}
+                  className="h-24 text-center text-muted-foreground"
+                >
+                  {emptyMessage}
+                </TableCell>
+              </TableRow>
+            )}
+          </TableBody>
+        </Table>
 
         {/* Pagination */}
         <div className="flex items-center justify-between border-t px-4 py-3">
@@ -116,10 +209,11 @@ export function TableLayout({
             <span>Exibir</span>
             <select
               className="h-8 rounded-md border bg-transparent px-2 text-sm"
-              value={pageSize}
+              value={currentPageSize}
               onChange={(e) => {
-                onPageSizeChange(Number(e.target.value));
-                onPageChange(0);
+                const size = Number(e.target.value);
+                table.setPageSize(size);
+                onPageSizeChange?.(size);
               }}
             >
               {pageSizeOptions.map((s) => (
@@ -133,8 +227,8 @@ export function TableLayout({
           <div className="text-sm text-muted-foreground">
             {totalCount === 0
               ? "0"
-              : `${pageIndex * pageSize + 1} - ${Math.min(
-                  (pageIndex + 1) * pageSize,
+              : `${currentPageIndex * currentPageSize + 1} - ${Math.min(
+                  (currentPageIndex + 1) * currentPageSize,
                   totalCount,
                 )}`}{" "}
             de {totalCount}
@@ -143,18 +237,16 @@ export function TableLayout({
             <Button
               variant="outline"
               size="sm"
-              onClick={() => onPageChange(Math.max(0, pageIndex - 1))}
-              disabled={pageIndex === 0}
+              onClick={() => table.previousPage()}
+              disabled={!table.getCanPreviousPage()}
             >
               Anterior
             </Button>
             <Button
               variant="outline"
               size="sm"
-              onClick={() =>
-                onPageChange(Math.min(totalPages - 1, pageIndex + 1))
-              }
-              disabled={pageIndex >= totalPages - 1}
+              onClick={() => table.nextPage()}
+              disabled={!table.getCanNextPage()}
             >
               Próxima
             </Button>

@@ -1,28 +1,18 @@
 import { useMemo, useState } from "react";
 import { Badge } from "@sports-system/ui/components/badge";
-import {
-  Card,
-  CardContent,
-  CardDescription,
-  CardHeader,
-  CardTitle,
-} from "@sports-system/ui/components/card";
 import { useSuspenseQuery } from "@tanstack/react-query";
 import { Link, createFileRoute } from "@tanstack/react-router";
-import {
-  Table,
-  TableBody,
-  TableCell,
-  TableHead,
-  TableHeader,
-  TableRow,
-} from "@sports-system/ui/components/table";
+import type { ColumnDef } from "@tanstack/react-table";
 
 import { TableLayout } from "@/shared/components/ui/table-layout";
 import { Title } from "@/shared/components/ui/title";
+import { SideCard } from "@/shared/components/ui/side-card";
+import { PageAsideLayout } from "@/shared/components/layouts/page-aside-layout";
 import { medalBoardQueryOptions } from "@/features/results/api/queries";
 import { sportListQueryOptions } from "@/features/sports/api/queries";
 import type { MedalBoardEntry } from "@/types/results";
+import * as m from "@/paraglide/messages";
+import { seoMeta } from "@/shared/lib/seo";
 
 export const Route = createFileRoute("/leagues/$leagueId/(public)/results/")({
   loader: ({ context: { queryClient }, params: { leagueId } }) =>
@@ -30,6 +20,7 @@ export const Route = createFileRoute("/leagues/$leagueId/(public)/results/")({
       queryClient.ensureQueryData(medalBoardQueryOptions(Number(leagueId))),
       queryClient.ensureQueryData(sportListQueryOptions()),
     ]),
+  head: () => seoMeta({ title: m["results.public.title"](), description: m["results.public.section.medalBoard"]() }),
   component: ResultsPage,
 });
 
@@ -41,8 +32,6 @@ function ResultsPage() {
   });
   const { data: sports } = useSuspenseQuery(sportListQueryOptions());
 
-  const [pageIndex, setPageIndex] = useState(0);
-  const [pageSize, setPageSize] = useState(10);
   const [searchQuery, setSearchQuery] = useState("");
 
   const filteredData = useMemo(() => {
@@ -55,49 +44,68 @@ function ResultsPage() {
     );
   }, [data, searchQuery]);
 
-  const pagedData = filteredData.slice(
-    pageIndex * pageSize,
-    (pageIndex + 1) * pageSize,
-  );
+  const columns: ColumnDef<MedalBoardEntry>[] = [
+    {
+      header: "#",
+      accessorKey: "delegation_id",
+      meta: { className: "ps-4 w-14" },
+      cell: ({ row }) => (
+        <span className="font-medium text-muted-foreground">{row.index + 1}</span>
+      ),
+    },
+    {
+      header: m["results.public.table.delegation"](),
+      accessorKey: "delegation_name",
+      cell: ({ row }) => (
+        <div className="flex flex-wrap items-center gap-2">
+          <span className="font-medium">{row.original.delegation_name}</span>
+          <Badge
+            variant="outline"
+            className="font-mono text-[10px] uppercase tracking-[0.2em]"
+          >
+            {row.original.delegation_code}
+          </Badge>
+        </div>
+      ),
+    },
+    {
+      header: "🥇",
+      accessorKey: "gold",
+      meta: { className: "text-center" },
+      cell: ({ row }) => <span className="font-semibold">{row.original.gold}</span>,
+    },
+    {
+      header: "🥈",
+      accessorKey: "silver",
+      meta: { className: "text-center" },
+      cell: ({ row }) => <span className="font-semibold">{row.original.silver}</span>,
+    },
+    {
+      header: "🥉",
+      accessorKey: "bronze",
+      meta: { className: "text-center" },
+      cell: ({ row }) => <span className="font-semibold">{row.original.bronze}</span>,
+    },
+    {
+      header: m["competition.detail.table.total"](),
+      accessorKey: "total",
+      meta: { className: "pe-4 text-center" },
+      cell: ({ row }) => <span className="font-bold">{row.original.total}</span>,
+    },
+  ];
 
   return (
-    <div className="container mx-auto max-w-6xl space-y-8 px-4 py-8">
-      <Title title="Resultados" />
-      <section className="grid gap-4 lg:grid-cols-[1.25fr_0.75fr]">
-        <Card className="border border-border/70 bg-[radial-gradient(circle_at_top_left,hsl(var(--primary)/0.16),transparent_42%),linear-gradient(180deg,hsl(var(--card)),hsl(var(--muted)/0.18))]">
-          <CardHeader className="gap-3">
-            <div className="flex flex-wrap items-center gap-2">
-              <Badge variant="secondary">Atualiza a cada 30s</Badge>
-            </div>
-            <CardTitle className="text-3xl">Quadro de medalhas</CardTitle>
-            <CardDescription className="max-w-2xl">
-              Painel público da competição com ranking geral das delegações.
-            </CardDescription>
-          </CardHeader>
-          <CardContent className="grid gap-3 md:grid-cols-3">
-            <QuickPill label="Delegações no ranking" value={String(data.length)} />
-            <QuickPill
-              label="Ouros distribuídos"
-              value={String(data.reduce((sum, entry) => sum + entry.gold, 0))}
-            />
-            <QuickPill
-              label="Medalhas totais"
-              value={String(data.reduce((sum, entry) => sum + entry.total, 0))}
-            />
-          </CardContent>
-        </Card>
-
-        <Card className="border border-border/70">
-          <CardHeader>
-            <CardTitle>Navegação</CardTitle>
-          </CardHeader>
-          <CardContent className="space-y-3">
+    <PageAsideLayout
+      sidebar={
+        <SideCard title={m["results.public.card.nav.title"]()}
+        >
+          <div className="space-y-3">
             <Link
               to="/leagues/$leagueId/results/records"
               params={{ leagueId }}
               className="block text-sm text-muted-foreground hover:text-foreground hover:underline"
             >
-              Ver recordes e melhores marcas
+              {m["results.records.title"]()}
             </Link>
             {sports.data.slice(0, 6).map((sport) => (
               <Link
@@ -109,88 +117,39 @@ function ResultsPage() {
                 {sport.name}
               </Link>
             ))}
-          </CardContent>
-        </Card>
-      </section>
+          </div>
+        </SideCard>
+      }
+    >
+      <Title title={m["results.public.title"]()}
+        description={m["results.public.section.medalBoard"]()}
+      />
 
-      <TableLayout
-        title="Quadro de medalhas"
-        countLabel="delegações"
-        visibleCount={pagedData.length}
-        totalCount={filteredData.length}
-        searchPlaceholder="Buscar delegações…"
-        searchQuery={searchQuery}
-        onSearchChange={(value) => {
-          setSearchQuery(value);
-          setPageIndex(0);
-        }}
-        activeFilterCount={searchQuery ? 1 : 0}
-        onClearFilters={() => {
-          setSearchQuery("");
-          setPageIndex(0);
-        }}
-        pageIndex={pageIndex}
-        pageSize={pageSize}
-        onPageChange={setPageIndex}
-        onPageSizeChange={setPageSize}
-      >
-        <MedalBoardTable entries={pagedData} />
-      </TableLayout>
-    </div>
+      <div className="w-full flex justify-center mt-6">
+        <div className="flex gap-4">
+          <StatCard label={m["results.public.pill.ranking"]()} value={String(data.length)} />
+          <StatCard label={m["results.public.pill.golds"]()} value={String(data.reduce((sum, entry) => sum + entry.gold, 0))} />
+          <StatCard label={m["results.public.pill.total"]()} value={String(data.reduce((sum, entry) => sum + entry.total, 0))} />
+        </div>
+      </div>
+
+      <div className="w-full mt-6">
+        <TableLayout
+          columns={columns}
+          data={filteredData}
+          searchQuery={searchQuery}
+          onSearchChange={(value) => setSearchQuery(value)}
+        />
+      </div>
+    </PageAsideLayout>
   );
 }
 
-function MedalBoardTable({ entries }: { entries: MedalBoardEntry[] }) {
+function StatCard({ label, value }: { label: string; value: string }) {
   return (
-    <Table>
-      <TableHeader>
-        <TableRow>
-          <TableHead className="ps-4 w-14">#</TableHead>
-          <TableHead>Delegação</TableHead>
-          <TableHead className="text-center">🥇</TableHead>
-          <TableHead className="text-center">🥈</TableHead>
-          <TableHead className="text-center">🥉</TableHead>
-          <TableHead className="pe-4 text-center">Total</TableHead>
-        </TableRow>
-      </TableHeader>
-      <TableBody>
-        {entries.map((entry, index) => (
-          <TableRow key={entry.delegation_id}>
-            <TableCell className="ps-4 font-medium text-muted-foreground">{index + 1}</TableCell>
-            <TableCell>
-              <div className="flex flex-wrap items-center gap-2">
-                <span className="font-medium">{entry.delegation_name}</span>
-                <Badge
-                  variant="outline"
-                  className="font-mono text-[10px] uppercase tracking-[0.2em]"
-                >
-                  {entry.delegation_code}
-                </Badge>
-              </div>
-            </TableCell>
-            <TableCell className="text-center font-semibold">{entry.gold}</TableCell>
-            <TableCell className="text-center font-semibold">{entry.silver}</TableCell>
-            <TableCell className="text-center font-semibold">{entry.bronze}</TableCell>
-            <TableCell className="pe-4 text-center font-bold">{entry.total}</TableCell>
-          </TableRow>
-        ))}
-        {entries.length === 0 && (
-          <TableRow>
-            <TableCell colSpan={6} className="h-24 text-center text-muted-foreground">
-              Nenhuma medalha registrada ainda.
-            </TableCell>
-          </TableRow>
-        )}
-      </TableBody>
-    </Table>
-  );
-}
-
-function QuickPill({ label, value }: { label: string; value: string }) {
-  return (
-    <div className="rounded-3xl border border-border/70 bg-background/80 p-4">
-      <div className="text-xs uppercase tracking-[0.24em] text-muted-foreground">{label}</div>
-      <div className="mt-2 text-lg font-semibold">{value}</div>
+    <div className="flex flex-col items-center gap-1 w-25 rounded-lg bg-input px-3 py-2 min-w-11">
+      <div className="text-[9px] uppercase tracking-widest text-placeholder leading-none">{label}</div>
+      <div className="text-xl font-bold tabular-nums text-foreground leading-none">{value}</div>
     </div>
   );
 }

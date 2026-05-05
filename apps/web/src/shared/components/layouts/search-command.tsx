@@ -1,5 +1,3 @@
-"use client";
-
 import { useQueries } from "@tanstack/react-query";
 import { Link } from "@tanstack/react-router";
 import {
@@ -29,6 +27,7 @@ import { userSearchQueryOptions } from "@/features/users/api/queries";
 import { globalSearchQueryOptions } from "@/features/search/api/queries";
 import type { Session } from "@/types/auth";
 import type { LeagueMemberRole, LeagueResponse } from "@/types/leagues";
+import * as m from "@/paraglide/messages";
 
 interface GlobalSearchResult {
 	query: string;
@@ -110,7 +109,7 @@ export function SearchCommand({
 		if (!leagueId) {
 			return [
 				{
-					label: "Explorar ligas",
+					label: m["search.quick.explore"](),
 					href: "/leagues",
 					icon: Globe,
 				},
@@ -119,12 +118,12 @@ export function SearchCommand({
 
 		const actions = [
 			{
-				label: "Visão geral",
+				label: m["search.quick.overview"](),
 				href: `/leagues/${leagueId}`,
 				icon: Globe,
 			},
 			{
-				label: "Calendário",
+				label: m["search.quick.calendar"](),
 				href: `/leagues/${leagueId}/calendar`,
 				icon: CalendarDays,
 			},
@@ -163,14 +162,18 @@ export function SearchCommand({
 	return (
 		<>
 			<Button
-				variant="outline"
+				variant="secondary"
 				size="sm"
-				className="text-muted-foreground text-sm"
+				className="h-12 justify-between w-full rounded-xl border-none border-input bg-card pl-4! pr-3 text-sm text-foreground placeholder:text-placeholder outline-none transition-colors focus:border-primary"
 				onClick={() => setOpen(true)}
 			>
-				<Search data-icon="inline-start" />
-				Buscar
-				<kbd className="pointer-events-none ml-2 inline-flex h-5 select-none items-center gap-1 rounded border bg-muted px-1.5 font-mono text-[10px] font-medium opacity-100">
+				<div className="flex justify-center gap-1 text-muted-foreground">
+					<Search data-icon="inline-start" className="mt-0.5" />
+					<span>
+						{m['search.buttonLabel']()}
+					</span>
+				</div>
+				<kbd className="pointer-events-none bg-card ml-2 inline-flex h-5 select-none items-center gap-1 rounded border px-1.5 font-mono text-[10px] font-medium opacity-100">
 					<span className="text-xs">⌘</span>K
 				</kbd>
 			</Button>
@@ -178,8 +181,8 @@ export function SearchCommand({
 			<CommandDialog
 				open={open}
 				onOpenChange={setOpen}
-				title="Buscar"
-				description="Pesquise pessoas, ligas e entidades da competição"
+				title={m['search.buttonLabel']()}
+				description={m['search.dialogDescription']()}
 				showCloseButton={false}
 			>
 				<Command
@@ -187,18 +190,18 @@ export function SearchCommand({
 					className="**:data-[selected=true]:bg-muted **:data-selected:bg-transparent"
 				>
 					<CommandInput
-						placeholder="Buscar por nome, código, modalidade, esporte ou local..."
+						placeholder={m['search.inputPlaceholder']()}
 						value={query}
 						onValueChange={setQuery}
 					/>
 					<CommandList>
 						{isSearching ? (
 							<div className="py-6 text-center text-sm text-muted-foreground">
-								Buscando...
+								m["search.loading"]()
 							</div>
 						) : trimmedQuery.length < 2 ? (
 							quickActions.length > 0 && (
-								<CommandGroup heading="Ações rápidas">
+								<CommandGroup heading={m['search.group.quickActions']()}>
 									{quickActions.map((action) => (
 										<CommandItem
 											key={action.href}
@@ -219,7 +222,7 @@ export function SearchCommand({
 						) : hasAnyResults ? (
 							<>
 								{matchingLeagues.length > 0 && (
-									<CommandGroup heading="Ligas">
+									<CommandGroup heading={m["search.group.leagues"]()}>
 										{matchingLeagues.map((league) => (
 											<CommandItem
 												key={league.id}
@@ -246,7 +249,7 @@ export function SearchCommand({
 								)}
 
 								{userResults.length > 0 && (
-									<CommandGroup heading="Usuários">
+									<CommandGroup heading={m["search.group.users"]()}>
 										{userResults.map((user) => (
 											<CommandItem
 												key={user.id}
@@ -267,7 +270,7 @@ export function SearchCommand({
 								)}
 
 								{leagueResults?.delegations?.length ? (
-									<CommandGroup heading="Delegações">
+									<CommandGroup heading={m["search.group.delegations"]()}>
 										{leagueResults.delegations.map((delegation) => (
 											<CommandItem
 												key={delegation.id}
@@ -293,7 +296,7 @@ export function SearchCommand({
 								) : null}
 
 								{leagueResults?.events?.length ? (
-									<CommandGroup heading="Eventos">
+									<CommandGroup heading={m["search.group.events"]()}>
 										{leagueResults.events.map((event) => (
 											<CommandItem
 												key={event.id}
@@ -322,7 +325,7 @@ export function SearchCommand({
 							</>
 						) : (
 							<div className="py-6 text-center text-sm text-muted-foreground">
-								Nenhum resultado encontrado para &quot;{trimmedQuery}&quot;.
+								{m['search.noResults']()} &quot;{trimmedQuery}&quot;.
 							</div>
 						)}
 					</CommandList>

@@ -1,4 +1,4 @@
-import { LogOutIcon, Sparkles, UserIcon } from "lucide-react";
+import { EllipsisIcon, LogOutIcon, Sparkles, UserIcon } from "lucide-react";
 import { useRouter } from "@tanstack/react-router";
 import { toast } from "sonner";
 
@@ -15,35 +15,48 @@ import {
 	DropdownMenuTrigger,
 } from "@sports-system/ui/components/dropdown-menu";
 
+import * as m from "@/paraglide/messages";
 import { logoutFn } from "@/features/auth/server/auth";
 import type { Session } from "@/types/auth";
 
 interface NavUserProps {
 	session: Session | null;
+	avatarOnly?: boolean;
 }
 
-export function NavUser({ session }: NavUserProps) {
+export function NavUser({ session, avatarOnly = false }: NavUserProps) {
 	const router = useRouter();
 	const user = session
 		? { name: session.name, email: session.email, avatar: session.avatar_url ?? "" }
-		: { name: "Visitante", email: "", avatar: "" };
+		: { name: m['nav.user.guest'](), email: "", avatar: "" };
 
 	async function handleLogout() {
 		await logoutFn();
 		await router.invalidate();
 		await router.navigate({ to: "/login" });
-		toast.success("Sessão encerrada");
+		toast.success(m['common.toast.logoutSuccess']());
 	}
 
 	return (
 		<DropdownMenu>
-			<DropdownMenuTrigger className="flex h-10 items-center gap-2 rounded-md px-2 hover:text-accent-foreground outline-none">
-				<Avatar className="h-8 w-8 rounded-md after:border-none">
+			<DropdownMenuTrigger className={`flex items-center ${avatarOnly ? "h-8 w-8 justify-center rounded-full p-0" : "h-11 gap-3 px-3"}`}>
+				<Avatar className={`flex shrink-0 items-center justify-center overflow-hidden rounded-full bg-primary ${avatarOnly ? "h-8 w-8" : "h-9 w-9"}`}>
 					<AvatarImage src={user.avatar} alt={user.name} />
 					<AvatarFallback className="font-semibold text-xs rounded-md">
-						{user.name ? user.name.charAt(0) : "SH"}
+						{user.name ? user.name.charAt(0) : m['nav.user.fallbackInitials']()}
 					</AvatarFallback>
 				</Avatar>
+				{!avatarOnly && (
+					<>
+						<div className="flex min-w-0 flex-1 flex-col items-start overflow-hidden">
+							<span className="w-full truncate text-sm font-semibold text-foreground">{user.name}</span>
+							<span className="w-full truncate text-xs text-muted-foreground">{user.email}</span>
+						</div>
+						<span className="inline-flex h-8 w-8 items-center justify-center rounded-md text-muted-foreground transition-colors duration-150 hover:bg-muted hover:text-foreground">
+							<EllipsisIcon size={16} />
+						</span>
+					</>
+				)}
 			</DropdownMenuTrigger>
 			<DropdownMenuContent
 				className="min-w-56 rounded-lg"
@@ -55,7 +68,7 @@ export function NavUser({ session }: NavUserProps) {
 					<Avatar className="h-8 w-8 rounded-md after:border-none">
 						<AvatarImage src={user.avatar} alt={user.name} />
 						<AvatarFallback className="font-semibold text-xs rounded-md bg-accent">
-							{user.name ? user.name.charAt(0) : "SH"}
+							{user.name ? user.name.charAt(0) : m['nav.user.fallbackInitials']()}
 						</AvatarFallback>
 					</Avatar>
 					<div className="grid flex-1 text-left text-sm leading-tight">
@@ -66,7 +79,7 @@ export function NavUser({ session }: NavUserProps) {
 				<DropdownMenuGroup>
 					<DropdownMenuItem onClick={() => router.navigate({ to: "/profile" })}>
 						<UserIcon />
-						Conta
+						{m['nav.user.account']()}
 					</DropdownMenuItem>
 				</DropdownMenuGroup>
 				<div className="h-px bg-border my-1 mx-2" />
@@ -78,12 +91,12 @@ export function NavUser({ session }: NavUserProps) {
 							onClick={() => void handleLogout()}
 						>
 							<LogOutIcon />
-							Sair
+							{m['logout']()}
 						</DropdownMenuItem>
 					) : (
 						<DropdownMenuItem onClick={() => router.navigate({ to: "/login" })}>
 							<Sparkles />
-							Entrar
+							{m['login_title']()}
 						</DropdownMenuItem>
 					)}
 				</DropdownMenuGroup>

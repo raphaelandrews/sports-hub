@@ -1,4 +1,4 @@
-import { useMemo, useState } from "react";
+import { useMemo } from "react";
 import {
   useMutation,
   useQueryClient,
@@ -9,15 +9,8 @@ import { Link, createFileRoute, useNavigate } from "@tanstack/react-router";
 import { Bot, Check, Plus, Trash2, X } from "lucide-react";
 import { toast } from "sonner";
 import { z } from "zod";
-import { Badge } from "@sports-system/ui/components/badge";
+import type { ColumnDef } from "@tanstack/react-table";
 import { Button, buttonVariants } from "@sports-system/ui/components/button";
-import {
-  Card,
-  CardContent,
-  CardDescription,
-  CardHeader,
-  CardTitle,
-} from "@sports-system/ui/components/card";
 import { Separator } from "@sports-system/ui/components/separator";
 import {
   Select,
@@ -26,14 +19,6 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@sports-system/ui/components/select";
-import {
-  Table,
-  TableBody,
-  TableCell,
-  TableHead,
-  TableHeader,
-  TableRow,
-} from "@sports-system/ui/components/table";
 import { cn } from "@sports-system/ui/lib/utils";
 
 import { EnrollmentStatusBadge } from "@/features/enrollments/components/enrollment-status-badge";
@@ -48,8 +33,12 @@ import { allEventsQueryOptions } from "@/features/events/api/queries";
 import { queryKeys } from "@/features/keys";
 import { sportDetailQueryOptions, sportListQueryOptions } from "@/features/sports/api/queries";
 import { TableLayout } from "@/shared/components/ui/table-layout";
+import { Title } from "@/shared/components/ui/title";
+import { SideCard } from "@/shared/components/ui/side-card";
+import { PageAsideLayout } from "@/shared/components/layouts/page-aside-layout";
 import type { CompetitionResponse } from "@/types/competitions";
 import type { EnrollmentReview, EnrollmentStatus } from "@/types/enrollments";
+import * as m from "@/paraglide/messages";
 
 const enrollmentsSearchSchema = z.object({
   q: z.string().optional(),
@@ -140,9 +129,6 @@ function EnrollmentsPage() {
     [sportDetails],
   );
 
-  const [pageIndex, setPageIndex] = useState(0);
-  const [pageSize, setPageSize] = useState(10);
-
   const filtered = useMemo(() => {
     const normalizedSearch = search.trim().toLowerCase();
 
@@ -200,11 +186,6 @@ function EnrollmentsPage() {
     weekFilter,
   ]);
 
-  const pagedData = filtered.slice(
-    pageIndex * pageSize,
-    (pageIndex + 1) * pageSize,
-  );
-
   const stats = useMemo(() => {
     const source = enrollmentsData.data;
     return {
@@ -241,11 +222,11 @@ function EnrollmentsPage() {
     onSuccess: async (_, variables) => {
       await refresh();
       toast.success(
-        variables.payload.status === "APPROVED" ? "Inscrição aprovada." : "Inscrição rejeitada.",
+        variables.payload.status === "APPROVED" ? m["common.status.approved"]() : m["common.status.rejected"](),
       );
     },
     onError: (error) => {
-      toast.error(error instanceof ApiError ? error.message : "Falha ao revisar inscrição.");
+      toast.error(error instanceof ApiError ? error.message : m["common.actions.submit"]());
     },
   });
 
@@ -260,12 +241,12 @@ function EnrollmentsPage() {
       await refresh();
       toast.success(
         created.length === 1
-          ? "1 inscrição criada com IA."
-          : `${created.length} inscrições criadas com IA.`,
+          ? m["common.actions.create"]()
+          : `${created.length} ${m['enrollments.admin.title']()} created with AI.`,
       );
     },
     onError: (error) => {
-      toast.error(error instanceof ApiError ? error.message : "Falha ao gerar inscrições.");
+      toast.error(error instanceof ApiError ? error.message : `Failed to generate ${m['enrollments.admin.title']()}.`);
     },
   });
 
@@ -278,50 +259,160 @@ function EnrollmentsPage() {
       ),
     onSuccess: async () => {
       await refresh();
-      toast.success("Inscrição cancelada.");
+      toast.success(m["common.actions.cancel"]());
     },
     onError: (error) => {
-      toast.error(error instanceof ApiError ? error.message : "Falha ao cancelar inscrição.");
+      toast.error(error instanceof ApiError ? error.message : m["common.actions.submit"]());
     },
   });
 
-  return (
-    <div className="space-y-6">
-      <section className="grid gap-4 xl:grid-cols-[1.55fr_1fr]">
-        <Card className="border border-border/70 bg-[radial-gradient(circle_at_top_left,hsl(var(--primary)/0.16),transparent_44%),linear-gradient(165deg,hsl(var(--card)),hsl(var(--card)),hsl(var(--muted)/0.22))]">
-          <CardHeader className="gap-3">
-            <div className="flex flex-wrap items-center gap-2">
-              {isAdmin ? (
-                <Badge variant="secondary">Admin</Badge>
-              ) : (
-                <Badge variant="secondary">Chefe</Badge>
-              )}
+  const columns: ColumnDef<(typeof enrollmentsData.data)[number]>[] = [
+    {
+      header: m["enrollments.admin.table.athlete"](),
+      accessorKey: "athlete_id",
+      meta: { className: "ps-4" },
+      cell: ({ row }) => {
+        const athlete = athleteById.get(row.original.athlete_id);
+        return (
+          <div>
+            <div className="font-medium">
+              {athlete?.name ?? `m["enrollments.admin.table.athlete"]() #${row.original.athlete_id}`}
             </div>
-            <CardTitle className="text-2xl">Painel de inscrições</CardTitle>
-            <CardDescription className="max-w-2xl">
-              {isAdmin
-                ? "Visão global para revisar status, acompanhar gargalos e acionar geração automática."
-                : "Acompanhe sua delegação, estado das revisões e bloqueios operacionais da semana."}
-            </CardDescription>
-          </CardHeader>
-          <CardContent className="grid gap-4 md:grid-cols-4">
-            <StatTile label="Total" value={String(stats.total)} />
-            <StatTile label="Pendentes" value={String(stats.pending)} />
-            <StatTile label="Aprovadas" value={String(stats.approved)} />
-            <StatTile label="Rejeitadas" value={String(stats.rejected)} />
-          </CardContent>
-        </Card>
+            <div className="text-xs text-muted-foreground">
+              {athlete?.code ?? `#${row.original.athlete_id}`}
+            </div>
+          </div>
+        );
+      },
+    },
+    {
+      header: m["enrollments.admin.table.event"](),
+      accessorKey: "event_id",
+      cell: ({ row }) => {
+        const event = eventById.get(row.original.event_id);
+        const competition = event ? competitionById.get(event.competition_id) : null;
+        const modality = event ? modalityById.get(event.modality_id) : null;
+        const sport = event ? sportByModalityId.get(event.modality_id) : null;
+        return (
+          <div>
+            <div className="font-medium">
+              {modality?.name ?? `Evento #${row.original.event_id}`}
+            </div>
+            <div className="text-xs text-muted-foreground">
+              {sport?.name ?? m['enrollment.form.label.sport']()} ·{" "}
+              {event
+                ? `${formatDate(event.event_date)} · ${formatTime(event.start_time)}`
+                : m['calendar.public.empty']()}
+            </div>
+            {competition ? (
+              <div className="mt-1 text-xs text-muted-foreground">
+                {m["enrollments.admin.table.event"]() } {competition.number} · {competition.status}
+              </div>
+            ) : null}
+          </div>
+        );
+      },
+    },
+    {
+      header: m["enrollments.admin.table.delegation"](),
+      accessorKey: "delegation_id",
+      cell: ({ row }) => {
+        const delegation = delegationById.get(row.original.delegation_id);
+        return delegation ? delegation.name : `m["delegations.public.title"]() #${row.original.delegation_id}`;
+      },
+    },
+    {
+      header: m["enrollments.admin.table.status"](),
+      accessorKey: "status",
+      cell: ({ row }) => <EnrollmentStatusBadge status={row.original.status} />,
+    },
+    {
+      header: m["enrollments.admin.table.validation"](),
+      accessorKey: "validation_message",
+      cell: ({ row }) =>
+        row.original.validation_message ? (
+          <span className="text-sm text-muted-foreground">
+            {row.original.validation_message}
+          </span>
+        ) : (
+          <span className="text-sm text-muted-foreground">—</span>
+        ),
+    },
+    {
+      header: m["enrollments.admin.table.actions"](),
+      accessorKey: "id",
+      meta: { className: "pe-4 text-right" },
+      cell: ({ row }) => {
+        const event = eventById.get(row.original.event_id);
+        const competition = event ? competitionById.get(event.competition_id) : null;
+        const competitionLocked = competition ? isEnrollmentLocked(competition) : false;
+        return (
+          <div className="flex justify-end gap-2">
+            {isAdmin && row.original.status === "PENDING" ? (
+              <>
+                <Button
+                  size="sm"
+                  variant="outline"
+                  disabled={reviewMutation.isPending}
+                  onClick={() =>
+                    reviewMutation.mutate({
+                      enrollmentId: row.original.id,
+                      payload: {
+                        status: "APPROVED",
+                        validation_message: m["common.status.approved"](),
+                      },
+                    })
+                  }
+                >
+                  <Check className="size-4" />
+                </Button>
+                <Button
+                  size="sm"
+                  variant="destructive"
+                  disabled={reviewMutation.isPending}
+                  onClick={() =>
+                    reviewMutation.mutate({
+                      enrollmentId: row.original.id,
+                      payload: {
+                        status: "REJECTED",
+                        validation_message: m["common.status.rejected"](),
+                      },
+                    })
+                  }
+                >
+                  <X className="size-4" />
+                </Button>
+              </>
+            ) : null}
 
-        <Card className="border border-border/70">
-          <CardHeader>
-            <CardTitle>Ações</CardTitle>
-            <CardDescription>
-              {isAdmin
-                ? "Use IA para preencher base e revise rapidamente o que entrou."
-                : "Cadastre inscrições novas e acompanhe o ciclo da sua delegação."}
-            </CardDescription>
-          </CardHeader>
-          <CardContent className="space-y-3">
+            {!isAdmin ? (
+              <Button
+                size="sm"
+                variant="ghost"
+                disabled={cancelMutation.isPending || competitionLocked}
+                onClick={() => cancelMutation.mutate(row.original.id)}
+              >
+                <Trash2 className="size-4" />
+              </Button>
+            ) : null}
+          </div>
+        );
+      },
+    },
+  ];
+
+  return (
+    <PageAsideLayout
+      sidebar={
+        <SideCard title={m["enrollments.admin.card.actions.title"]()}
+        >
+          <p className="text-sm text-muted-foreground mb-4">
+            {isAdmin
+              ? m["enrollments.admin.card.actions.title"]()
+              : m["chief.shell.delegationDesc"]()
+            }
+          </p>
+          <div className="space-y-3">
             {!isAdmin ? (
               <Link
                 to="/leagues/$leagueId/dashboard/enrollments/new"
@@ -329,7 +420,7 @@ function EnrollmentsPage() {
                 className={cn(buttonVariants({ variant: "default" }), "w-full justify-start")}
               >
                 <Plus className="mr-2 size-4" />
-                Nova inscrição
+                {m["enrollment.form.title"]()}
               </Link>
             ) : null}
 
@@ -342,309 +433,163 @@ function EnrollmentsPage() {
                 onClick={() => aiMutation.mutate()}
               >
                 <Bot className="mr-2 size-4" />
-                {aiMutation.isPending ? "Gerando..." : "Gerar Inscrições com IA"}
+                {aiMutation.isPending ? m["common.actions.submit"]() : m["common.actions.submit"]()}
               </Button>
             ) : null}
 
             {chiefDelegation ? (
-              <div className="rounded-2xl border border-dashed border-border/70 p-4 text-sm text-muted-foreground">
-                Delegação gerenciada:{" "}
+              <div className="text-sm text-muted-foreground">
+                {m["chief.shell.delegationDesc"]() }{" "}
                 <span className="font-medium text-foreground">{chiefDelegation.name}</span>.
               </div>
             ) : !isAdmin ? (
-              <div className="rounded-2xl border border-destructive/30 bg-destructive/5 p-4 text-sm text-destructive">
-                Nenhuma delegação gerenciada. Solicite aprovação antes de inscrever atletas.
+              <div className="text-sm text-destructive">
+                {m["enrollments.admin.noDelegation"]() }
               </div>
             ) : (
-              <div className="rounded-2xl border border-dashed border-border/70 p-4 text-sm text-muted-foreground">
-                Filtro global habilitado para todas as delegações.
+              <div className="text-sm text-muted-foreground">
+                {m["chief.shell.delegationDesc"]() }
               </div>
             )}
-          </CardContent>
-        </Card>
-      </section>
+          </div>
+        </SideCard>
+      }
+    >
+      <Title
+        title={m["enrollments.admin.title"]()}
+        description={isAdmin ? m["enrollments.admin.card.actions.title"]() : m["chief.shell.delegationDesc"]()}
+      />
 
-      <header className="mb-1 flex items-end justify-between gap-4">
-        <div>
-          <h1 className="text-xl font-semibold">Lista operacional</h1>
-          <p className="text-muted-foreground text-sm">
-            {pagedData.length} visíveis de {filtered.length} inscrições
-          </p>
+      <div className="w-full flex justify-center mt-6">
+        <div className="flex gap-4">
+          <StatCard label={m["enrollments.admin.stat.total"]()} value={String(stats.total)} />
+          <StatCard label={m["enrollments.admin.stat.pending"]()} value={String(stats.pending)} />
+          <StatCard label={m["enrollments.admin.stat.approved"]()} value={String(stats.approved)} />
+          <StatCard label={m["enrollments.admin.stat.rejected"]()} value={String(stats.rejected)} />
         </div>
-        {!isAdmin ? (
-          <Link
-            to="/leagues/$leagueId/dashboard/enrollments/new"
-            params={{ leagueId }}
-            className={buttonVariants({ variant: "outline" })}
-          >
-            <Plus className="mr-2 size-4" />
-            Inscrever atleta
-          </Link>
-        ) : null}
-      </header>
+      </div>
 
-      <TableLayout
-        searchPlaceholder="Buscar atleta, delegação ou modalidade"
-        searchQuery={search}
-        onSearchChange={(value) =>
-          void navigate({
-            search: (prev) => ({ ...prev, q: value || undefined }),
-          })
-        }
-        activeFilterCount={activeFilterCount}
-        onClearFilters={() =>
-          void navigate({
-            search: (prev) => ({
-              ...prev,
-              q: undefined,
-              status: "ALL",
-              week: "ALL",
-            }),
-          })
-        }
-        pageIndex={pageIndex}
-        pageSize={pageSize}
-        onPageChange={setPageIndex}
-        onPageSizeChange={setPageSize}
-        totalCount={filtered.length}
-        visibleCount={pagedData.length}
-        filterActions={
-          <>
-            <Separator orientation="vertical" className="mx-1 h-6" />
-            <Select
-              value={statusFilter}
-              onValueChange={(value) =>
-                void navigate({
-                  search: (prev) => ({
-                    ...prev,
-                    status: (value as EnrollmentStatus | "ALL" | null) ?? "ALL",
-                  }),
-                })
-              }
-            >
-              <SelectTrigger className="w-44">
-                <SelectValue />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="ALL">Todos os status</SelectItem>
-                <SelectItem value="PENDING">Pendentes</SelectItem>
-                <SelectItem value="APPROVED">Aprovadas</SelectItem>
-                <SelectItem value="REJECTED">Rejeitadas</SelectItem>
-              </SelectContent>
-            </Select>
+      <div className="w-full mt-6">
+        <TableLayout
+          searchPlaceholder={m["common.table.searchPlaceholder"]() }
+          searchQuery={search}
+          onSearchChange={(value) =>
+            void navigate({
+              search: (prev) => ({ ...prev, q: value || undefined }),
+            })
+          }
+          activeFilterCount={activeFilterCount}
+          onClearFilters={() =>
+            void navigate({
+              search: (prev) => ({
+                ...prev,
+                q: undefined,
+                status: "ALL",
+                week: "ALL",
+              }),
+            })
+          }
+          columns={columns}
+          data={filtered}
+          emptyMessage={m["enrollments.admin.empty"]()}
+          filterActions={
+            <>
+              <Separator orientation="vertical" className="mx-1 h-6" />
+              <Select
+                value={statusFilter}
+                onValueChange={(value) =>
+                  void navigate({
+                    search: (prev) => ({
+                      ...prev,
+                      status: (value as EnrollmentStatus | "ALL" | null) ?? "ALL",
+                    }),
+                  })
+                }
+              >
+                <SelectTrigger className="w-44">
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="ALL">{m["enrollments.admin.filter.allStatus"]()}</SelectItem>
+                  <SelectItem value="PENDING">{m["enrollments.admin.filter.pending"]()}</SelectItem>
+                  <SelectItem value="APPROVED">{m["enrollments.admin.filter.approved"]()}</SelectItem>
+                  <SelectItem value="REJECTED">{m["enrollments.admin.filter.rejected"]()}</SelectItem>
+                </SelectContent>
+              </Select>
 
-            <Select
-              value={weekFilter}
-              onValueChange={(value) =>
-                void navigate({
-                  search: (prev) => ({
-                    ...prev,
-                    week: value ?? "ALL",
-                  }),
-                })
-              }
-            >
-              <SelectTrigger className="w-52">
-                <SelectValue />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="ALL">Todas as competições</SelectItem>
-                {competitionsData.data.map((competition) => (
-                  <SelectItem key={competition.id} value={String(competition.id)}>
-                    Competição {competition.number} · {competition.status}
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
+              <Select
+                value={weekFilter}
+                onValueChange={(value) =>
+                  void navigate({
+                    search: (prev) => ({
+                      ...prev,
+                      week: value ?? "ALL",
+                    }),
+                  })
+                }
+              >
+                <SelectTrigger className="w-52">
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="ALL">{m["enrollments.admin.filter.allCompetitions"]()}</SelectItem>
+                  {competitionsData.data.map((competition) => (
+                    <SelectItem key={competition.id} value={String(competition.id)}>
+                      {m["enrollments.admin.table.event"]() } {competition.number} · {competition.status}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
 
-            <Select
-              value={sort}
-              onValueChange={(value) =>
-                void navigate({
-                  search: (prev) => ({
-                    ...prev,
-                    sort: value as "athlete" | "status" | "week",
-                  }),
-                })
-              }
-            >
-              <SelectTrigger className="w-48">
-                <SelectValue />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="week">Ordenar por competição</SelectItem>
-                <SelectItem value="athlete">Ordenar por atleta</SelectItem>
-                <SelectItem value="status">Ordenar por status</SelectItem>
-              </SelectContent>
-            </Select>
+              <Select
+                value={sort}
+                onValueChange={(value) =>
+                  void navigate({
+                    search: (prev) => ({
+                      ...prev,
+                      sort: value as "athlete" | "status" | "week",
+                    }),
+                  })
+                }
+              >
+                <SelectTrigger className="w-48">
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="week">{m["enrollments.admin.sort.competition"]()}</SelectItem>
+                  <SelectItem value="athlete">{m["enrollments.admin.sort.athlete"]()}</SelectItem>
+                  <SelectItem value="status">{m["enrollments.admin.sort.status"]()}</SelectItem>
+                </SelectContent>
+              </Select>
 
-            <Select
-              value={dir}
-              onValueChange={(value) =>
-                void navigate({
-                  search: (prev) => ({
-                    ...prev,
-                    dir: value as "asc" | "desc",
-                  }),
-                })
-              }
-            >
-              <SelectTrigger className="w-36">
-                <SelectValue />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="asc">Ascendente</SelectItem>
-                <SelectItem value="desc">Descendente</SelectItem>
-              </SelectContent>
-            </Select>
-          </>
-        }
-      >
-        <Table>
-          <TableHeader>
-            <TableRow>
-              <TableHead className="ps-4">Atleta</TableHead>
-              <TableHead>Evento</TableHead>
-              <TableHead>Delegação</TableHead>
-              <TableHead>Status</TableHead>
-              <TableHead>Validação</TableHead>
-              <TableHead className="pe-4 text-right">Ações</TableHead>
-            </TableRow>
-          </TableHeader>
-          <TableBody>
-            {pagedData.length === 0 && (
-              <TableRow>
-                <TableCell
-                  colSpan={6}
-                  className="h-24 text-center text-muted-foreground"
-                >
-                  Nenhuma inscrição encontrada com os filtros atuais.
-                </TableCell>
-              </TableRow>
-            )}
-            {pagedData.map((enrollment) => {
-              const event = eventById.get(enrollment.event_id);
-              const competition = event ? competitionById.get(event.competition_id) : null;
-              const modality = event ? modalityById.get(event.modality_id) : null;
-              const sport = event ? sportByModalityId.get(event.modality_id) : null;
-              const athlete = athleteById.get(enrollment.athlete_id);
-              const delegation = delegationById.get(enrollment.delegation_id);
-              const competitionLocked = competition ? isEnrollmentLocked(competition) : false;
-
-              return (
-                <TableRow key={enrollment.id}>
-                  <TableCell className="ps-4">
-                    <div className="font-medium">
-                      {athlete?.name ?? `Atleta #${enrollment.athlete_id}`}
-                    </div>
-                    <div className="text-xs text-muted-foreground">
-                      {athlete?.code ?? `#${enrollment.athlete_id}`}
-                    </div>
-                  </TableCell>
-                  <TableCell>
-                    <div className="font-medium">
-                      {modality?.name ?? `Evento #${enrollment.event_id}`}
-                    </div>
-                    <div className="text-xs text-muted-foreground">
-                      {sport?.name ?? "Esporte"} ·{" "}
-                      {event
-                        ? `${formatDate(event.event_date)} · ${formatTime(event.start_time)}`
-                        : "Sem agenda"}
-                    </div>
-                    {competition ? (
-                      <div className="mt-1 text-xs text-muted-foreground">
-                        Competição {competition.number} · {competition.status}
-                      </div>
-                    ) : null}
-                  </TableCell>
-                  <TableCell>
-                    {delegation ? delegation.name : `Delegação #${enrollment.delegation_id}`}
-                  </TableCell>
-                  <TableCell>
-                    <EnrollmentStatusBadge status={enrollment.status} />
-                  </TableCell>
-                  <TableCell>
-                    {enrollment.validation_message ? (
-                      <span className="text-sm text-muted-foreground">
-                        {enrollment.validation_message}
-                      </span>
-                    ) : (
-                      <span className="text-sm text-muted-foreground">—</span>
-                    )}
-                  </TableCell>
-                  <TableCell className="pe-4 text-right">
-                    <div className="flex justify-end gap-2">
-                      {isAdmin && enrollment.status === "PENDING" ? (
-                        <>
-                          <Button
-                            size="sm"
-                            variant="outline"
-                            disabled={reviewMutation.isPending}
-                            onClick={() =>
-                              reviewMutation.mutate({
-                                enrollmentId: enrollment.id,
-                                payload: {
-                                  status: "APPROVED",
-                                  validation_message: "Aprovada manualmente pelo admin.",
-                                },
-                              })
-                            }
-                          >
-                            <Check className="size-4" />
-                          </Button>
-                          <Button
-                            size="sm"
-                            variant="destructive"
-                            disabled={reviewMutation.isPending}
-                            onClick={() =>
-                              reviewMutation.mutate({
-                                enrollmentId: enrollment.id,
-                                payload: {
-                                  status: "REJECTED",
-                                  validation_message: "Rejeitada em revisão administrativa.",
-                                },
-                              })
-                            }
-                          >
-                            <X className="size-4" />
-                          </Button>
-                        </>
-                      ) : null}
-
-                      {!isAdmin ? (
-                        <Button
-                          size="sm"
-                          variant="ghost"
-                          disabled={cancelMutation.isPending || competitionLocked}
-                          onClick={() => cancelMutation.mutate(enrollment.id)}
-                        >
-                          <Trash2 className="size-4" />
-                        </Button>
-                      ) : null}
-                    </div>
-                  </TableCell>
-                </TableRow>
-              );
-            })}
-          </TableBody>
-        </Table>
-      </TableLayout>
-
-      {!isAdmin ? (
-        <div className="rounded-2xl border border-dashed border-border/70 p-4 text-sm text-muted-foreground">
-          Cancelamento fica indisponível quando a competição está travada, ativa ou concluída.
-        </div>
-      ) : (
-        <div className="rounded-2xl border border-dashed border-border/70 p-4 text-sm text-muted-foreground">
-          Admin revisa inscrições pendentes e pode disparar geração automática para ambiente
-          demo.
-        </div>
-      )}
-    </div>
+              <Select
+                value={dir}
+                onValueChange={(value) =>
+                  void navigate({
+                    search: (prev) => ({
+                      ...prev,
+                      dir: value as "asc" | "desc",
+                    }),
+                  })
+                }
+              >
+                <SelectTrigger className="w-36">
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="asc">{m["enrollments.admin.sort.asc"]()}</SelectItem>
+                  <SelectItem value="desc">{m["enrollments.admin.sort.desc"]()}</SelectItem>
+                </SelectContent>
+              </Select>
+            </>
+          }
+        />
+      </div>
+    </PageAsideLayout>
   );
 }
 
-function StatTile({ label, value }: { label: string; value: string }) {
+function StatCard({ label, value }: { label: string; value: string }) {
   return (
     <div className="rounded-3xl border border-border/70 bg-background/80 p-4">
       <div className="text-xs uppercase tracking-[0.24em] text-muted-foreground">{label}</div>

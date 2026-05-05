@@ -1,6 +1,5 @@
 import { Toaster } from "@sports-system/ui/components/sonner";
 import type { QueryClient } from "@tanstack/react-query";
-import { ReactQueryDevtools } from "@tanstack/react-query-devtools";
 import {
   HeadContent,
   Outlet,
@@ -8,14 +7,16 @@ import {
   createRootRouteWithContext,
   useRouterState,
 } from "@tanstack/react-router";
-import { TanStackRouterDevtools } from "@tanstack/react-router-devtools";
 import { ThemeProvider } from "next-themes";
 
+import { getLocale } from "@/paraglide/runtime";
+import { m } from "@/paraglide/messages";
 import { DashboardViewportLoading } from "@/shared/components/layouts/dashboard-content-loading";
-import { DashboardLayout } from "@/shared/components/layouts/dashboard";
+import { SocialLayout } from "@/shared/components/layouts/social";
 import { ErrorScreen } from "@/shared/components/layouts/error-screen";
 import { NotFoundScreen } from "@/shared/components/layouts/not-found-screen";
 import { getSessionFn } from "@/features/auth/server/auth";
+import { useThemeAssets } from "@/shared/hooks/use-theme-assets";
 
 import appCss from "@/index.css?url";
 
@@ -38,7 +39,10 @@ export const Route = createRootRouteWithContext<RouterAppContext>()({
     meta: [
       { charSet: "utf-8" },
       { name: "viewport", content: "width=device-width, initial-scale=1" },
-      { title: "Sports System" },
+      { title: m.app_title() },
+      { name: "description", content: "Plataforma de gestão de ligas esportivas, competições e resultados." },
+      { property: "og:title", content: m.app_title() },
+      { property: "og:description", content: "Plataforma de gestão de ligas esportivas, competições e resultados." },
     ],
     links: [{ rel: "stylesheet", href: appCss }],
   }),
@@ -50,29 +54,29 @@ function RootDocument() {
   const { session } = Route.useRouteContext();
   const pathname = useRouterState({ select: (s) => s.location.pathname });
   const isAuthPage = AUTH_PATHS.some((p) => pathname.startsWith(p));
+  const { favicon } = useThemeAssets();
 
   return (
-    <html lang="pt-BR" suppressHydrationWarning>
+    <html lang={getLocale()} suppressHydrationWarning className="dark">
       <head>
         <HeadContent />
+        <link rel="icon" href={favicon} />
       </head>
       <body>
         <ThemeProvider
-          attribute="class"
-          defaultTheme="dark"
+          attribute="data-palette"
+          defaultTheme="blue"
           enableSystem={false}
-          themes={["light", "dark"]}
+          themes={["blue", "green", "orange", "dark"]}
         >
           {isAuthPage ? (
             <Outlet />
           ) : (
-            <DashboardLayout session={session ?? null}>
+            <SocialLayout session={session ?? null}>
               <Outlet />
-            </DashboardLayout>
+            </SocialLayout>
           )}
           <Toaster richColors />
-          <ReactQueryDevtools buttonPosition="bottom-right" />
-          <TanStackRouterDevtools position="bottom-left" />
           <Scripts />
         </ThemeProvider>
       </body>

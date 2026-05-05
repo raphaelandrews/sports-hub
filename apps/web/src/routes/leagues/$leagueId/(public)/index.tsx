@@ -23,10 +23,17 @@ import {
 
 import { leagueDetailQueryOptions } from "@/features/leagues/api/queries";
 import { useGenerateResumeMutation } from "@/features/narratives/api/queries";
+import { MarkdownRenderer } from "@/shared/components/ui/markdown-renderer";
+import { seoMeta } from "@/shared/lib/seo";
 
 export const Route = createFileRoute("/leagues/$leagueId/(public)/")({
   loader: ({ context: { queryClient }, params: { leagueId } }) =>
     queryClient.ensureQueryData(leagueDetailQueryOptions(leagueId)),
+  head: ({ loaderData }) =>
+    seoMeta({
+      title: loaderData?.name ?? "Liga",
+      description: loaderData?.description || loaderData?.slug || "",
+    }),
   component: LeaguePublicPage,
 });
 
@@ -145,9 +152,7 @@ function LeaguePublicPage() {
           </CardHeader>
           {resumeContent && (
             <CardContent>
-              <div className="prose prose-sm max-w-none dark:prose-invert">
-                <div dangerouslySetInnerHTML={{ __html: resumeContent.replace(/\n/g, "<br />") }} />
-              </div>
+              <MarkdownRenderer content={resumeContent} />
             </CardContent>
           )}
         </Card>

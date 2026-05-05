@@ -7,6 +7,7 @@ import {
 	useSidebar,
 } from "@sports-system/ui/components/sidebar";
 
+import * as m from "@/paraglide/messages";
 import {
 	buildMembershipNav,
 	buildPrimaryNav,
@@ -17,7 +18,8 @@ import type { Session } from "@/types/auth";
 import type { LeagueMemberResponse, LeagueResponse } from "@/types/leagues";
 
 import { NavGroup } from "./nav-group";
-import { Home, Trophy, SquareDotIcon, Shield, PlusCircle, Users } from "lucide-react";
+import { Home, Trophy, Shield, PlusCircle, Users } from "lucide-react";
+import { useThemeAssets } from "@/shared/hooks/use-theme-assets";
 import { Link } from "@tanstack/react-router";
 
 interface AppSidebarProps extends React.ComponentProps<typeof Sidebar> {
@@ -59,13 +61,13 @@ export function AppSidebar({
 
 	const mainItems = [
 		{
-			title: "Início",
+			title: m['sidebar.home'](),
 			url: "/",
 			icon: Home,
 			isActive: pathname === "/",
 		},
 		{
-			title: "Ligas",
+			title: m['sidebar.leagues'](),
 			url: "/leagues",
 			icon: Trophy,
 			isActive: pathname === "/leagues" || pathname.startsWith("/leagues?"),
@@ -73,19 +75,19 @@ export function AppSidebar({
 		...(session
 			? [
 					{
-						title: "Minhas ligas",
+						title: m['sidebar.myLeagues'](),
 						url: "/my-leagues",
 						icon: Shield,
 						isActive: pathname === "/my-leagues" || pathname.startsWith("/my-leagues?"),
 					},
 					{
-						title: "Minhas delegações",
+						title: m['sidebar.myDelegations'](),
 						url: "/my-delegations",
 						icon: Users,
 						isActive: pathname === "/my-delegations" || pathname.startsWith("/my-delegations?"),
 					},
 					{
-						title: "Criar liga",
+						title: m['sidebar.createLeague'](),
 						url: "/leagues/new",
 						icon: PlusCircle,
 						isActive: pathname === "/leagues/new",
@@ -131,12 +133,14 @@ export function AppSidebar({
 			})),
 	];
 
+	const { logo } = useThemeAssets();
+
 	return (
 		<Sidebar collapsible="icon" variant="inset" {...props}>
 			<SidebarHeader>
-				<Link to={"/"} className={`flex items-center w-full h-full px-2 ${state === "expanded" ? "justify-start" : ""}`}>
-					<SquareDotIcon size={20} />
-				</Link>
+			<Link to={"/"} className={`flex items-center w-full h-full px-2 ${state === "expanded" ? "justify-start" : ""}`}>
+				<img src={logo} alt="Logo" className="size-5" />
+			</Link>
 			</SidebarHeader>
 			<SidebarContent>
 				<NavGroup items={mainItems} />

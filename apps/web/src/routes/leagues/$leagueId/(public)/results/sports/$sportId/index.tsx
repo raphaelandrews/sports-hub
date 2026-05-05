@@ -13,6 +13,7 @@ import {
   EmptyTitle,
 } from "@sports-system/ui/components/empty";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@sports-system/ui/components/tabs";
+import type { LocalizedString } from "@inlang/paraglide-js";
 import { useSuspenseQueries, useSuspenseQuery } from "@tanstack/react-query";
 import { createFileRoute } from "@tanstack/react-router";
 
@@ -23,6 +24,9 @@ import {
   sportMedalBoardQueryOptions,
 } from "@/features/results/api/queries";
 import { sportDetailQueryOptions } from "@/features/sports/api/queries";
+import * as m from "@/paraglide/messages";
+import { PageSingleLayout } from "@/shared/components/layouts/page-single-layout";
+import { seoMeta } from "@/shared/lib/seo";
 
 export const Route = createFileRoute("/leagues/$leagueId/(public)/results/sports/$sportId/")({
   loader: async ({ context: { queryClient }, params: { leagueId, sportId } }) => {
@@ -36,7 +40,14 @@ export const Route = createFileRoute("/leagues/$leagueId/(public)/results/sports
         queryClient.ensureQueryData(modalityStandingsQueryOptions(numericLeagueId, modality.id)),
       ),
     ]);
+
+    return sport;
   },
+  head: ({ loaderData }) =>
+    seoMeta({
+      title: loaderData?.name ? `${loaderData.name} - Resultados` : "Resultados",
+      description: "Resultados e classificação por esporte.",
+    }),
   component: SportResultsPage,
 });
 
@@ -57,30 +68,31 @@ function SportResultsPage() {
   const defaultTab = sport.modalities[0]?.id ? String(sport.modalities[0].id) : "overview";
 
   return (
-    <div className="container mx-auto max-w-6xl space-y-8 px-4 py-8">
+    <PageSingleLayout title={sport.name as LocalizedString} description={sport.description ? (sport.description as LocalizedString) : undefined}>
+    <div className="space-y-8">
       <section className="grid gap-4 lg:grid-cols-[1.25fr_0.75fr]">
-        <Card className="border border-border/70 bg-[radial-gradient(circle_at_top_left,hsl(var(--primary)/0.16),transparent_42%),linear-gradient(180deg,hsl(var(--card)),hsl(var(--muted)/0.18))]">
+        <Card className="bg-[radial-gradient(circle_at_top_left,hsl(var(--primary)/0.16),transparent_42%),linear-gradient(180deg,hsl(var(--card)),hsl(var(--muted)/0.18))]">
           <CardHeader className="gap-3">
             <div className="flex flex-wrap items-center gap-2">
-              <Badge variant="outline">Resultados por esporte</Badge>
+              <Badge variant="outline">{m["results.sport.badge"]()}</Badge>
               <Badge variant="secondary">{sport.sport_type}</Badge>
             </div>
             <CardTitle className="text-3xl">{sport.name}</CardTitle>
             {sport.description ? <CardDescription>{sport.description}</CardDescription> : null}
           </CardHeader>
           <CardContent className="grid gap-3 md:grid-cols-3">
-            <QuickPill label="Modalidades" value={String(sport.modalities.length)} />
-            <QuickPill label="Delegações pontuando" value={String(medalBoard.length)} />
+            <QuickPill label={m["results.sport.stat.modalities"]()} value={String(sport.modalities.length)} />
+            <QuickPill label={m["results.sport.stat.scoring"]()} value={String(medalBoard.length)} />
             <QuickPill
-              label="Medalhas no esporte"
+              label={m["results.sport.stat.medals"]()}
               value={String(medalBoard.reduce((sum, entry) => sum + entry.total, 0))}
             />
           </CardContent>
         </Card>
 
-        <Card className="border border-border/70">
+        <Card>
           <CardHeader>
-            <CardTitle>Quadro do esporte</CardTitle>
+            <CardTitle>{m["results.sport.card.title"]()}</CardTitle>
           </CardHeader>
           <CardContent>
             <MedalBoard entries={medalBoard} compact />
@@ -88,20 +100,20 @@ function SportResultsPage() {
         </Card>
       </section>
 
-      <Card className="border border-border/70">
+      <Card>
         <CardHeader>
-          <CardTitle>Classificações por modalidade</CardTitle>
+          <CardTitle>{m["results.sport.section.standings"]()}</CardTitle>
           <CardDescription>
-            Cada aba mostra a classificação já registrada para uma modalidade do esporte.
+            {m["results.sport.section.standings"]()}
           </CardDescription>
         </CardHeader>
         <CardContent>
           {sport.modalities.length === 0 ? (
             <Empty>
               <EmptyHeader>
-                <EmptyTitle>Nenhuma modalidade cadastrada</EmptyTitle>
+                <EmptyTitle>{m["results.sport.empty.modalities"]()}</EmptyTitle>
                 <EmptyDescription>
-                  Este esporte ainda não possui modalidades configuradas.
+                  m["results.sport.empty.modalities"]()
                 </EmptyDescription>
               </EmptyHeader>
             </Empty>
@@ -130,6 +142,7 @@ function SportResultsPage() {
         </CardContent>
       </Card>
     </div>
+    </PageSingleLayout>
   );
 }
 

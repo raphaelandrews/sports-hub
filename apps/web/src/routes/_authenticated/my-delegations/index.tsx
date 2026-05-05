@@ -1,17 +1,13 @@
-import { useState } from "react";
+import { useMemo, useState } from "react";
 import { useMutation, useQueryClient, useSuspenseQuery } from "@tanstack/react-query";
 import { Link, createFileRoute } from "@tanstack/react-router";
 import { toast } from "sonner";
+import type { ColumnDef } from "@tanstack/react-table";
 
+import * as m from "@/paraglide/messages";
 import { Badge } from "@sports-system/ui/components/badge";
 import { Button, buttonVariants } from "@sports-system/ui/components/button";
-import {
-  Card,
-  CardContent,
-  CardDescription,
-  CardHeader,
-  CardTitle,
-} from "@sports-system/ui/components/card";
+import { SideCard } from "@/shared/components/ui/side-card";
 import {
   Dialog,
   DialogContent,
@@ -33,21 +29,16 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@sports-system/ui/components/select";
-import {
-  Table,
-  TableBody,
-  TableCell,
-  TableHead,
-  TableHeader,
-  TableRow,
-} from "@sports-system/ui/components/table";
 import { cn } from "@sports-system/ui/lib/utils";
-import { MoreHorizontal, Pencil, ExternalLink, Hand, Sparkles, ChevronLeft, ChevronRight, Bot, Send } from "lucide-react";
+import { MoreHorizontal, Pencil, ExternalLink, Hand, Sparkles, Bot, Send } from "lucide-react";
+import { PageAsideLayout } from "@/shared/components/layouts/page-aside-layout";
+import { TableLayout } from "@/shared/components/ui/table-layout";
 import { myDelegationsQueryOptions } from "@/features/delegations/api/queries";
 import { leagueListQueryOptions } from "@/features/leagues/api/queries";
 import { client, unwrap, ApiError } from "@/shared/lib/api";
 import { queryKeys } from "@/features/keys";
 import type { DelegationResponse } from "@/types/delegations";
+import { Title } from "@/shared/components/ui/title";
 
 export const Route = createFileRoute("/_authenticated/my-delegations/")({
   loader: ({ context: { queryClient } }) =>
@@ -59,10 +50,10 @@ export const Route = createFileRoute("/_authenticated/my-delegations/")({
 });
 
 const statusLabel: Record<string, string> = {
-  INDEPENDENT: "Independente",
-  PENDING: "Pendente",
-  APPROVED: "Aprovada",
-  REJECTED: "Rejeitada",
+  INDEPENDENT: m['myDelegations.stat.independent'](),
+  PENDING: m['common.status.pending'](),
+  APPROVED: m['common.status.approved'](),
+  REJECTED: m['common.status.rejected'](),
 };
 
 const statusVariant: Record<string, string> = {
@@ -72,55 +63,167 @@ const statusVariant: Record<string, string> = {
   REJECTED: "border-destructive/30 text-destructive",
 };
 
-const ITEMS_PER_PAGE = 10;
-
 function MyDelegationsPage() {
   const { data: delegations } = useSuspenseQuery(myDelegationsQueryOptions());
   const [dialogOpen, setDialogOpen] = useState(false);
   const [aiDialogOpen, setAiDialogOpen] = useState(false);
   const [selectedDelegation, setSelectedDelegation] = useState<DelegationResponse | null>(null);
-  const [page, setPage] = useState(1);
+  const [searchQuery, setSearchQuery] = useState("");
 
-  const totalPages = Math.ceil(delegations.length / ITEMS_PER_PAGE);
-  const startIndex = (page - 1) * ITEMS_PER_PAGE;
-  const paginatedDelegations = delegations.slice(startIndex, startIndex + ITEMS_PER_PAGE);
+  const filteredData = useMemo(() => {
+    let data = [...delegations];
+    if (searchQuery.trim()) {
+      const lower = searchQuery.toLowerCase();
+      data = data.filter(
+        (d) =>
+          d.name.toLowerCase().includes(lower) ||
+          d.code.toLowerCase().includes(lower),
+      );
+    }
+    return data;
+  }, [delegations, searchQuery]);
+
+  const columns: ColumnDef<DelegationResponse>[] = [
+    {
+      header: m['myDelegations.table.name'](),
+      accessorKey: "name",
+      meta: { className: "ps-4" },
+      cell: ({ row }) => (
+        <div className="flex items-center gap-3">
+          {row.original.flag_url ? (
+            <img
+              src={row.original.flag_url}
+              alt={row.original.name}
+              className="h-8 w-8 rounded-md object-cover"
+            />
+          ) : (
+            <div className="flex h-8 w-8 items-center justify-center rounded-md bg-muted text-muted-foreground text-sm font-semibold">
+              {row.original.name.charAt(0)}
+            </div>
+          )}
+          {row.original.league_id ? (
+            <Link
+              to="/leagues/$leagueId/delegations/$delegationId"
+              params={{ leagueId: String(row.original.league_id), delegationId: String(row.original.id) }}
+              className="font-medium hover:underline"
+            >
+              {row.original.name}
+            </Link>
+          ) : (
+            <Link
+              to="/delegations/$delegationId"
+              params={{ delegationId: String(row.original.id) }}
+              className="font-medium hover:underline"
+            >
+              {row.original.name}
+            </Link>
+          )}
+        </div>
+      ),
+    },
+    {
+      header: m['myDelegations.table.code'](),
+      accessorKey: "code",
+      meta: { className: "w-28" },
+      cell: ({ row }) => (
+        <span className="font-mono text-muted-foreground text-xs">
+          {row.original.code}
+        </span>
+      ),
+    },
+    {
+      header: m['myDelegations.table.status'](),
+      accessorKey: "status",
+      meta: { className: "w-32" },
+      cell: ({ row }) => (
+        <Badge
+          variant="outline"
+          className={cn("font-mono text-[10px]", statusVariant[row.original.status])}
+        >
+          {statusLabel[row.original.status] ?? row.original.status}
+        </Badge>
+      ),
+    },
+    {
+      header: m['myDelegations.table.created'](),
+      accessorKey: "created_at",
+      meta: { className: "w-36" },
+      cell: ({ row }) => (
+        <span className="text-muted-foreground text-xs">
+          {new Date(row.original.created_at).toLocaleDateString("pt-BR")}
+        </span>
+      ),
+    },
+    {
+      header: m['myDelegations.table.actions'](),
+      accessorKey: "id",
+      meta: { className: "pe-4 w-24 text-right" },
+      cell: ({ row }) => (
+        <DropdownMenu>
+          <DropdownMenuTrigger
+            render={
+              <Button variant="ghost" size="sm">
+                <MoreHorizontal className="size-4" />
+              </Button>
+            }
+          />
+          <DropdownMenuContent align="end" className="w-full">
+            <DropdownMenuItem>
+              <Link
+                to="/my-delegations/$delegationId/edit"
+                params={{ delegationId: String(row.original.id) }}
+                className="flex items-center gap-2 w-full"
+              >
+                <Pencil className="size-3.5" />
+                {m['myDelegations.action.edit']()}
+              </Link>
+            </DropdownMenuItem>
+            <DropdownMenuItem
+              onClick={() => {
+                setSelectedDelegation(row.original);
+                setDialogOpen(true);
+              }}
+            >
+              <span className="flex items-center gap-2 w-full whitespace-nowrap">
+                <Hand className="size-3.5" />
+                {m['myDelegations.action.request']()}
+              </span>
+            </DropdownMenuItem>
+            {row.original.league_id ? (
+              <DropdownMenuItem>
+                <Link
+                  to="/leagues/$leagueId/delegations/$delegationId"
+                  params={{
+                    leagueId: String(row.original.league_id),
+                    delegationId: String(row.original.id),
+                  }}
+                  className="flex items-center gap-2 w-full"
+                >
+                  <ExternalLink className="size-3.5" />
+                  {m['myDelegations.action.view']()}
+                </Link>
+              </DropdownMenuItem>
+            ) : null}
+          </DropdownMenuContent>
+        </DropdownMenu>
+      ),
+    },
+  ];
 
   return (
-    <div className="space-y-6">
-      <section className="grid gap-4 xl:grid-cols-[1.45fr_1fr]">
-        <Card className="border border-border/70 bg-[radial-gradient(circle_at_top_left,hsl(var(--primary)/0.18),transparent_38%),linear-gradient(165deg,hsl(var(--card)),hsl(var(--card)),hsl(var(--muted)/0.2))]">
-          <CardHeader className="gap-3">
-            <Badge variant="outline">Delegações</Badge>
-            <CardTitle className="text-2xl">Minhas delegações</CardTitle>
-            <CardDescription className="max-w-2xl">
-              Gerencie suas delegações independentes e acompanhe o status de participação em ligas.
-            </CardDescription>
-          </CardHeader>
-          <CardContent className="grid gap-4 md:grid-cols-3">
-            <StatCard label="Total" value={String(delegations.length)} />
-            <StatCard
-              label="Independentes"
-              value={String(delegations.filter((d) => d.status === "INDEPENDENT").length)}
-            />
-            <StatCard
-              label="Em ligas"
-              value={String(delegations.filter((d) => d.league_id != null).length)}
-            />
-          </CardContent>
-        </Card>
-
-        <Card className="border border-border/70">
-          <CardHeader>
-            <CardTitle>Controles</CardTitle>
-            <CardDescription>Crie e gerencie suas delegações.</CardDescription>
-          </CardHeader>
-          <CardContent className="space-y-3">
+    <PageAsideLayout
+      sidebar={
+        <SideCard title={m['myDelegations.card.controls.title']()}>
+          <p className="text-sm text-muted-foreground mb-4">
+            {m['myDelegations.card.controls.desc']()}
+          </p>
+          <div className="space-y-3">
             <Link
               to="/delegations/new"
               className={cn(buttonVariants({ variant: "default" }), "w-full justify-start")}
             >
               <Sparkles className="mr-2 size-4" />
-              Nova delegação
+              {m['delegation.new.title']()}
             </Link>
             <Button
               variant="outline"
@@ -128,176 +231,37 @@ function MyDelegationsPage() {
               onClick={() => setAiDialogOpen(true)}
             >
               <Bot className="mr-2 size-4" />
-              Criar com IA
+              {m['common.actions.create']()}
             </Button>
-          </CardContent>
-        </Card>
-      </section>
-
-      <div className="mx-auto max-w-6xl">
-        <header className="mb-4 flex items-end justify-between gap-4">
-          <div>
-            <h1 className="text-xl font-semibold">Lista de delegações</h1>
-            <p className="text-muted-foreground text-sm">
-              {delegations.length} delegação{delegations.length !== 1 ? "es" : ""}
-            </p>
           </div>
-        </header>
+        </SideCard>
+      }
+    >
+      <Title title={m['myDelegations.card.title']()} description={m['myDelegations.card.controls.desc']()} />
 
-        <div className="rounded-xl border bg-card shadow-xs/5">
-          <Table>
-            <TableHeader>
-              <TableRow>
-                <TableHead className="ps-4">Nome</TableHead>
-                <TableHead className="w-28">Código</TableHead>
-                <TableHead className="w-32">Status</TableHead>
-                <TableHead className="w-36">Criada em</TableHead>
-                <TableHead className="pe-4 w-24 text-right">Ações</TableHead>
-              </TableRow>
-            </TableHeader>
-            <TableBody>
-              {paginatedDelegations.length === 0 && (
-                <TableRow>
-                  <TableCell
-                    colSpan={5}
-                    className="h-24 text-center text-muted-foreground"
-                  >
-                    Nenhuma delegação encontrada.
-                  </TableCell>
-                </TableRow>
-              )}
-              {paginatedDelegations.map((delegation: DelegationResponse) => (
-                <TableRow key={delegation.id}>
-                  <TableCell className="ps-4">
-                    <div className="flex items-center gap-3">
-                      {delegation.flag_url ? (
-                        <img
-                          src={delegation.flag_url}
-                          alt={delegation.name}
-                          className="h-8 w-8 rounded-md object-cover"
-                        />
-                      ) : (
-                        <div className="flex h-8 w-8 items-center justify-center rounded-md bg-primary text-primary-foreground text-sm font-bold">
-                          {delegation.name.charAt(0)}
-                        </div>
-                      )}
-                      {delegation.league_id ? (
-                        <Link
-                          to="/leagues/$leagueId/delegations/$delegationId"
-                          params={{ leagueId: String(delegation.league_id), delegationId: String(delegation.id) }}
-                          className="font-medium hover:underline"
-                        >
-                          {delegation.name}
-                        </Link>
-                      ) : (
-                        <Link
-                          to="/delegations/$delegationId"
-                          params={{ delegationId: String(delegation.id) }}
-                          className="font-medium hover:underline"
-                        >
-                          {delegation.name}
-                        </Link>
-                      )}
-                    </div>
-                  </TableCell>
-                  <TableCell>
-                    <span className="font-mono text-muted-foreground text-xs">
-                      {delegation.code}
-                    </span>
-                  </TableCell>
-                  <TableCell>
-                    <Badge
-                      variant="outline"
-                      className={cn("font-mono text-[10px]", statusVariant[delegation.status])}
-                    >
-                      {statusLabel[delegation.status] ?? delegation.status}
-                    </Badge>
-                  </TableCell>
-                  <TableCell>
-                    <span className="text-muted-foreground text-xs">
-                      {new Date(delegation.created_at).toLocaleDateString("pt-BR")}
-                    </span>
-                  </TableCell>
-                  <TableCell className="pe-4 text-right">
-                    <DropdownMenu>
-                      <DropdownMenuTrigger
-                        render={
-                          <Button variant="ghost" size="sm">
-                            <MoreHorizontal className="size-4" />
-                          </Button>
-                        }
-                      />
-                      <DropdownMenuContent align="end" className="w-full">
-                        <DropdownMenuItem>
-                          <Link
-                            to="/my-delegations/$delegationId/edit"
-                            params={{ delegationId: String(delegation.id) }}
-                            className="flex items-center gap-2 w-full"
-                          >
-                            <Pencil className="size-3.5" />
-                            Editar
-                          </Link>
-                        </DropdownMenuItem>
-                        <DropdownMenuItem
-                          onClick={() => {
-                            setSelectedDelegation(delegation);
-                            setDialogOpen(true);
-                          }}
-                        >
-                          <span className="flex items-center gap-2 w-full whitespace-nowrap">
-                            <Hand className="size-3.5" />
-                            Solicitar participação
-                          </span>
-                        </DropdownMenuItem>
-                        {delegation.league_id ? (
-                          <DropdownMenuItem>
-                            <Link
-                              to="/leagues/$leagueId/delegations/$delegationId"
-                              params={{
-                                leagueId: String(delegation.league_id),
-                                delegationId: String(delegation.id),
-                              }}
-                              className="flex items-center gap-2 w-full"
-                            >
-                              <ExternalLink className="size-3.5" />
-                              Ver na liga
-                            </Link>
-                          </DropdownMenuItem>
-                        ) : null}
-                      </DropdownMenuContent>
-                    </DropdownMenu>
-                  </TableCell>
-                </TableRow>
-              ))}
-            </TableBody>
-          </Table>
+      <div className="w-full flex justify-center mt-6">
+        <div className="flex gap-4">
+          <StatCard label={m['myDelegations.stat.total']()} value={String(delegations.length)} />
+          <StatCard
+            label={m['myDelegations.stat.independent']()}
+            value={String(delegations.filter((d) => d.status === "INDEPENDENT").length)}
+          />
+          <StatCard
+            label={m['myDelegations.stat.inLeague']()}
+            value={String(delegations.filter((d) => d.league_id != null).length)}
+          />
         </div>
+      </div>
 
-        {totalPages > 1 && (
-          <div className="mt-4 flex items-center justify-between">
-            <p className="text-sm text-muted-foreground">
-              Página {page} de {totalPages} ({delegations.length} total)
-            </p>
-            <div className="flex items-center gap-2">
-              <Button
-                variant="outline"
-                size="sm"
-                onClick={() => setPage((p) => Math.max(1, p - 1))}
-                disabled={page === 1}
-              >
-                <ChevronLeft className="size-4" />
-              </Button>
-              <Button
-                variant="outline"
-                size="sm"
-                onClick={() => setPage((p) => Math.min(totalPages, p + 1))}
-                disabled={page === totalPages}
-              >
-                <ChevronRight className="size-4" />
-              </Button>
-            </div>
-          </div>
-        )}
+      <div className="w-full mt-6">
+        <h2 className="mb-3 text-sm font-semibold uppercase tracking-wide text-placeholder">{m['myDelegations.listHeading']()}</h2>
+
+        <TableLayout
+          columns={columns}
+          data={filteredData}
+          searchQuery={searchQuery}
+          onSearchChange={(value) => setSearchQuery(value)}
+        />
       </div>
 
       {selectedDelegation && (
@@ -309,15 +273,15 @@ function MyDelegationsPage() {
       )}
 
       <AIGenerateDialog open={aiDialogOpen} onOpenChange={setAiDialogOpen} />
-    </div>
+    </PageAsideLayout>
   );
 }
 
 function StatCard({ label, value }: { label: string; value: string }) {
   return (
-    <div className="rounded-3xl border border-border/70 bg-background/75 p-4">
-      <div className="text-xs uppercase tracking-[0.2em] text-muted-foreground">{label}</div>
-      <div className="mt-2 text-lg font-semibold">{value}</div>
+    <div className="flex flex-col items-center gap-1 w-25 rounded-lg bg-input px-3 py-2 min-w-11">
+      <div className="text-[9px] uppercase tracking-widest text-placeholder leading-none">{label}</div>
+      <div className="text-xl font-bold tabular-nums text-foreground leading-none">{value}</div>
     </div>
   );
 }
@@ -345,12 +309,12 @@ function RequestParticipationDialog({
       ),
     onSuccess: async () => {
       await queryClient.invalidateQueries({ queryKey: queryKeys.delegations.my() });
-      toast.success("Solicitação enviada com sucesso.");
+      toast.success(m['common.actions.create']());
       onOpenChange(false);
       setSelectedLeagueId("");
     },
     onError: (error) => {
-      toast.error(error instanceof ApiError ? error.message : "Falha ao enviar solicitação.");
+      toast.error(error instanceof ApiError ? error.message : m['delegation.form.alert.error']());
     },
   });
 
@@ -358,9 +322,9 @@ function RequestParticipationDialog({
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent>
         <DialogHeader>
-          <DialogTitle>Solicitar participação</DialogTitle>
+          <DialogTitle>{m['myDelegations.dialog.title']()}</DialogTitle>
           <DialogDescription>
-            Escolha a liga onde deseja participar com{" "}
+            {m['myDelegations.card.controls.desc']()}{" "}
             <strong>{delegation.name}</strong>.
           </DialogDescription>
         </DialogHeader>
@@ -368,7 +332,7 @@ function RequestParticipationDialog({
         <div className="space-y-4">
           <Select value={selectedLeagueId} onValueChange={(value) => setSelectedLeagueId(value ?? "")}>
             <SelectTrigger>
-              <SelectValue placeholder="Selecione uma liga" />
+              <SelectValue placeholder={m['myDelegations.selectLeague']()} />
             </SelectTrigger>
             <SelectContent>
               {leagues.map((league) => (
@@ -382,13 +346,13 @@ function RequestParticipationDialog({
 
         <DialogFooter>
           <Button variant="outline" onClick={() => onOpenChange(false)}>
-            Cancelar
+            {m['common.actions.cancel']()}
           </Button>
           <Button
             disabled={!selectedLeagueId || mutation.isPending}
             onClick={() => mutation.mutate(Number(selectedLeagueId))}
           >
-            {mutation.isPending ? "Enviando..." : "Solicitar"}
+            {mutation.isPending ? m['competition.form.submitting']() : m['common.actions.submit']()}
           </Button>
         </DialogFooter>
       </DialogContent>
@@ -409,8 +373,7 @@ function AIGenerateDialog({
   >([
     {
       role: "assistant",
-      content:
-        "Olá! Sou seu assistente de criação de delegações. Me diga quantas delegações você quer e o tema. Por exemplo: \"Crie 5 delegações com nomes de times de basquete europeus\" ou \"4 delegações baseadas em bandas dos anos 2000\".",
+      content: m['myDelegations.card.controls.desc'](),
     },
   ]);
   const [input, setInput] = useState("");
@@ -429,17 +392,17 @@ function AIGenerateDialog({
         ...prev,
         {
           role: "assistant",
-          content: `Pronto! Criei ${created.length} delegações: ${names}.`,
+          content: `${m['common.actions.create']()}: ${names}.`,
         },
       ]);
       toast.success(
         created.length === 1
-          ? "1 delegação criada com IA."
-          : `${created.length} delegações criadas com IA.`,
+          ? m['common.actions.create']()
+          : `${created.length} ${m['common.actions.create']()}`,
       );
     },
     onError: (error) => {
-      const msg = error instanceof ApiError ? error.message : "Falha ao gerar delegações.";
+      const msg = error instanceof ApiError ? error.message : m['delegation.form.alert.error']();
       setMessages((prev) => [...prev, { role: "assistant", content: `Erro: ${msg}` }]);
       toast.error(msg);
     },
@@ -459,10 +422,10 @@ function AIGenerateDialog({
         <DialogHeader>
           <DialogTitle className="flex items-center gap-2">
             <Bot className="size-5" />
-            Criar delegações com IA
+            {m['common.actions.create']()}
           </DialogTitle>
           <DialogDescription>
-            Descreva o tema e quantidade. Ex: "5 delegações com nomes de times europeus"
+            {m['myDelegations.requestPlaceholder']()}
           </DialogDescription>
         </DialogHeader>
 
@@ -484,7 +447,7 @@ function AIGenerateDialog({
             {mutation.isPending && (
               <div className="mr-auto flex items-center gap-2 rounded-xl border bg-background px-3 py-2 text-sm text-muted-foreground">
                 <div className="size-4 animate-spin rounded-full border-2 border-primary border-t-transparent" />
-                Criando delegações...
+                {m['competition.form.submitting']()}
               </div>
             )}
           </div>
@@ -495,7 +458,7 @@ function AIGenerateDialog({
               value={input}
               onChange={(e) => setInput(e.target.value)}
               onKeyDown={(e) => e.key === "Enter" && handleSend()}
-              placeholder="Descreva as delegações que deseja..."
+              placeholder={m['myDelegations.requestPlaceholder']()}
               className="flex-1 rounded-lg border bg-background px-3 py-2 text-sm outline-none focus:ring-2 focus:ring-primary/20"
               disabled={mutation.isPending}
             />

@@ -1,29 +1,20 @@
-import { useMemo } from "react";
+import { useMemo, useState } from "react";
 import { useSuspenseQuery } from "@tanstack/react-query";
 import { Link, createFileRoute } from "@tanstack/react-router";
+import type { ColumnDef } from "@tanstack/react-table";
 import { Badge } from "@sports-system/ui/components/badge";
 import { buttonVariants } from "@sports-system/ui/components/button";
-import {
-  Card,
-  CardContent,
-  CardDescription,
-  CardHeader,
-  CardTitle,
-} from "@sports-system/ui/components/card";
-import {
-  Table,
-  TableBody,
-  TableCell,
-  TableHead,
-  TableHeader,
-  TableRow,
-} from "@sports-system/ui/components/table";
 import { cn } from "@sports-system/ui/lib/utils";
 
+import * as m from "@/paraglide/messages";
 import { formatDate } from "@/shared/lib/date";
 import { sportListQueryOptions } from "@/features/sports/api/queries";
 import { competitionListQueryOptions } from "@/features/competitions/api/queries";
-import type { CompetitionStatus } from "@/types/competitions";
+import { TableLayout } from "@/shared/components/ui/table-layout";
+import { Title } from "@/shared/components/ui/title";
+import { SideCard } from "@/shared/components/ui/side-card";
+import { PageAsideLayout } from "@/shared/components/layouts/page-aside-layout";
+import type { CompetitionResponse, CompetitionStatus } from "@/types/competitions";
 
 export const Route = createFileRoute(
   "/leagues/$leagueId/_authenticated/dashboard/_league_admin/competitions/",
@@ -37,11 +28,11 @@ export const Route = createFileRoute(
 });
 
 const statusLabel: Record<CompetitionStatus, string> = {
-  DRAFT: "Rascunho",
-  SCHEDULED: "Agendada",
-  LOCKED: "Travada",
-  ACTIVE: "Ativa",
-  COMPLETED: "Encerrada",
+  DRAFT: m['common.status.draft'](),
+  SCHEDULED: m['common.status.scheduled'](),
+  LOCKED: m['common.status.locked'](),
+  ACTIVE: m['common.status.active'](),
+  COMPLETED: m['common.status.completed'](),
 };
 
 function AdminCompetitionsPage() {
@@ -49,61 +40,89 @@ function AdminCompetitionsPage() {
   const { data: competitions } = useSuspenseQuery(competitionListQueryOptions(Number(leagueId)));
   const { data: sports } = useSuspenseQuery(sportListQueryOptions());
 
+  const [searchQuery, setSearchQuery] = useState("");
+
   const sportNamesById = useMemo(
     () => new Map(sports.data.map((sport) => [sport.id, sport.name])),
     [sports.data],
   );
   const transferInfo = getTransferWindowInfo();
 
-  return (
-    <div className="space-y-6">
-      <section className="grid gap-4 xl:grid-cols-[1.6fr_1fr]">
-        <Card className="border border-border/70 bg-[radial-gradient(circle_at_top_left,hsl(var(--primary)/0.16),transparent_42%),linear-gradient(160deg,hsl(var(--card)),hsl(var(--card)),hsl(var(--muted)/0.22))]">
-          <CardHeader className="gap-3">
-            <Badge variant="outline" className="w-fit">
-              Competições
-            </Badge>
-            <CardTitle className="text-2xl">Competições</CardTitle>
-            <CardDescription className="max-w-2xl">
-              Gerencie o ciclo de competição, acompanhe status visual e entre no detalhe para
-              acionar transições.
-            </CardDescription>
-          </CardHeader>
-          <CardContent className="grid gap-4 md:grid-cols-3">
-            <MetricCard
-              label="Total"
-              value={String(competitions.data.length)}
-              hint="Competições cadastradas"
-            />
-            <MetricCard
-              label="Ativas"
-              value={String(competitions.data.filter((c) => c.status === "ACTIVE").length)}
-              hint="Competição em andamento"
-            />
-            <MetricCard
-              label="Travadas+"
-              value={String(
-                competitions.data.filter((c) =>
-                  ["LOCKED", "ACTIVE", "COMPLETED"].includes(c.status),
-                ).length,
-              )}
-              hint="Fora da edição livre"
-            />
-          </CardContent>
-        </Card>
+  const filteredData = useMemo(() => {
+    if (!searchQuery.trim()) return competitions.data;
+    const lower = searchQuery.toLowerCase();
+    return competitions.data.filter((c) =>
+      String(c.number).includes(lower) ||
+      statusLabel[c.status].toLowerCase().includes(lower) ||
+      formatDate(c.start_date).toLowerCase().includes(lower),
+    );
+  }, [competitions.data, searchQuery]);
 
-        <Card className="border border-border/70">
-          <CardHeader>
-            <CardTitle>Janela de transferência</CardTitle>
-            <CardDescription>Regras calculadas em UTC-3 / America_Sao_Paulo.</CardDescription>
-          </CardHeader>
-          <CardContent className="space-y-3">
-            <Badge variant={transferInfo.open ? "secondary" : "outline"}>
-              {transferInfo.open ? "Janela aberta" : "Janela fechada"}
+  const columns: ColumnDef<CompetitionResponse>[] = [
+    {
+      header: m['competitions.admin.table.competition'](),
+      accessorKey: "number",
+      cell: ({ row }) => <span className="font-medium">#{row.original.number}</span>,
+    },
+    {
+      header: m['competitions.admin.table.period'](),
+      accessorKey: "start_date",
+      cell: ({ row }) =>
+        `${formatDate(row.original.start_date)} até ${formatDate(row.original.end_date)}`,
+    },
+    {
+      header: m['competitions.admin.table.status'](),
+      accessorKey: "status",
+      cell: ({ row }) => (
+        <Badge variant={row.original.status === "ACTIVE" ? "secondary" : "outline"}>
+          {statusLabel[row.original.status]}
+        </Badge>
+      ),
+    },
+    {
+      header: m['competitions.admin.table.sports'](),
+      accessorKey: "sport_focus",
+      cell: ({ row }) => (
+        <span className="text-sm text-muted-foreground">
+          {row.original.sport_focus.length > 0
+            ? row.original.sport_focus
+                .filter((sportId): sportId is number => typeof sportId === "number")
+                .map((sportId) => sportNamesById.get(sportId) ?? `#${sportId}`)
+                .join(", ")
+            : "Sem foco definido"}
+        </span>
+      ),
+    },
+    {
+      header: m['competitions.admin.table.actions'](),
+      accessorKey: "id",
+      meta: { className: "text-right" },
+      cell: ({ row }) => (
+        <Link
+          to="/leagues/$leagueId/dashboard/competitions/$competitionId"
+          params={{ leagueId, competitionId: String(row.original.id) }}
+          className={cn(buttonVariants({ variant: "outline" }))}
+        >
+          {m['common.actions.open']()}
+        </Link>
+      ),
+    },
+  ];
+
+  return (
+    <PageAsideLayout
+      sidebar={
+        <SideCard title={m['competitions.admin.card.transfer.title']()}>
+          <p className="text-sm text-muted-foreground mb-4">
+            {m['competitions.admin.card.transfer.desc']()}
+          </p>
+          <div className="space-y-3">
+            <Badge variant={transferInfo.open ? "secondary" : "outline"} className="w-full justify-center">
+              {transferInfo.open ? m['chief.shell.badge.open']() : m['chief.shell.badge.closed']()}
             </Badge>
-            <p className="text-sm text-muted-foreground">
+            <p className="text-xs text-muted-foreground">
               {transferInfo.open
-                ? "Transferências liberadas hoje."
+                ? m['transferWindow.openMessage']()
                 : `Próxima janela: ${transferInfo.nextLabel}.`}
             </p>
             <Link
@@ -111,75 +130,39 @@ function AdminCompetitionsPage() {
               params={{ leagueId }}
               className={cn(buttonVariants({ variant: "default" }), "w-full justify-start")}
             >
-              Nova competição
+              {m['competition.form.title']()}
             </Link>
-          </CardContent>
-        </Card>
-      </section>
+          </div>
+        </SideCard>
+      }
+    >
+      <Title title={m['competitions.admin.title']()} description={m['competitions.admin.card.transfer.desc']()} />
 
-      <Card className="border border-border/70">
-        <CardHeader>
-          <CardTitle>Lista das competições</CardTitle>
-          <CardDescription>
-            Veja período, status e esportes foco antes de abrir o detalhe.
-          </CardDescription>
-        </CardHeader>
-        <CardContent>
-          <Table>
-            <TableHeader>
-              <TableRow>
-                <TableHead>Competição</TableHead>
-                <TableHead>Período</TableHead>
-                <TableHead>Status</TableHead>
-                <TableHead>Esportes foco</TableHead>
-                <TableHead className="text-right">Ações</TableHead>
-              </TableRow>
-            </TableHeader>
-            <TableBody>
-              {competitions.data.map((competition) => (
-                <TableRow key={competition.id}>
-                  <TableCell className="font-medium">#{competition.number}</TableCell>
-                  <TableCell>
-                    {formatDate(competition.start_date)} até {formatDate(competition.end_date)}
-                  </TableCell>
-                  <TableCell>
-                    <Badge variant={competition.status === "ACTIVE" ? "secondary" : "outline"}>
-                      {statusLabel[competition.status]}
-                    </Badge>
-                  </TableCell>
-                  <TableCell className="text-sm text-muted-foreground">
-                    {competition.sport_focus.length > 0
-                      ? competition.sport_focus
-                          .filter((sportId): sportId is number => typeof sportId === "number")
-                          .map((sportId) => sportNamesById.get(sportId) ?? `#${sportId}`)
-                          .join(", ")
-                      : "Sem foco definido"}
-                  </TableCell>
-                  <TableCell className="text-right">
-                    <Link
-                      to="/leagues/$leagueId/dashboard/competitions/$competitionId"
-                      params={{ leagueId, competitionId: String(competition.id) }}
-                      className={cn(buttonVariants({ variant: "outline" }))}
-                    >
-                      Abrir detalhe
-                    </Link>
-                  </TableCell>
-                </TableRow>
-              ))}
-            </TableBody>
-          </Table>
-        </CardContent>
-      </Card>
-    </div>
+      <div className="w-full flex justify-center mt-6">
+        <div className="flex gap-4">
+          <StatCard label={m['competitions.admin.stat.total']()} value={String(competitions.data.length)} />
+          <StatCard label={m['competitions.admin.stat.active']()} value={String(competitions.data.filter((c) => c.status === "ACTIVE").length)} />
+          <StatCard label={m['competitions.admin.stat.locked']()} value={String(competitions.data.filter((c) => ["LOCKED", "ACTIVE", "COMPLETED"].includes(c.status)).length)} />
+        </div>
+      </div>
+
+      <div className="w-full mt-6">
+        <TableLayout
+          columns={columns}
+          data={filteredData}
+          searchQuery={searchQuery}
+          onSearchChange={(value) => setSearchQuery(value)}
+        />
+      </div>
+    </PageAsideLayout>
   );
 }
 
-function MetricCard({ label, value, hint }: { label: string; value: string; hint: string }) {
+function StatCard({ label, value }: { label: string; value: string }) {
   return (
-    <div className="rounded-2xl border border-border/70 bg-background/80 p-4">
-      <div className="text-sm text-muted-foreground">{label}</div>
-      <div className="mt-3 text-2xl font-semibold">{value}</div>
-      <div className="mt-1 text-xs text-muted-foreground">{hint}</div>
+    <div className="flex flex-col items-center gap-1 w-25 rounded-lg bg-input px-3 py-2 min-w-11">
+      <div className="text-[9px] uppercase tracking-widest text-placeholder leading-none">{label}</div>
+      <div className="text-xl font-bold tabular-nums text-foreground leading-none">{value}</div>
     </div>
   );
 }

@@ -29,6 +29,9 @@ import { formatEventDate } from "@/shared/lib/date";
 import { finalReportQueryOptions } from "@/features/reports/api/queries";
 import { modalityStandingsQueryOptions } from "@/features/results/api/queries";
 import { sportDetailQueryOptions, sportListQueryOptions } from "@/features/sports/api/queries";
+import { SideCard } from "@/shared/components/ui/side-card";
+import { PageAsideLayout } from "@/shared/components/layouts/page-aside-layout";
+import { seoMeta } from "@/shared/lib/seo";
 
 export const Route = createFileRoute("/leagues/$leagueId/(public)/report/")({
   loader: async ({ context: { queryClient }, params: { leagueId } }) => {
@@ -40,6 +43,7 @@ export const Route = createFileRoute("/leagues/$leagueId/(public)/report/")({
       ...sports.data.map((sport) => queryClient.ensureQueryData(sportDetailQueryOptions(sport.id))),
     ]);
   },
+  head: () => seoMeta({ title: "Relatório final", description: "Relatório consolidado da competição." }),
   component: PublicReportPage,
 });
 
@@ -97,95 +101,86 @@ function PublicReportPage() {
   let standingsIndex = 0;
 
   return (
-    <div className="relative overflow-hidden">
-      <div className="absolute inset-x-0 top-0 -z-10 h-112 bg-[radial-gradient(circle_at_top_left,hsl(var(--primary)/0.18),transparent_34%),radial-gradient(circle_at_top_right,hsl(var(--accent)/0.18),transparent_28%),linear-gradient(180deg,hsl(var(--muted)/0.22),transparent)]" />
-      <div className="container mx-auto max-w-7xl space-y-8 px-4 py-10">
-        <section className="grid gap-4 xl:grid-cols-[1.3fr_0.7fr]">
-          <Card className="border border-border/70 bg-[linear-gradient(150deg,hsl(var(--card)),hsl(var(--card)),hsl(var(--muted)/0.22))]">
-            <CardHeader className="gap-4">
-              <div className="flex flex-wrap items-center gap-2">
-                <Badge variant="outline">Relatório final</Badge>
-                <Badge variant="secondary">Público</Badge>
-              </div>
-              <div className="space-y-3">
-                <CardTitle className="max-w-3xl text-4xl leading-tight">
-                  Encerramento competitivo com quadro geral, classificação por modalidade e
-                  destaques da edição.
-                </CardTitle>
-                <CardDescription className="max-w-2xl text-base">
-                  Painel consolidado para leitura pública da competição, com medalhas, recordes,
-                  modalidades e recorte dos atletas em evidência.
-                </CardDescription>
-              </div>
-            </CardHeader>
-            <CardContent className="grid gap-4 md:grid-cols-3 xl:grid-cols-6">
-              <ReportStat label="Delegações" value={String(report.summary.total_delegations)} />
-              <ReportStat label="Atletas" value={String(report.summary.total_athletes)} />
-              <ReportStat label="Competições" value={String(report.summary.total_competitions)} />
-              <ReportStat label="Eventos" value={String(report.summary.total_events)} />
-              <ReportStat label="Partidas" value={String(report.summary.total_matches)} />
-              <ReportStat label="Concluídas" value={String(report.summary.completed_matches)} />
-            </CardContent>
-          </Card>
+    <PageAsideLayout
+      sidebar={
+        <SideCard title="Rotas rápidas">
+          <p className="text-sm text-muted-foreground mb-4">
+            Entradas públicas para aprofundar a leitura.
+          </p>
+          <div className="space-y-3">
+            <Link
+              to="/leagues/$leagueId/results"
+              params={{ leagueId }}
+              className={cn(buttonVariants({ variant: "outline" }), "w-full justify-between")}
+            >
+              Ver resultados ao vivo
+              <ArrowRight className="size-4" />
+            </Link>
+            <Link
+              to="/leagues/$leagueId/results/records"
+              params={{ leagueId }}
+              className={cn(buttonVariants({ variant: "outline" }), "w-full justify-between")}
+            >
+              Abrir recordes
+              <ArrowRight className="size-4" />
+            </Link>
+            <Link
+              to="/leagues/$leagueId/calendar"
+              params={{ leagueId }}
+              className={cn(buttonVariants({ variant: "outline" }), "w-full justify-between")}
+            >
+              Revisar calendário
+              <ArrowRight className="size-4" />
+            </Link>
 
-          <Card className="border border-border/70 bg-[linear-gradient(180deg,hsl(var(--card)),hsl(var(--muted)/0.16))]">
-            <CardHeader>
-              <CardTitle>Rotas rápidas</CardTitle>
-              <CardDescription>Entradas públicas para aprofundar a leitura.</CardDescription>
-            </CardHeader>
-            <CardContent className="space-y-3">
-              <Link
-                to="/leagues/$leagueId/results"
-                params={{ leagueId }}
-                className={cn(buttonVariants({ variant: "outline" }), "w-full justify-between")}
-              >
-                Ver resultados ao vivo
-                <ArrowRight className="size-4" />
-              </Link>
-              <Link
-                to="/leagues/$leagueId/results/records"
-                params={{ leagueId }}
-                className={cn(buttonVariants({ variant: "outline" }), "w-full justify-between")}
-              >
-                Abrir recordes
-                <ArrowRight className="size-4" />
-              </Link>
-              <Link
-                to="/leagues/$leagueId/calendar"
-                params={{ leagueId }}
-                className={cn(buttonVariants({ variant: "outline" }), "w-full justify-between")}
-              >
-                Revisar calendário
-                <ArrowRight className="size-4" />
-              </Link>
+            <Button
+              type="button"
+              variant="outline"
+              className="w-full justify-between"
+              disabled={csvMutation.isPending}
+              onClick={() => csvMutation.mutate()}
+            >
+              {csvMutation.isPending ? "Exportando..." : "Exportar resultados (CSV)"}
+              <Download className="size-4" />
+            </Button>
 
-              <Button
-                type="button"
-                variant="outline"
-                className="w-full justify-between"
-                disabled={csvMutation.isPending}
-                onClick={() => csvMutation.mutate()}
-              >
-                {csvMutation.isPending ? "Exportando..." : "Exportar resultados (CSV)"}
-                <Download className="size-4" />
-              </Button>
+            <Button
+              type="button"
+              variant="outline"
+              className="w-full justify-between"
+              disabled={xlsxMutation.isPending}
+              onClick={() => xlsxMutation.mutate()}
+            >
+              {xlsxMutation.isPending ? "Exportando..." : "Exportar resultados (XLSX)"}
+              <Download className="size-4" />
+            </Button>
+          </div>
+        </SideCard>
+      }
+    >
+      <div className="relative overflow-hidden">
+        <div className="absolute inset-x-0 top-0 -z-10 h-112 bg-[radial-gradient(circle_at_top_left,hsl(var(--primary)/0.18),transparent_34%),radial-gradient(circle_at_top_right,hsl(var(--accent)/0.18),transparent_28%),linear-gradient(180deg,hsl(var(--muted)/0.22),transparent)]" />
+        <div className="space-y-8 py-4">
+          <div>
+            <h1 className="text-2xl font-bold text-foreground">Relatório final</h1>
+            <p className="mt-1 text-sm text-muted-foreground">
+              Painel consolidado para leitura pública da competição, com medalhas, recordes, modalidades e recorte dos atletas em evidência.
+            </p>
+          </div>
 
-              <Button
-                type="button"
-                variant="outline"
-                className="w-full justify-between"
-                disabled={xlsxMutation.isPending}
-                onClick={() => xlsxMutation.mutate()}
-              >
-                {xlsxMutation.isPending ? "Exportando..." : "Exportar resultados (XLSX)"}
-                <Download className="size-4" />
-              </Button>
-            </CardContent>
-          </Card>
-        </section>
+          <div className="w-full flex justify-center">
+            <div className="flex gap-4 flex-wrap justify-center">
+              <StatCard label="Delegações" value={String(report.summary.total_delegations)} />
+              <StatCard label="Atletas" value={String(report.summary.total_athletes)} />
+              <StatCard label="Competições" value={String(report.summary.total_competitions)} />
+              <StatCard label="Eventos" value={String(report.summary.total_events)} />
+              <StatCard label="Partidas" value={String(report.summary.total_matches)} />
+              <StatCard label="Concluídas" value={String(report.summary.completed_matches)} />
+            </div>
+          </div>
 
         <section className="grid gap-4 xl:grid-cols-[1.15fr_0.85fr]">
-          <Card className="border border-border/70">
+          <Card>
             <CardHeader>
               <CardTitle className="flex items-center gap-2">
                 <Medal className="size-4" />
@@ -197,7 +192,7 @@ function PublicReportPage() {
             </CardContent>
           </Card>
 
-          <Card className="border border-border/70">
+          <Card>
             <CardHeader>
               <CardTitle className="flex items-center gap-2">
                 <Sparkles className="size-4" />
@@ -235,7 +230,7 @@ function PublicReportPage() {
         </section>
 
         <section className="grid gap-4 xl:grid-cols-[0.9fr_1.1fr]">
-          <Card className="border border-border/70">
+          <Card>
             <CardHeader>
               <CardTitle className="flex items-center gap-2">
                 <BarChart3 className="size-4" />
@@ -265,7 +260,7 @@ function PublicReportPage() {
             </CardContent>
           </Card>
 
-          <Card className="border border-border/70">
+          <Card>
             <CardHeader>
               <CardTitle>Recordes e melhores marcas</CardTitle>
               <CardDescription>
@@ -299,7 +294,7 @@ function PublicReportPage() {
 
           <div className="grid gap-4">
             {sportDetails.map((sport) => (
-              <Card key={sport.data.id} className="border border-border/70">
+              <Card key={sport.data.id} className="">
                 <CardHeader>
                   <CardTitle>{sport.data.name}</CardTitle>
                   {sport.data.description ? (
@@ -338,15 +333,16 @@ function PublicReportPage() {
           </div>
         </section>
       </div>
-    </div>
+      </div>
+    </PageAsideLayout>
   );
 }
 
-function ReportStat({ label, value }: { label: string; value: string }) {
+function StatCard({ label, value }: { label: string; value: string }) {
   return (
-    <div className="rounded-3xl border border-border/70 bg-background/80 p-4">
-      <div className="text-[11px] uppercase tracking-[0.24em] text-muted-foreground">{label}</div>
-      <div className="mt-2 text-2xl font-semibold">{value}</div>
+    <div className="flex flex-col items-center gap-1 w-25 rounded-lg bg-input px-3 py-2 min-w-11">
+      <div className="text-[9px] uppercase tracking-widest text-placeholder leading-none">{label}</div>
+      <div className="text-xl font-bold tabular-nums text-foreground leading-none">{value}</div>
     </div>
   );
 }

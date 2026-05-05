@@ -1,6 +1,7 @@
 import { useMemo, useState } from "react";
 import { useSuspenseQuery } from "@tanstack/react-query";
 import { Link, createFileRoute } from "@tanstack/react-router";
+import type { ColumnDef } from "@tanstack/react-table";
 import { Badge } from "@sports-system/ui/components/badge";
 import { Button } from "@sports-system/ui/components/button";
 import { Checkbox } from "@sports-system/ui/components/checkbox";
@@ -12,14 +13,6 @@ import {
 } from "@sports-system/ui/components/popover";
 import { Separator } from "@sports-system/ui/components/separator";
 import {
-  Table,
-  TableBody,
-  TableCell,
-  TableHead,
-  TableHeader,
-  TableRow,
-} from "@sports-system/ui/components/table";
-import {
   CircleIcon,
   CircleDotIcon,
   CircleDashedIcon,
@@ -27,14 +20,18 @@ import {
   FunnelIcon,
 } from "lucide-react";
 
+import * as m from "@/paraglide/messages";
 import { formatDate } from "@/shared/lib/date";
 import { competitionListQueryOptions } from "@/features/competitions/api/queries";
-import type { CompetitionStatus } from "@/types/competitions";
+import type { CompetitionResponse, CompetitionStatus } from "@/types/competitions";
 import { TableLayout } from "@/shared/components/ui/table-layout";
+import { PageSingleLayout } from "@/shared/components/layouts/page-single-layout";
+import { seoMeta } from "@/shared/lib/seo";
 
 export const Route = createFileRoute("/leagues/$leagueId/(public)/competitions/")({
   loader: ({ context: { queryClient }, params: { leagueId } }) =>
     queryClient.ensureQueryData(competitionListQueryOptions(Number(leagueId))),
+  head: () => seoMeta({ title: m["competitions.public.title"](), description: "Lista de competições da liga." }),
   component: CompetitionsPage,
 });
 
@@ -42,11 +39,11 @@ const STATUS_META: Record<
   CompetitionStatus,
   { label: string; icon: typeof CheckIcon; cls: string }
 > = {
-  DRAFT: { label: "Rascunho", icon: CircleIcon, cls: "text-muted-foreground" },
-  SCHEDULED: { label: "Agendada", icon: CircleDotIcon, cls: "text-sky-500" },
-  LOCKED: { label: "Bloqueada", icon: CircleDashedIcon, cls: "text-amber-500" },
-  ACTIVE: { label: "Ativa", icon: CircleDotIcon, cls: "text-emerald-500" },
-  COMPLETED: { label: "Concluída", icon: CheckIcon, cls: "text-violet-500" },
+  DRAFT: { label: m['common.status.draft'](), icon: CircleIcon, cls: "text-muted-foreground" },
+  SCHEDULED: { label: m['common.status.scheduled'](), icon: CircleDotIcon, cls: "text-sky-500" },
+  LOCKED: { label: m['common.status.locked'](), icon: CircleDashedIcon, cls: "text-amber-500" },
+  ACTIVE: { label: m['common.status.active'](), icon: CircleDotIcon, cls: "text-emerald-500" },
+  COMPLETED: { label: m['common.status.completed'](), icon: CheckIcon, cls: "text-violet-500" },
 };
 
 function CompetitionsPage() {
@@ -56,8 +53,6 @@ function CompetitionsPage() {
   );
   const competitions = data.data;
 
-  const [pageIndex, setPageIndex] = useState(0);
-  const [pageSize, setPageSize] = useState(10);
   const [searchQuery, setSearchQuery] = useState("");
   const [selectedStatuses, setSelectedStatuses] = useState<CompetitionStatus[]>(
     [],
@@ -92,11 +87,6 @@ function CompetitionsPage() {
     );
   }, [competitions, selectedStatuses, searchQuery]);
 
-  const pagedData = filteredData.slice(
-    pageIndex * pageSize,
-    (pageIndex + 1) * pageSize,
-  );
-
   const statusCounts = useMemo(() => {
     return competitions.reduce(
       (acc, item) => {
@@ -113,7 +103,6 @@ function CompetitionsPage() {
         ? prev.filter((v) => v !== status)
         : [...prev, status],
     );
-    setPageIndex(0);
   };
 
   const activeFilterCount = selectedStatuses.length;
@@ -121,147 +110,140 @@ function CompetitionsPage() {
   const handleClearFilters = () => {
     setSelectedStatuses([]);
     setSearchQuery("");
-    setPageIndex(0);
   };
 
-  return (
-    <TableLayout
-      title="Competições"
-      countLabel="competições"
-      visibleCount={pagedData.length}
-      totalCount={filteredData.length}
-      searchPlaceholder="Buscar competições…"
-      searchQuery={searchQuery}
-      onSearchChange={(value) => {
-        setSearchQuery(value);
-        setPageIndex(0);
-      }}
-      activeFilterCount={activeFilterCount}
-      onClearFilters={handleClearFilters}
-      pageIndex={pageIndex}
-      pageSize={pageSize}
-      onPageChange={setPageIndex}
-      onPageSizeChange={setPageSize}
-      filterActions={
-        <FacetButton
-          label="Status"
-          icon={<FunnelIcon className="size-3.5" />}
-          count={selectedStatuses.length}
-          chips={selectedStatuses.map((s) => STATUS_META[s].label)}
+  const columns: ColumnDef<CompetitionResponse>[] = [
+    {
+      header: m['competitions.public.table.competition'](),
+      accessorKey: "number",
+      meta: { className: "ps-4 w-40" },
+      cell: ({ row }) => (
+        <span className="inline-flex items-center gap-2 font-mono text-muted-foreground text-xs">
+          <span className="font-medium text-foreground text-sm">
+            {m['competition.admin.badge.competition']({ 'competition.number': row.original.number })}
+          </span>
+        </span>
+      ),
+    },
+    {
+      header: m['competitions.public.table.period'](),
+      accessorKey: "start_date",
+      meta: { className: "w-32" },
+      cell: ({ row }) => (
+        <span className="text-sm">
+          {formatDate(row.original.start_date)} – {formatDate(row.original.end_date)}
+        </span>
+      ),
+    },
+    {
+      header: m['competitions.public.table.status'](),
+      accessorKey: "status",
+      meta: { className: "w-36" },
+      cell: ({ row }) => {
+        const meta = STATUS_META[row.original.status];
+        return (
+          <Badge
+            variant="outline"
+            className={
+              "font-mono text-[10px] " +
+              (row.original.status === "DRAFT"
+                ? "border-muted-foreground/30 text-muted-foreground"
+                : row.original.status === "SCHEDULED"
+                  ? "border-sky-500/30 text-sky-700 dark:text-sky-400"
+                  : row.original.status === "LOCKED"
+                    ? "border-amber-500/30 text-amber-700 dark:text-amber-400"
+                    : row.original.status === "ACTIVE"
+                      ? "border-emerald-500/30 text-emerald-700 dark:text-emerald-400"
+                      : "border-violet-500/30 text-violet-700 dark:text-violet-400")
+            }
+          >
+            {meta.label}
+          </Badge>
+        );
+      },
+    },
+    {
+      header: m['competitions.public.table.sports'](),
+      accessorKey: "sport_focus",
+      meta: { className: "w-24" },
+      cell: ({ row }) => (
+        <span className="inline-flex size-6 items-center justify-center rounded-full bg-muted font-mono text-[10px] tabular-nums">
+          {row.original.sport_focus.length}
+        </span>
+      ),
+    },
+    {
+      header: m['competitions.public.table.actions'](),
+      accessorKey: "id",
+      meta: { className: "pe-4 w-40 text-right" },
+      cell: ({ row }) => (
+        <Link
+          to="/leagues/$leagueId/competitions/$competitionId"
+          params={{
+            leagueId,
+            competitionId: String(row.original.id),
+          }}
+          className="text-sm text-primary underline-offset-4 hover:underline"
         >
-          <div className="flex flex-col p-1">
-            {(
-              [
-                "DRAFT",
-                "SCHEDULED",
-                "LOCKED",
-                "ACTIVE",
-                "COMPLETED",
-              ] as CompetitionStatus[]
-            ).map((status) => {
-              const m = STATUS_META[status];
-              const Icon = m.icon;
-              return (
-                <Label
-                  key={status}
-                  className="flex cursor-pointer items-center gap-2 rounded-md px-2 py-1.5 text-sm hover:bg-accent"
-                >
-                  <Checkbox
-                    checked={selectedStatuses.includes(status)}
-                    onCheckedChange={() => toggleStatus(status)}
-                  />
-                  <Icon className={"size-3.5 " + m.cls} />
-                  <span className="flex-1">{m.label}</span>
-                  <span className="text-muted-foreground text-xs">
-                    {statusCounts[status] ?? 0}
-                  </span>
-                </Label>
-              );
-            })}
-          </div>
-        </FacetButton>
-      }
-    >
-      <Table>
-        <TableHeader>
-          <TableRow>
-            <TableHead className="ps-4 w-40">Competição</TableHead>
-            <TableHead className="w-32">Período</TableHead>
-            <TableHead className="w-36">Status</TableHead>
-            <TableHead className="w-24">Esportes</TableHead>
-            <TableHead className="pe-4 w-40 text-right">Ações</TableHead>
-          </TableRow>
-        </TableHeader>
-        <TableBody>
-          {pagedData.length === 0 && (
-            <TableRow>
-              <TableCell
-                colSpan={5}
-                className="h-24 text-center text-muted-foreground"
-              >
-                Nenhuma competição encontrada.
-              </TableCell>
-            </TableRow>
-          )}
-          {pagedData.map((competition) => {
-            const m = STATUS_META[competition.status];
-            return (
-              <TableRow key={competition.id}>
-                <TableCell className="ps-4">
-                  <span className="inline-flex items-center gap-2 font-mono text-muted-foreground text-xs">
-                    <span className="font-medium text-foreground text-sm">
-                      Competição {competition.number}
+          {m['common.actions.view']()}
+        </Link>
+      ),
+    },
+  ];
+
+  return (
+    <PageSingleLayout title={m['competitions.public.title']()}>
+      <TableLayout
+        countLabel="competições"
+        columns={columns}
+        data={filteredData}
+        emptyMessage={m['competitions.public.empty']()}
+        searchPlaceholder={m['common.table.searchPlaceholder']()}
+        searchQuery={searchQuery}
+        onSearchChange={(value) => setSearchQuery(value)}
+        activeFilterCount={activeFilterCount}
+        onClearFilters={handleClearFilters}
+        filterActions={
+          <FacetButton
+            label={m['competitions.public.filter.status']()}
+            icon={<FunnelIcon className="size-3.5" />}
+            count={selectedStatuses.length}
+            chips={selectedStatuses.map((s) => STATUS_META[s].label)}
+          >
+            <div className="flex flex-col p-1">
+              {(
+                [
+                  "DRAFT",
+                  "SCHEDULED",
+                  "LOCKED",
+                  "ACTIVE",
+                  "COMPLETED",
+                ] as CompetitionStatus[]
+              ).map((status) => {
+                const meta = STATUS_META[status];
+                const Icon = meta.icon;
+                return (
+                  <Label
+                    key={status}
+                    className="flex cursor-pointer items-center gap-2 rounded-md px-2 py-1.5 text-sm hover:bg-accent"
+                  >
+                    <Checkbox
+                      checked={selectedStatuses.includes(status)}
+                      onCheckedChange={() => toggleStatus(status)}
+                    />
+                    <Icon className={"size-3.5 " + meta.cls} />
+                    <span className="flex-1">{meta.label}</span>
+                    <span className="text-muted-foreground text-xs">
+                      {statusCounts[status] ?? 0}
                     </span>
-                  </span>
-                </TableCell>
-                <TableCell>
-                  <span className="text-sm">
-                    {formatDate(competition.start_date)} –{" "}
-                    {formatDate(competition.end_date)}
-                  </span>
-                </TableCell>
-                <TableCell>
-                  <Badge
-                    variant="outline"
-                    className={
-                      "font-mono text-[10px] " +
-                      (competition.status === "DRAFT"
-                        ? "border-muted-foreground/30 text-muted-foreground"
-                        : competition.status === "SCHEDULED"
-                          ? "border-sky-500/30 text-sky-700 dark:text-sky-400"
-                          : competition.status === "LOCKED"
-                            ? "border-amber-500/30 text-amber-700 dark:text-amber-400"
-                            : competition.status === "ACTIVE"
-                              ? "border-emerald-500/30 text-emerald-700 dark:text-emerald-400"
-                              : "border-violet-500/30 text-violet-700 dark:text-violet-400")
-                    }
-                  >
-                    {m.label}
-                  </Badge>
-                </TableCell>
-                <TableCell>
-                  <span className="inline-flex size-6 items-center justify-center rounded-full bg-muted font-mono text-[10px] tabular-nums">
-                    {competition.sport_focus.length}
-                  </span>
-                </TableCell>
-                <TableCell className="pe-4 text-right">
-                  <Link
-                    to="/leagues/$leagueId/competitions/$competitionId"
-                    params={{
-                      leagueId,
-                      competitionId: String(competition.id),
-                    }}
-                    className="text-sm text-primary underline-offset-4 hover:underline"
-                  >
-                    Ver detalhes
-                  </Link>
-                </TableCell>
-              </TableRow>
-            );
-          })}
-        </TableBody>
-      </Table>
-    </TableLayout>
+                  </Label>
+                );
+              })}
+            </div>
+          </FacetButton>
+        }
+      />
+    </PageSingleLayout>
   );
 }
 

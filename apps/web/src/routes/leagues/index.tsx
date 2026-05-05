@@ -11,12 +11,17 @@ import {
   EmptyTitle,
 } from "@sports-system/ui/components/empty";
 import { cn } from "@sports-system/ui/lib/utils";
+import * as m from "@/paraglide/messages";
 import { leagueListQueryOptions } from "@/features/leagues/api/queries";
 import { LeagueCard } from "@/shared/components/ui/league-card";
 import { Title } from "@/shared/components/ui/title";
+import { PageAsideLayout } from "@/shared/components/layouts/page-aside-layout";
+import { LeaguesSidebar } from "@/shared/components/ui/leagues-sidebar";
+import { seoMeta } from "@/shared/lib/seo";
 
 export const Route = createFileRoute("/leagues/")({
   loader: ({ context: { queryClient } }) => queryClient.ensureQueryData(leagueListQueryOptions()),
+  head: () => seoMeta({ title: m["leagues.listTitle"](), description: "Explore e participe de ligas esportivas." }),
   component: LeaguesPage,
 });
 
@@ -24,16 +29,16 @@ function LeaguesPage() {
   const { data: leagues } = useSuspenseQuery(leagueListQueryOptions());
 
   return (
-    <>
+    <PageAsideLayout sidebar={<LeaguesSidebar leagues={leagues} />}>
       <div className="flex items-center justify-between mb-8">
-        <Title title="Ligas"/>
+        <Title title={m['leagues.listTitle']()}/>
 
-        <Link to="/leagues/new" className={cn(buttonVariants({size: "sm"}), "text-sm")}>
-          Criar liga
+        <Link to="/leagues/new" className={cn(buttonVariants({variant: "default"}))}>
+          {m['nav.createLeague']()}
         </Link>
       </div>
 
-      <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+      <div className="grid grid-cols-3 gap-4 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-3">
         {leagues.map((league) => (
           <LeagueCard
             key={league.id}
@@ -52,16 +57,16 @@ function LeaguesPage() {
             <EmptyMedia variant="icon">
               <Trophy />
             </EmptyMedia>
-            <EmptyTitle>Nenhuma liga cadastrada</EmptyTitle>
+            <EmptyTitle>{m['leagues.listEmpty']()}</EmptyTitle>
             <EmptyDescription>Crie a primeira liga para começar.</EmptyDescription>
           </EmptyHeader>
           <EmptyContent>
             <Link to="/leagues/new" className={cn(buttonVariants({size: "sm"}), "text-sm")}>
-              Criar liga
+              {m['nav.createLeague']()}
             </Link>
           </EmptyContent>
         </Empty>
       )}
-    </>
+    </PageAsideLayout>
   );
 }

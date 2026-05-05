@@ -1,76 +1,105 @@
 import { useQueries, useSuspenseQuery } from "@tanstack/react-query";
 import { Link, createFileRoute } from "@tanstack/react-router";
+import { Trophy } from "lucide-react";
 
+import * as m from "@/paraglide/messages";
 import { Badge } from "@sports-system/ui/components/badge";
 import { buttonVariants } from "@sports-system/ui/components/button";
+import {
+  Empty,
+  EmptyContent,
+  EmptyDescription,
+  EmptyHeader,
+  EmptyMedia,
+  EmptyTitle,
+} from "@sports-system/ui/components/empty";
 import { cn } from "@sports-system/ui/lib/utils";
 import {
   myLeagueMembershipQueryOptions,
   myLeaguesQueryOptions,
+  leagueListQueryOptions,
 } from "@/features/leagues/api/queries";
 import { LeagueCard } from "@/shared/components/ui/league-card";
+import { Title } from "@/shared/components/ui/title";
+import { PageAsideLayout } from "@/shared/components/layouts/page-aside-layout";
+import { LeaguesSidebar } from "@/shared/components/ui/leagues-sidebar";
 
 export const Route = createFileRoute("/_authenticated/my-leagues/")({
-  loader: ({ context: { queryClient } }) => queryClient.ensureQueryData(myLeaguesQueryOptions()),
+  loader: ({ context: { queryClient } }) =>
+    Promise.all([
+      queryClient.ensureQueryData(myLeaguesQueryOptions()),
+      queryClient.ensureQueryData(leagueListQueryOptions()),
+    ]),
   component: MyLeaguesPage,
 });
 
 const roleLabel: Record<string, string> = {
-  LEAGUE_ADMIN: "Admin",
-  CHIEF: "Chefe",
-  COACH: "Técnico",
-  ATHLETE: "Atleta",
+  LEAGUE_ADMIN: m['myLeagues.role.admin'](),
+  CHIEF: m['myLeagues.role.chief'](),
+  COACH: m['myLeagues.role.coach'](),
+  ATHLETE: m['myLeagues.role.athlete'](),
 };
 
 function MyLeaguesPage() {
-  const { data: leagues } = useSuspenseQuery(myLeaguesQueryOptions());
+  const { data: myLeagues } = useSuspenseQuery(myLeaguesQueryOptions());
+  const { data: allLeagues } = useSuspenseQuery(leagueListQueryOptions());
 
   const membershipQueries = useQueries({
-    queries: leagues.map((league) => myLeagueMembershipQueryOptions(league.id)),
+    queries: myLeagues.map((league) => myLeagueMembershipQueryOptions(league.id)),
   });
 
   return (
-    <>
+    <PageAsideLayout sidebar={<LeaguesSidebar leagues={allLeagues} />}>
       <div className="flex items-center justify-between mb-8">
-        <h1 className="text-3xl font-bold">Minhas ligas</h1>
-        <Link to="/leagues/new" className={cn(buttonVariants({ size: "sm" }), "text-sm")}>
-          Criar liga
+        <Title title={m['myLeagues.title']()}/>
+
+        <Link to="/leagues/new" className={cn(buttonVariants({variant: "default"}))}>
+          {m['nav.createLeague']()}
         </Link>
       </div>
 
-      <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
-        {leagues.map((league, index) => {
+      <div className="grid grid-cols-3 gap-4 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-3">
+        {myLeagues.map((league, index) => {
           const membership = membershipQueries[index]?.data;
           return (
-            <div key={league.id} className="relative">
-              {membership && (
-                <Badge
-                  variant="outline"
-                  className="absolute top-3 right-3 z-10 bg-black/40 text-white border-white/30 backdrop-blur-sm"
-                >
-                  {roleLabel[membership.role] ?? membership.role}
-                </Badge>
-              )}
-              <LeagueCard
-                id={league.id}
-                name={league.name}
-                logoUrl={league.logo_url}
-                memberCount={league.member_count}
-                href="/leagues/$leagueId"
-              />
-            </div>
+            <LeagueCard
+              key={league.id}
+              id={league.id}
+              name={league.name}
+              logoUrl={league.logo_url}
+              memberCount={league.member_count}
+              href="/leagues/$leagueId"
+              badge={
+                membership ? (
+                  <Badge
+                    variant="outline"
+                    className="bg-black/40 text-white border-white/30 backdrop-blur-sm"
+                  >
+                    {roleLabel[membership.role] ?? membership.role}
+                  </Badge>
+                ) : undefined
+              }
+            />
           );
         })}
       </div>
 
-      {leagues.length === 0 && (
-        <div className="text-center space-y-4">
-          <p className="text-muted-foreground">Você ainda não participa de nenhuma liga.</p>
-          <Link to="/leagues" className={cn(buttonVariants())}>
-            Explorar ligas
-          </Link>
-        </div>
+      {myLeagues.length === 0 && (
+        <Empty className="mt-8">
+          <EmptyHeader>
+            <EmptyMedia variant="icon">
+              <Trophy />
+            </EmptyMedia>
+            <EmptyTitle>{m['myLeagues.empty']()}</EmptyTitle>
+            <EmptyDescription>Crie a primeira liga para começar.</EmptyDescription>
+          </EmptyHeader>
+          <EmptyContent>
+            <Link to="/leagues/new" className={cn(buttonVariants({size: "sm"}), "text-sm")}>
+              {m['nav.createLeague']()}
+            </Link>
+          </EmptyContent>
+        </Empty>
       )}
-    </>
+    </PageAsideLayout>
   );
 }

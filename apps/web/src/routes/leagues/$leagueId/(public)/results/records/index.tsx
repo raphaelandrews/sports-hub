@@ -19,10 +19,14 @@ import { createFileRoute } from "@tanstack/react-router";
 
 import { formatEventDate } from "@/shared/lib/date";
 import { recordsQueryOptions } from "@/features/results/api/queries";
+import * as m from "@/paraglide/messages";
+import { PageSingleLayout } from "@/shared/components/layouts/page-single-layout";
+import { seoMeta } from "@/shared/lib/seo";
 
 export const Route = createFileRoute("/leagues/$leagueId/(public)/results/records/")({
   loader: ({ context: { queryClient }, params: { leagueId } }) =>
     queryClient.ensureQueryData(recordsQueryOptions(Number(leagueId))),
+  head: () => seoMeta({ title: m["results.records.title"](), description: m["results.records.desc"]() }),
   component: RecordsPage,
 });
 
@@ -31,29 +35,32 @@ function RecordsPage() {
   const { data } = useSuspenseQuery(recordsQueryOptions(Number(leagueId)));
 
   return (
-    <div className="container mx-auto max-w-6xl space-y-8 px-4 py-8">
-      <Card className="border border-border/70 bg-[radial-gradient(circle_at_top_left,hsl(var(--primary)/0.16),transparent_42%),linear-gradient(180deg,hsl(var(--card)),hsl(var(--muted)/0.18))]">
+    <PageSingleLayout title={m["results.records.title"]()} description={m["results.records.desc"]()}>
+    <div className="space-y-8">
+      <Card className="bg-[radial-gradient(circle_at_top_left,hsl(var(--primary)/0.16),transparent_42%),linear-gradient(180deg,hsl(var(--card)),hsl(var(--muted)/0.18))]">
         <CardHeader className="gap-3">
           <div className="flex flex-wrap items-center gap-2">
-            <Badge variant="outline">Recordes</Badge>
+            <Badge variant="outline">{m["results.records.badge"]()}</Badge>
             <Badge variant="secondary">{data.length} marca(s)</Badge>
           </div>
-          <CardTitle className="text-3xl">Melhores marcas da competição</CardTitle>
-          <CardDescription>Histórico de recordes registrados por modalidade.</CardDescription>
+          <CardTitle className="text-3xl">{m["results.records.title"]()}</CardTitle>
+          <CardDescription>
+            {m["results.records.desc"]()}
+          </CardDescription>
         </CardHeader>
       </Card>
 
-      <Card className="border border-border/70">
+      <Card>
         <CardContent className="pt-6">
           <Table>
             <TableHeader>
               <TableRow>
-                <TableHead>Modalidade</TableHead>
-                <TableHead>Atleta</TableHead>
-                <TableHead>Delegação</TableHead>
-                <TableHead>Valor</TableHead>
-                <TableHead>Semana</TableHead>
-                <TableHead>Data</TableHead>
+                <TableHead>{m["results.records.table.modality"]()}</TableHead>
+                <TableHead>{m["results.records.table.athlete"]()}</TableHead>
+                <TableHead>{m["results.records.table.delegation"]()}</TableHead>
+                <TableHead>{m["results.records.table.value"]()}</TableHead>
+                <TableHead>{m["results.records.table.week"]()}</TableHead>
+                <TableHead>{m["results.records.table.date"]()}</TableHead>
               </TableRow>
             </TableHeader>
             <TableBody>
@@ -72,7 +79,7 @@ function RecordsPage() {
               {data.length === 0 ? (
                 <TableRow>
                   <TableCell colSpan={6} className="py-10 text-center text-muted-foreground">
-                    Nenhum recorde registrado ainda.
+                    {m["results.records.empty"]()}
                   </TableCell>
                 </TableRow>
               ) : null}
@@ -81,5 +88,6 @@ function RecordsPage() {
         </CardContent>
       </Card>
     </div>
+    </PageSingleLayout>
   );
 }

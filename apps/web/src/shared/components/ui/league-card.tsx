@@ -1,7 +1,5 @@
 import { Link } from "@tanstack/react-router";
-import { ArrowRight, Users } from "lucide-react";
 
-import { Card } from "@sports-system/ui/components/card";
 import leaguePlaceholder from "@/assets/league-placeholder.webp";
 
 interface LeagueCardProps {
@@ -10,39 +8,39 @@ interface LeagueCardProps {
   logoUrl: string | null | undefined;
   memberCount: number;
   href: string;
+  badge?: React.ReactNode;
 }
 
-export function LeagueCard({ id, name, logoUrl, memberCount, href }: LeagueCardProps) {
+export function LeagueCard({ id, name, logoUrl, memberCount, href, badge }: LeagueCardProps) {
   return (
     <Link
       key={id}
       to={href}
       params={{ leagueId: String(id) }}
-      className="block w-full"
+      className="group relative cursor-pointer overflow-hidden rounded-lg lg:rounded-xl bg-input transition-transform hover:scale-105 animate-[gridCardIn_300ms_ease-out_both]"
     >
-      <Card className="group/card relative h-96 w-full overflow-hidden rounded-xl border-0 py-0 gap-0">
+      <div className="aspect-3/4">
         <img
           src={logoUrl ?? leaguePlaceholder}
           alt={name}
-          className="absolute inset-0 h-full w-full object-cover transition-transform duration-500 group-hover/card:scale-110"
+          className="h-full w-full object-cover"
         />
+      </div>
 
-        {/* Background fade effects */}
-        <div className="absolute inset-x-0 bottom-0 h-1/2 bg-linear-to-t from-background/80 to-transparent transition-opacity duration-500 group-hover/card:from-background/90" />
+      <div className="absolute inset-x-0 top-0 bg-linear-to-b from-black/70 to-transparent px-2 pt-1.5 pb-4">
+        {badge && (
+          <>
+            {badge}
+          </>
+        )}
+        <span className="line-clamp-2 text-sm font-bold leading-tight text-white drop-shadow-sm">{name}</span>
+      </div>
 
-        {/* Content */}
-        <div className="relative flex h-full flex-col justify-end p-6">
-          <h3 className="text-xl font-bold text-foreground">{name}</h3>
-          <p className="mt-2 text-sm font-medium text-foreground/90 flex items-center gap-1">
-            <Users className="size-3.5" />
-            {memberCount} membros
-          </p>
-          <div className="mt-3 inline-flex items-center gap-2 self-start rounded-md bg-foreground/20 px-3 py-1.5 text-sm font-medium text-foreground backdrop-blur-sm transition-colors group-hover/card:bg-foreground/30">
-            Ver liga
-            <ArrowRight className="size-4" />
-          </div>
+      <div className="absolute inset-x-0 bottom-0 bg-linear-to-t from-black/70 to-transparent px-2 pb-1.5 pt-5">
+        <div className="flex items-center justify-center gap-1.5">
+          <span className="text-sm font-semibold text-white/70">{memberCount} membros</span>
         </div>
-      </Card>
-    </Link>
+      </div>
+    </Link >
   );
 }

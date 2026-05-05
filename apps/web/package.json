@@ -13,6 +13,7 @@
     "check-types": "tsc --noEmit"
   },
   "dependencies": {
+    "@inlang/paraglide-js": "^2.18.0",
     "@sports-system/contracts": "workspace:*",
     "@sports-system/env": "workspace:*",
     "@sports-system/ui": "workspace:*",
@@ -34,6 +35,7 @@
     "openapi-fetch": "^0.17.0",
     "react": "catalog:",
     "react-dom": "catalog:",
+    "recharts": "^3.8.1",
     "sonner": "catalog:",
     "tailwindcss": "catalog:",
     "vite-tsconfig-paths": "^5.1.4",

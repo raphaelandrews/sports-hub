@@ -22,10 +22,12 @@ import { Activity, Medal, RadioTower, TimerReset } from "lucide-react";
 
 import { activityFeedQueryOptions } from "@/features/activities/api/queries";
 import type { ActivityFeedItem, ActivityFeedItemType } from "@/types/activity";
+import { seoMeta } from "@/shared/lib/seo";
 
 export const Route = createFileRoute("/leagues/$leagueId/(public)/feed/")({
   loader: ({ context: { queryClient }, params: { leagueId } }) =>
     queryClient.ensureQueryData(activityFeedQueryOptions(Number(leagueId), 40)),
+  head: () => seoMeta({ title: "Feed de atividades", description: "Feed de atividades e eventos da liga." }),
   component: FeedPage,
 });
 
@@ -66,7 +68,7 @@ function FeedPage() {
   return (
     <div className="container mx-auto max-w-6xl space-y-8 px-4 py-8">
       <section className="grid gap-4 lg:grid-cols-[1.2fr_0.8fr]">
-        <Card className="border border-border/70 bg-[radial-gradient(circle_at_top_left,hsl(var(--primary)/0.16),transparent_42%),linear-gradient(180deg,hsl(var(--card)),hsl(var(--muted)/0.18))]">
+        <Card className="bg-[radial-gradient(circle_at_top_left,hsl(var(--primary)/0.16),transparent_42%),linear-gradient(180deg,hsl(var(--card)),hsl(var(--muted)/0.18))]">
           <CardHeader className="gap-3">
             <CardTitle className="text-3xl">Feed de atividades</CardTitle>
             <CardDescription className="max-w-2xl">
@@ -87,7 +89,7 @@ function FeedPage() {
           </CardContent>
         </Card>
 
-        <Card className="border border-border/70">
+        <Card>
           <CardHeader>
             <CardTitle>Navegação</CardTitle>
           </CardHeader>
@@ -117,7 +119,7 @@ function FeedPage() {
         </Card>
       </section>
 
-      <Card className="border border-border/70">
+      <Card>
         <CardHeader className="flex flex-row items-center justify-between gap-3">
           <CardTitle className="text-xl">Linha do tempo</CardTitle>
           <Badge variant="secondary">Ao vivo</Badge>
@@ -164,12 +166,20 @@ function FeedPage() {
                           </p>
                           <div className="flex flex-wrap gap-2 text-xs text-muted-foreground">
                             {item.competition_number != null ? (
-                              <span>Competição {item.competition_number}</span>
+                              <Badge variant="default">Competição {item.competition_number}</Badge>
                             ) : null}
-                            {item.sport_name ? <span>{item.sport_name}</span> : null}
-                            {item.modality_name ? <span>{item.modality_name}</span> : null}
-                            {item.delegation_name ? <span>{item.delegation_name}</span> : null}
-                            {item.minute != null ? <span>{item.minute}min</span> : null}
+                            {item.sport_name ? (
+                              <Badge className="bg-blue-100 text-blue-800 hover:bg-blue-200">{item.sport_name}</Badge>
+                            ) : null}
+                            {item.modality_name ? (
+                              <Badge className="bg-emerald-100 text-emerald-800 hover:bg-emerald-200">{item.modality_name}</Badge>
+                            ) : null}
+                            {item.delegation_name ? (
+                              <Badge className="bg-purple-100 text-purple-800 hover:bg-purple-200">{item.delegation_name}</Badge>
+                            ) : null}
+                            {item.minute != null ? (
+                              <Badge className="bg-amber-100 text-amber-800 hover:bg-amber-200">{item.minute}min</Badge>
+                            ) : null}
                           </div>
                         </div>
                         <div className="shrink-0 text-right">

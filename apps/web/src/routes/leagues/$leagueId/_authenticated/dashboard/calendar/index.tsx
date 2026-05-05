@@ -1,4 +1,3 @@
-import * as React from "react";
 import { useMemo, useState } from "react";
 import { useMutation, useQuery, useQueryClient, useSuspenseQuery } from "@tanstack/react-query";
 import { Link, createFileRoute } from "@tanstack/react-router";
@@ -21,11 +20,6 @@ import {
   InputGroupInput,
 } from "@sports-system/ui/components/input-group";
 import { Label } from "@sports-system/ui/components/label";
-import {
-  Popover,
-  PopoverContent,
-  PopoverTrigger,
-} from "@sports-system/ui/components/popover";
 import { Separator } from "@sports-system/ui/components/separator";
 import {
   Select,
@@ -44,13 +38,15 @@ import {
 } from "@sports-system/ui/components/table";
 import { cn } from "@sports-system/ui/lib/utils";
 
+import * as m from "@/paraglide/messages";
 import { client, unwrap, ApiError } from "@/shared/lib/api";
 import { formatDate, formatTime } from "@/shared/lib/date";
 import { allEventsQueryOptions } from "@/features/events/api/queries";
 import { queryKeys } from "@/features/keys";
 import { competitionListQueryOptions } from "@/features/competitions/api/queries";
-import type { EventStatus } from "@/types/events";
 import type { CompetitionResponse } from "@/types/competitions";
+import type { EventStatus } from "@/types/events";
+import { FacetButton, orderCompetitions, StatCard, useWeekSelection } from "./-components";
 
 export const Route = createFileRoute("/leagues/$leagueId/_authenticated/dashboard/calendar/")({
   ssr: false,
@@ -61,18 +57,18 @@ export const Route = createFileRoute("/leagues/$leagueId/_authenticated/dashboar
 });
 
 const statusLabel: Record<EventStatus, string> = {
-  SCHEDULED: "Agendado",
-  IN_PROGRESS: "Em andamento",
-  COMPLETED: "Concluido",
-  CANCELLED: "Cancelado",
+  SCHEDULED: m['common.status.scheduled'](),
+  IN_PROGRESS: m['common.status.live'](),
+  COMPLETED: m['common.status.completed'](),
+  CANCELLED: m['common.status.cancelled'](),
 };
 
 const phaseLabel: Record<string, string> = {
-  GROUPS: "Grupos",
-  QUARTER: "Quartas",
-  SEMI: "Semis",
-  FINAL: "Final",
-  BRONZE: "Bronze",
+  GROUPS: m['common.phase.group'](),
+  QUARTER: m['common.phase.quarter'](),
+  SEMI: m['common.phase.semi'](),
+  FINAL: m['common.phase.final'](),
+  BRONZE: m['common.phase.bronze'](),
 };
 
 function CalendarPage() {
@@ -83,7 +79,7 @@ function CalendarPage() {
   const { data: competitionsData } = useSuspenseQuery(
     competitionListQueryOptions(Number(leagueId)),
   );
-  const competitions = orderCompetitions(competitionsData.data);
+  const competitions = orderCompetitions(competitionsData.data as CompetitionResponse[]);
   const defaultCompetitionId = competitions[0]?.id;
   const [selectedCompetitionId, setSelectedCompetitionId] = useWeekSelection(defaultCompetitionId);
 
@@ -100,7 +96,7 @@ function CalendarPage() {
   const generateMutation = useMutation({
     mutationFn: async () => {
       if (!selectedCompetitionId) {
-        throw new Error("Selecione uma competicao antes de gerar.");
+        throw new Error(m['calendar.admin.error.selectCompetition']());
       }
       return unwrap(
         client.POST("/leagues/{league_id}/events/ai-generate", {
@@ -124,10 +120,10 @@ function CalendarPage() {
           queryKey: queryKeys.competitions.detail(Number(leagueId), selectedCompetitionId),
         }),
       ]);
-      toast.success("Calendario gerado com IA.");
+      toast.success(m['calendar.admin.success.generated']());
     },
     onError: (error) => {
-      toast.error(error instanceof ApiError ? error.message : "Falha ao gerar calendario.");
+      toast.error(error instanceof ApiError ? error.message : m['calendar.admin.error.generateFailed']());
     },
   });
 
@@ -201,27 +197,27 @@ function CalendarPage() {
   return (
     <div className="space-y-6">
       <section className="grid gap-4 xl:grid-cols-[1.45fr_1fr]">
-        <Card className="border border-border/70 bg-[radial-gradient(circle_at_top_left,hsl(var(--primary)/0.18),transparent_38%),linear-gradient(165deg,hsl(var(--card)),hsl(var(--card)),hsl(var(--muted)/0.2))]">
+        <Card className="bg-[radial-gradient(circle_at_top_left,hsl(var(--primary)/0.18),transparent_38%),linear-gradient(165deg,hsl(var(--card)),hsl(var(--card)),hsl(var(--muted)/0.2))]">
           <CardHeader className="gap-3">
             <div className="flex flex-wrap items-center gap-2">
-              <Badge variant="outline">Calendário</Badge>
+              <Badge variant="outline">{m['calendar.public.title']()}</Badge>
               {activeCompetition ? (
-                <Badge variant="secondary">Competição {activeCompetition.number}</Badge>
+                <Badge variant="secondary">{m['competition.admin.badge.competition']({ "competition.number": activeCompetition.number })}</Badge>
               ) : null}
             </div>
-            <CardTitle className="text-2xl">Calendário de eventos</CardTitle>
+            <CardTitle className="text-2xl">{m['calendar.admin.title']()}</CardTitle>
             <CardDescription className="max-w-2xl">
-              Acompanhe os eventos agendados por competição e fase.
+              {m['calendar.admin.description']()}
             </CardDescription>
           </CardHeader>
           <CardContent className="grid gap-4 md:grid-cols-3">
             <StatCard
-              label="Competição ativa"
-              value={activeCompetition ? `#${activeCompetition.number}` : "Sem competicao"}
+              label={m['calendar.admin.stat.activeCompetition']()}
+              value={activeCompetition ? `#${activeCompetition.number}` : m['calendar.admin.stat.noCompetition']()}
             />
-            <StatCard label="Eventos visiveis" value={String(events.length)} />
+            <StatCard label={m['calendar.admin.stat.visibleEvents']()} value={String(events.length)} />
             <StatCard
-              label="Periodo"
+              label={m['calendar.admin.stat.period']()}
               value={
                 activeCompetition
                   ? `${formatDate(activeCompetition.start_date)} - ${formatDate(activeCompetition.end_date)}`
@@ -231,13 +227,13 @@ function CalendarPage() {
           </CardContent>
         </Card>
 
-        <Card className="border border-border/70">
+        <Card>
           <CardHeader>
-            <CardTitle>Controles</CardTitle>
+            <CardTitle>{m['calendar.admin.card.controls.title']()}</CardTitle>
             <CardDescription>
               {isAdmin
-                ? "Competição, criacao manual e IA."
-                : "Selecione a competicao para visualizar."}
+                ? m['calendar.admin.card.controls.desc.admin']()
+                : m['calendar.admin.card.controls.desc.user']()}
             </CardDescription>
           </CardHeader>
           <CardContent className="space-y-3">
@@ -246,12 +242,12 @@ function CalendarPage() {
               onValueChange={(value) => setSelectedCompetitionId(Number(value))}
             >
               <SelectTrigger>
-                <SelectValue placeholder="Selecione a competicao" />
+                <SelectValue placeholder={m['calendar.admin.selectCompetition']()} />
               </SelectTrigger>
               <SelectContent>
                 {competitions.map((competition) => (
                   <SelectItem key={competition.id} value={String(competition.id)}>
-                    Competição {competition.number} · {competition.status}
+                    {m['competition.admin.badge.competition']({ "competition.number": competition.number })} · {competition.status}
                   </SelectItem>
                 ))}
               </SelectContent>
@@ -265,7 +261,7 @@ function CalendarPage() {
                   className={cn(buttonVariants({ variant: "default" }), "w-full justify-start")}
                 >
                   <CalendarPlus2 className="mr-2 size-4" />
-                  Criar evento
+                  {m['calendar.admin.button.createEvent']()}
                 </Link>
 
                 <Button
@@ -276,7 +272,7 @@ function CalendarPage() {
                   onClick={() => generateMutation.mutate()}
                 >
                   <Sparkles className="mr-2 size-4" />
-                  {generateMutation.isPending ? "Gerando..." : "Gerar Calendario com IA"}
+                  {generateMutation.isPending ? m['calendar.admin.button.generating']() : m['calendar.admin.button.generateAi']()}
                 </Button>
               </>
             ) : null}
@@ -288,7 +284,7 @@ function CalendarPage() {
                 className={cn(buttonVariants({ variant: "outline" }), "w-full justify-start")}
               >
                 <Waves className="mr-2 size-4" />
-                Ver calendario publico
+                  {m['calendar.admin.button.publicCalendar']()}
               </Link>
             ) : null}
           </CardContent>
@@ -299,9 +295,9 @@ function CalendarPage() {
         <div className="mx-auto max-w-6xl">
           <header className="mb-4 flex items-end justify-between gap-4">
             <div>
-              <h1 className="text-xl font-semibold">Grade da semana</h1>
+              <h1 className="text-xl font-semibold">{m['calendar.admin.table.weeklyGrid']()}</h1>
               <p className="text-muted-foreground text-sm">
-                {pagedData.length} visíveis de {filteredData.length} eventos
+                {m['calendar.admin.table.visibleOfTotal']({ visible: String(pagedData.length), total: String(filteredData.length) })}
               </p>
             </div>
           </header>
@@ -314,7 +310,7 @@ function CalendarPage() {
                   <SearchIcon className="size-4 text-muted-foreground" />
                 </InputGroupAddon>
                 <InputGroupInput
-                  placeholder="Buscar eventos…"
+                  placeholder={m['calendar.admin.searchPlaceholder']()}
                   value={searchQuery}
                   onChange={(e) => {
                     setSearchQuery(e.target.value);
@@ -324,8 +320,8 @@ function CalendarPage() {
                 {searchQuery.length > 0 && (
                   <InputGroupAddon align="inline-end">
                     <InputGroupButton
-                      aria-label="Limpar"
-                      title="Limpar"
+                      aria-label={m['calendar.admin.clearAria']()}
+                      title={m['calendar.admin.clearTitle']()}
                       size="icon-xs"
                       onClick={() => {
                         setSearchQuery("");
@@ -341,7 +337,7 @@ function CalendarPage() {
               <Separator orientation="vertical" className="mx-1 h-6" />
 
               <FacetButton
-                label="Status"
+                label={m['calendar.admin.filter.status']()}
                 icon={<FunnelIcon className="size-3.5" />}
                 count={selectedStatuses.length}
                 chips={selectedStatuses.map((s) => statusLabel[s])}
@@ -381,28 +377,28 @@ function CalendarPage() {
                   }}
                 >
                   <XIcon className="size-3.5 mr-1" />
-                  Limpar filtros
+                  {m['common.actions.clear']()}
                 </Button>
               )}
 
               <span className="ms-auto text-muted-foreground text-xs">
                 <span className="text-foreground">
-                  {activeFilterCount} filtro{activeFilterCount !== 1 ? "s" : ""}
+                  {activeFilterCount} {m['common.table.filterSingular']()}{activeFilterCount !== 1 ? m['common.table.filterPluralSuffix']() : ""}
                 </span>{" "}
-                ativo{activeFilterCount !== 1 ? "s" : ""}
+                {m['common.table.filterActiveSingular']()}{activeFilterCount !== 1 ? m['common.table.filterActivePluralSuffix']() : ""}
               </span>
             </div>
 
             <Table>
               <TableHeader>
                 <TableRow>
-                  <TableHead className="ps-4 w-28">Data</TableHead>
-                  <TableHead className="w-24">Horário</TableHead>
-                  <TableHead>Local</TableHead>
-                  <TableHead className="w-32">Fase</TableHead>
-                  <TableHead className="w-36">Status</TableHead>
-                  <TableHead className="w-24">Modalidade</TableHead>
-                  {isAdmin ? <TableHead className="pe-4 w-28 text-right">Ações</TableHead> : null}
+                  <TableHead className="ps-4 w-28">{m['calendar.admin.table.date']()}</TableHead>
+                  <TableHead className="w-24">{m['calendar.admin.table.time']()}</TableHead>
+                  <TableHead>{m['calendar.admin.table.venue']()}</TableHead>
+                  <TableHead className="w-32">{m['calendar.admin.table.phase']()}</TableHead>
+                  <TableHead className="w-36">{m['calendar.admin.table.status']()}</TableHead>
+                  <TableHead className="w-24">{m['calendar.admin.table.modality']()}</TableHead>
+                  {isAdmin ? <TableHead className="pe-4 w-28 text-right">{m['calendar.admin.table.actions']()}</TableHead> : null}
                 </TableRow>
               </TableHeader>
               <TableBody>
@@ -412,7 +408,7 @@ function CalendarPage() {
                       colSpan={isAdmin ? 7 : 6}
                       className="h-24 text-center text-muted-foreground"
                     >
-                      Nenhum evento encontrado.
+                      {m['calendar.admin.empty']()}
                     </TableCell>
                   </TableRow>
                 )}
@@ -468,7 +464,7 @@ function CalendarPage() {
                             params={{ leagueId }}
                             className={cn(buttonVariants({ variant: "ghost", size: "sm" }))}
                           >
-                            Duplicar base
+                            {m['calendar.admin.table.duplicateBase']()}
                           </Link>
                         </TableCell>
                       ) : null}
@@ -481,7 +477,7 @@ function CalendarPage() {
             {/* Pagination */}
             <div className="flex items-center justify-between border-t px-4 py-3">
               <div className="flex items-center gap-2 text-sm text-muted-foreground">
-                <span>Exibir</span>
+                <span>{m['common.table.paginationShow']()}</span>
                 <select
                   className="h-8 rounded-md border bg-transparent px-2 text-sm"
                   value={pageSize}
@@ -496,7 +492,7 @@ function CalendarPage() {
                     </option>
                   ))}
                 </select>
-                <span>por página</span>
+                <span>{m['common.table.paginationPerPage']()}</span>
               </div>
               <div className="text-sm text-muted-foreground">
                 {filteredData.length === 0
@@ -505,7 +501,7 @@ function CalendarPage() {
                       (pageIndex + 1) * pageSize,
                       filteredData.length,
                     )}`}{" "}
-                de {filteredData.length}
+                {m['common.table.paginationOf']()} {filteredData.length}
               </div>
               <div className="flex items-center gap-2">
                 <Button
@@ -514,7 +510,7 @@ function CalendarPage() {
                   onClick={() => setPageIndex((p) => Math.max(0, p - 1))}
                   disabled={pageIndex === 0}
                 >
-                  Anterior
+                  {m['common.actions.previous']()}
                 </Button>
                 <Button
                   variant="outline"
@@ -524,7 +520,7 @@ function CalendarPage() {
                   }
                   disabled={pageIndex >= totalPages - 1}
                 >
-                  Próxima
+                  {m['common.actions.next']()}
                 </Button>
               </div>
             </div>
@@ -535,88 +531,3 @@ function CalendarPage() {
   );
 }
 
-function StatCard({ label, value }: { label: string; value: string }) {
-  return (
-    <div className="rounded-3xl border border-border/70 bg-background/75 p-4">
-      <div className="text-xs uppercase tracking-[0.2em] text-muted-foreground">{label}</div>
-      <div className="mt-2 text-lg font-semibold">{value}</div>
-    </div>
-  );
-}
-
-function orderCompetitions(competitions: CompetitionResponse[]) {
-  return [...competitions].sort((a, b) => b.number - a.number);
-}
-
-function useWeekSelection(defaultWeekId?: number) {
-  const [selectedWeekId, setSelectedWeekId] = React.useState<number | undefined>(defaultWeekId);
-
-  React.useEffect(() => {
-    if (selectedWeekId == null && defaultWeekId != null) {
-      setSelectedWeekId(defaultWeekId);
-    }
-  }, [defaultWeekId, selectedWeekId]);
-
-  return [selectedWeekId, setSelectedWeekId] as const;
-}
-
-function FacetButton({
-  label,
-  icon,
-  count,
-  chips,
-  children,
-}: {
-  label: string;
-  icon?: React.ReactNode;
-  count?: number;
-  chips?: string[];
-  children: React.ReactNode;
-}) {
-  return (
-    <Popover>
-      <PopoverTrigger
-        render={
-          <Button
-            size="sm"
-            variant="outline"
-            className={
-              count && count > 0
-                ? "border-foreground/20 bg-foreground/5"
-                : "border-dashed"
-            }
-          >
-            {icon}
-            {label}
-            {count && count > 0 ? (
-              <>
-                <Separator orientation="vertical" className="mx-1 h-3" />
-                {chips && chips.length <= 2 ? (
-                  chips.map((c) => (
-                    <Badge
-                      key={c}
-                      variant="secondary"
-                      className="font-mono text-[10px]"
-                    >
-                      {c}
-                    </Badge>
-                  ))
-                ) : (
-                  <Badge
-                    variant="secondary"
-                    className="font-mono text-[10px]"
-                  >
-                    {count}
-                  </Badge>
-                )}
-              </>
-            ) : null}
-          </Button>
-        }
-      />
-      <PopoverContent className="w-60 p-0" align="start">
-        {children}
-      </PopoverContent>
-    </Popover>
-  );
-}
