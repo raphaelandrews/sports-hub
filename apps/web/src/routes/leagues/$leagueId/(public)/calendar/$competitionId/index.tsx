@@ -15,6 +15,7 @@ import {
 } from "@/features/events/api/queries";
 import { competitionDetailQueryOptions } from "@/features/competitions/api/queries";
 import type { EventDetailResponse, EventResponse, EventStatus } from "@/types/events";
+import { seoMeta } from "@/shared/lib/seo";
 
 export const Route = createFileRoute("/leagues/$leagueId/(public)/calendar/$competitionId/")({
   loader: async ({ context: { queryClient }, params: { leagueId, competitionId } }) => {
@@ -30,6 +31,13 @@ export const Route = createFileRoute("/leagues/$leagueId/(public)/calendar/$comp
       ),
       queryClient.ensureQueryData(delegationListQueryOptions(numericLeagueId)),
     ]);
+  },
+  head: ({ loaderData }) => {
+    const competition = Array.isArray(loaderData) ? loaderData[0] : null;
+    return seoMeta({
+      title: competition?.number ? `Competição ${competition.number} - Calendário` : "Calendário",
+      description: "Calendário de eventos da competição.",
+    });
   },
   component: PublicCompetitionCalendarPage,
 });

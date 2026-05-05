@@ -24,6 +24,7 @@ import {
 import { competitionReportQueryOptions } from "@/features/competitions/api/queries";
 import type { DelegationSummary } from "@/types/delegations";
 import type { EventResponse, EventStatus, MatchResponse } from "@/types/events";
+import { seoMeta } from "@/shared/lib/seo";
 
 export const Route = createFileRoute("/leagues/$leagueId/(public)/competitions/$competitionId")({
   loader: async ({ context: { queryClient }, params: { leagueId, competitionId } }) => {
@@ -34,6 +35,13 @@ export const Route = createFileRoute("/leagues/$leagueId/(public)/competitions/$
       queryClient.ensureQueryData(competitionEventsQueryOptions(numericLeagueId, id)),
       queryClient.ensureQueryData(delegationListQueryOptions(numericLeagueId)),
     ]);
+  },
+  head: ({ loaderData }) => {
+    const report = Array.isArray(loaderData) ? loaderData[0] : null;
+    return seoMeta({
+      title: report?.number ? `Competição ${report.number}` : "Competição",
+      description: "Detalhes da competição.",
+    });
   },
   component: CompetitionDetailPage,
 });

@@ -14,10 +14,16 @@ import { resolveRosterSize } from "@/shared/lib/sports";
 import { sportDetailQueryOptions } from "@/features/sports/api/queries";
 import type { Gender, SportType } from "@/types/sports";
 import * as m from "@/paraglide/messages";
+import { seoMeta } from "@/shared/lib/seo";
 
 export const Route = createFileRoute("/leagues/$leagueId/(public)/sports/$sportId")({
   loader: ({ context: { queryClient }, params: { sportId } }) =>
     queryClient.ensureQueryData(sportDetailQueryOptions(Number(sportId))),
+  head: ({ loaderData }) =>
+    seoMeta({
+      title: loaderData?.name ?? "Esporte",
+      description: loaderData?.description || loaderData?.name || "",
+    }),
   component: SportDetailPage,
 });
 

@@ -26,10 +26,12 @@ import { competitionListQueryOptions } from "@/features/competitions/api/queries
 import type { CompetitionResponse, CompetitionStatus } from "@/types/competitions";
 import { TableLayout } from "@/shared/components/ui/table-layout";
 import { PageSingleLayout } from "@/shared/components/layouts/page-single-layout";
+import { seoMeta } from "@/shared/lib/seo";
 
 export const Route = createFileRoute("/leagues/$leagueId/(public)/competitions/")({
   loader: ({ context: { queryClient }, params: { leagueId } }) =>
     queryClient.ensureQueryData(competitionListQueryOptions(Number(leagueId))),
+  head: () => seoMeta({ title: m["competitions.public.title"](), description: "Lista de competições da liga." }),
   component: CompetitionsPage,
 });
 

@@ -31,6 +31,7 @@ import { modalityStandingsQueryOptions } from "@/features/results/api/queries";
 import { sportDetailQueryOptions, sportListQueryOptions } from "@/features/sports/api/queries";
 import { SideCard } from "@/shared/components/ui/side-card";
 import { PageAsideLayout } from "@/shared/components/layouts/page-aside-layout";
+import { seoMeta } from "@/shared/lib/seo";
 
 export const Route = createFileRoute("/leagues/$leagueId/(public)/report/")({
   loader: async ({ context: { queryClient }, params: { leagueId } }) => {
@@ -42,6 +43,7 @@ export const Route = createFileRoute("/leagues/$leagueId/(public)/report/")({
       ...sports.data.map((sport) => queryClient.ensureQueryData(sportDetailQueryOptions(sport.id))),
     ]);
   },
+  head: () => seoMeta({ title: "Relatório final", description: "Relatório consolidado da competição." }),
   component: PublicReportPage,
 });
 

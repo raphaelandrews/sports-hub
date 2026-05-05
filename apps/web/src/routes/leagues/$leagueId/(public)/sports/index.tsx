@@ -10,9 +10,11 @@ import { sportListQueryOptions } from "@/features/sports/api/queries";
 import type { SportType, SportResponse } from "@/types/sports";
 import { TableLayout } from "@/shared/components/ui/table-layout";
 import { PageSingleLayout } from "@/shared/components/layouts/page-single-layout";
+import { seoMeta } from "@/shared/lib/seo";
 
 export const Route = createFileRoute("/leagues/$leagueId/(public)/sports/")({
   loader: ({ context: { queryClient } }) => queryClient.ensureQueryData(sportListQueryOptions()),
+  head: () => seoMeta({ title: m["sports.public.title"](), description: "Lista de esportes e modalidades da liga." }),
   component: SportsPage,
 });
 

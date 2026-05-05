@@ -17,9 +17,11 @@ import { LeagueCard } from "@/shared/components/ui/league-card";
 import { Title } from "@/shared/components/ui/title";
 import { PageAsideLayout } from "@/shared/components/layouts/page-aside-layout";
 import { LeaguesSidebar } from "@/shared/components/ui/leagues-sidebar";
+import { seoMeta } from "@/shared/lib/seo";
 
 export const Route = createFileRoute("/leagues/")({
   loader: ({ context: { queryClient } }) => queryClient.ensureQueryData(leagueListQueryOptions()),
+  head: () => seoMeta({ title: m["leagues.listTitle"](), description: "Explore e participe de ligas esportivas." }),
   component: LeaguesPage,
 });
 

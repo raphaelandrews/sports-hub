@@ -26,6 +26,7 @@ import {
 import { sportDetailQueryOptions } from "@/features/sports/api/queries";
 import * as m from "@/paraglide/messages";
 import { PageSingleLayout } from "@/shared/components/layouts/page-single-layout";
+import { seoMeta } from "@/shared/lib/seo";
 
 export const Route = createFileRoute("/leagues/$leagueId/(public)/results/sports/$sportId/")({
   loader: async ({ context: { queryClient }, params: { leagueId, sportId } }) => {
@@ -39,7 +40,14 @@ export const Route = createFileRoute("/leagues/$leagueId/(public)/results/sports
         queryClient.ensureQueryData(modalityStandingsQueryOptions(numericLeagueId, modality.id)),
       ),
     ]);
+
+    return sport;
   },
+  head: ({ loaderData }) =>
+    seoMeta({
+      title: loaderData?.name ? `${loaderData.name} - Resultados` : "Resultados",
+      description: "Resultados e classificação por esporte.",
+    }),
   component: SportResultsPage,
 });
 

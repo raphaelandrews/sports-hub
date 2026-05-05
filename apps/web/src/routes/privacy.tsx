@@ -1,8 +1,10 @@
 import { createFileRoute } from "@tanstack/react-router";
 import * as m from "@/paraglide/messages";
 import { PageSingleLayout } from "@/shared/components/layouts/page-single-layout";
+import { seoMeta } from "@/shared/lib/seo";
 
 export const Route = createFileRoute("/privacy")({
+  head: () => seoMeta({ title: m["privacy.title"](), description: "Política de privacidade da plataforma." }),
   component: PrivacyPage,
 });
 

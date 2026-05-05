@@ -22,6 +22,7 @@ import { ImageUpload } from "@/shared/components/ui/image-upload";
 import type { LeagueResponse } from "@/types/leagues";
 import { Badge } from "@sports-system/ui/components/badge";
 import { PageSingleLayout } from "@/shared/components/layouts/page-single-layout";
+import { seoMeta } from "@/shared/lib/seo";
 
 export const Route = createFileRoute("/leagues/new")({
   beforeLoad: ({ context }) => {
@@ -32,6 +33,7 @@ export const Route = createFileRoute("/leagues/new")({
   loader: ({ context: { queryClient } }) => {
     void queryClient.prefetchQuery(sportListQueryOptions());
   },
+  head: () => seoMeta({ title: m["league.new.title"](), description: m["league.new.subtitle"]() }),
   component: NewLeaguePage,
 });
 

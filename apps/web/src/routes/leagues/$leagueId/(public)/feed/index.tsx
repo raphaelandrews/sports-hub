@@ -22,10 +22,12 @@ import { Activity, Medal, RadioTower, TimerReset } from "lucide-react";
 
 import { activityFeedQueryOptions } from "@/features/activities/api/queries";
 import type { ActivityFeedItem, ActivityFeedItemType } from "@/types/activity";
+import { seoMeta } from "@/shared/lib/seo";
 
 export const Route = createFileRoute("/leagues/$leagueId/(public)/feed/")({
   loader: ({ context: { queryClient }, params: { leagueId } }) =>
     queryClient.ensureQueryData(activityFeedQueryOptions(Number(leagueId), 40)),
+  head: () => seoMeta({ title: "Feed de atividades", description: "Feed de atividades e eventos da liga." }),
   component: FeedPage,
 });
 

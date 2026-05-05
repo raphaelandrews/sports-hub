@@ -27,6 +27,7 @@ import {
   standaloneDelegationDetailQueryOptions,
   delegationLeaguesQueryOptions,
 } from "@/features/delegations/api/queries";
+import { seoMeta } from "@/shared/lib/seo";
 
 export const Route = createFileRoute("/delegations/$delegationId/")({
   loader: ({ context: { queryClient }, params: { delegationId } }) =>
@@ -34,6 +35,13 @@ export const Route = createFileRoute("/delegations/$delegationId/")({
       queryClient.ensureQueryData(standaloneDelegationDetailQueryOptions(Number(delegationId))),
       queryClient.ensureQueryData(delegationLeaguesQueryOptions(Number(delegationId))),
     ]),
+  head: ({ loaderData }) => {
+    const delegation = loaderData?.[0];
+    return seoMeta({
+      title: delegation?.name ?? "Delegação",
+      description: delegation?.name ? `Perfil da delegação ${delegation.name}.` : "",
+    });
+  },
   component: StandaloneDelegationPage,
 });
 

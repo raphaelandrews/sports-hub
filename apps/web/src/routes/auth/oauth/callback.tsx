@@ -13,6 +13,7 @@ import { z } from "zod";
 
 import * as m from "@/paraglide/messages";
 import { finalizeOAuthFn } from "@/features/auth/server/auth";
+import { seoMeta } from "@/shared/lib/seo";
 
 const callbackSearchSchema = z.object({
   token: z.string().optional(),
@@ -26,6 +27,7 @@ export const Route = createFileRoute("/auth/oauth/callback")({
       throw redirect({ to: "/leagues" });
     }
   },
+  head: () => seoMeta({ title: "Autenticação", description: "Processando autenticação OAuth." }),
   component: OAuthCallbackPage,
 });
 

@@ -1,8 +1,10 @@
 import { createFileRoute } from "@tanstack/react-router";
 import * as m from "@/paraglide/messages";
 import { PageSingleLayout } from "@/shared/components/layouts/page-single-layout";
+import { seoMeta } from "@/shared/lib/seo";
 
 export const Route = createFileRoute("/terms")({
+  head: () => seoMeta({ title: m["terms.title"](), description: "Termos de uso da plataforma." }),
   component: TermsPage,
 });
 

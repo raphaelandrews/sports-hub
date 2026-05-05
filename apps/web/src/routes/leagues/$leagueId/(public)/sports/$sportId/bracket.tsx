@@ -40,6 +40,7 @@ import type {
   GroupStanding,
 } from "@/types/bracketcore";
 import type { EventResponse, EventDetailResponse, MatchStatus } from "@/types/events";
+import { seoMeta } from "@/shared/lib/seo";
 
 export const Route = createFileRoute("/leagues/$leagueId/(public)/sports/$sportId/bracket")({
   loader: async ({ context: { queryClient }, params: { leagueId, sportId } }) => {
@@ -54,6 +55,13 @@ export const Route = createFileRoute("/leagues/$leagueId/(public)/sports/$sportI
         allEventsQueryOptions(numericLeagueId, { per_page: 200, sport_id: numericSportId }),
       ),
     ]);
+  },
+  head: ({ loaderData }) => {
+    const sport = Array.isArray(loaderData) ? loaderData[0] : null;
+    return seoMeta({
+      title: sport?.name ? `${sport.name} - Chaveamento` : "Chaveamento",
+      description: "Chaveamento e fases eliminatórias do esporte.",
+    });
   },
   component: SportBracketPage,
 });

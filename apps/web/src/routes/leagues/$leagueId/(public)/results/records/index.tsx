@@ -21,10 +21,12 @@ import { formatEventDate } from "@/shared/lib/date";
 import { recordsQueryOptions } from "@/features/results/api/queries";
 import * as m from "@/paraglide/messages";
 import { PageSingleLayout } from "@/shared/components/layouts/page-single-layout";
+import { seoMeta } from "@/shared/lib/seo";
 
 export const Route = createFileRoute("/leagues/$leagueId/(public)/results/records/")({
   loader: ({ context: { queryClient }, params: { leagueId } }) =>
     queryClient.ensureQueryData(recordsQueryOptions(Number(leagueId))),
+  head: () => seoMeta({ title: m["results.records.title"](), description: m["results.records.desc"]() }),
   component: RecordsPage,
 });
 

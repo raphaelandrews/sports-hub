@@ -28,6 +28,7 @@ import { competitionListQueryOptions } from "@/features/competitions/api/queries
 import type { EventResponse, EventStatus } from "@/types/events";
 import { TableLayout } from "@/shared/components/ui/table-layout";
 import { PageSingleLayout } from "@/shared/components/layouts/page-single-layout";
+import { seoMeta } from "@/shared/lib/seo";
 
 export const Route = createFileRoute("/leagues/$leagueId/(public)/calendar/")({
   loader: ({ context: { queryClient }, params: { leagueId } }) =>
@@ -37,6 +38,7 @@ export const Route = createFileRoute("/leagues/$leagueId/(public)/calendar/")({
         allEventsQueryOptions(Number(leagueId), { per_page: 100 }),
       ),
     ]),
+  head: () => seoMeta({ title: m["calendar.public.title"](), description: "Calendário de eventos e competições." }),
   component: CalendarPage,
 });
 

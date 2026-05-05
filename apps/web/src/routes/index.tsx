@@ -8,6 +8,7 @@ import { PageAsideLayout } from "@/shared/components/layouts/page-aside-layout";
 import { LeaguesSidebar } from "@/shared/components/ui/leagues-sidebar";
 import { globalActivityFeedQueryOptions } from "@/features/activities";
 import { HomeCharts } from "@/features/home/components/home-charts";
+import { seoMeta } from "@/shared/lib/seo";
 
 export const Route = createFileRoute("/")({
   loader: ({ context: { queryClient } }) =>
@@ -15,6 +16,7 @@ export const Route = createFileRoute("/")({
       queryClient.ensureQueryData(leagueListQueryOptions()),
       queryClient.ensureQueryData(globalActivityFeedQueryOptions(10)),
     ]),
+  head: () => seoMeta({ title: m["home.title"](), description: m["home.subtitle"]() }),
   component: HomePage,
 });
 

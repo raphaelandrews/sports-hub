@@ -12,6 +12,7 @@ import { medalBoardQueryOptions } from "@/features/results/api/queries";
 import { sportListQueryOptions } from "@/features/sports/api/queries";
 import type { MedalBoardEntry } from "@/types/results";
 import * as m from "@/paraglide/messages";
+import { seoMeta } from "@/shared/lib/seo";
 
 export const Route = createFileRoute("/leagues/$leagueId/(public)/results/")({
   loader: ({ context: { queryClient }, params: { leagueId } }) =>
@@ -19,6 +20,7 @@ export const Route = createFileRoute("/leagues/$leagueId/(public)/results/")({
       queryClient.ensureQueryData(medalBoardQueryOptions(Number(leagueId))),
       queryClient.ensureQueryData(sportListQueryOptions()),
     ]),
+  head: () => seoMeta({ title: m["results.public.title"](), description: m["results.public.section.medalBoard"]() }),
   component: ResultsPage,
 });
 

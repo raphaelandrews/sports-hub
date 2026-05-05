@@ -1,6 +1,6 @@
 {
   "$schema": "https://inlang.com/schema/inlang-message-format",
-  "app_title": "Sports System",
+  "app_title": "SportsHub",
   "nav_dashboard": "Dashboard",
   "nav_athletes": "Athletes",
   "nav_competitions": "Competitions",

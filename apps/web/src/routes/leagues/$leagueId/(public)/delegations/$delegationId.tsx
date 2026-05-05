@@ -35,6 +35,7 @@ import {
 } from "@/features/delegations/api/queries";
 import { PageAsideLayout } from "@/shared/components/layouts/page-aside-layout";
 import { Title } from "@/shared/components/ui/title";
+import { seoMeta } from "@/shared/lib/seo";
 
 export const Route = createFileRoute("/leagues/$leagueId/(public)/delegations/$delegationId")({
   loader: ({ context: { queryClient }, params: { leagueId, delegationId } }) => {
@@ -47,6 +48,11 @@ export const Route = createFileRoute("/leagues/$leagueId/(public)/delegations/$d
       delegationDetailQueryOptions(numericLeagueId, numericDelegationId),
     );
   },
+  head: ({ loaderData }) =>
+    seoMeta({
+      title: loaderData?.name ?? "Delegação",
+      description: loaderData?.name ? `Perfil da delegação ${loaderData.name}.` : "",
+    }),
   component: DelegationDetailPage,
 });
 

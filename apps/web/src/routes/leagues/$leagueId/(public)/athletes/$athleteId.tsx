@@ -17,11 +17,17 @@ import * as m from "@/paraglide/messages";
 import { formatDate } from "@/shared/lib/date";
 import { athleteReportQueryOptions } from "@/features/athletes/api/queries";
 import type { Medal } from "@/types/athletes";
+import { seoMeta } from "@/shared/lib/seo";
 
 export const Route = createFileRoute("/leagues/$leagueId/(public)/athletes/$athleteId")({
   ssr: false,
   loader: ({ context: { queryClient }, params: { leagueId, athleteId } }) =>
     queryClient.ensureQueryData(athleteReportQueryOptions(Number(leagueId), Number(athleteId))),
+  head: ({ loaderData }) =>
+    seoMeta({
+      title: loaderData?.athlete?.name ?? "Atleta",
+      description: loaderData?.athlete?.name ? `Perfil do atleta ${loaderData.athlete.name}.` : "",
+    }),
   component: AthleteProfilePage,
 });
 

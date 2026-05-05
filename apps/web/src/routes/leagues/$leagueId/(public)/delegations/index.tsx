@@ -14,10 +14,12 @@ import { delegationListQueryOptions } from "@/features/delegations/api/queries";
 import { TableLayout } from "@/shared/components/ui/table-layout";
 import { PageSingleLayout } from "@/shared/components/layouts/page-single-layout";
 import type { DelegationResponse } from "@/types/delegations";
+import { seoMeta } from "@/shared/lib/seo";
 
 export const Route = createFileRoute("/leagues/$leagueId/(public)/delegations/")({
   loader: ({ context: { queryClient }, params: { leagueId } }) =>
     queryClient.ensureQueryData(delegationListQueryOptions(Number(leagueId))),
+  head: () => seoMeta({ title: m["delegations.public.title"](), description: "Delegações participantes da liga." }),
   component: DelegationsPage,
 });
 
