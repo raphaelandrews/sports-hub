@@ -1127,6 +1127,40 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/activities": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** List Global Activity Feed */
+        get: operations["list_global_activity_feed_activities_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/activities/stream": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Stream Global Activity Feed */
+        get: operations["stream_global_activity_feed_activities_stream_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/leagues/{league_id}/events": {
         parameters: {
             query?: never;
@@ -1660,6 +1694,57 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/leagues/{league_id}/assistant/query": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Query Assistant */
+        post: operations["query_assistant_leagues__league_id__assistant_query_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/leagues/{league_id}/matches/{match_id}/predict": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Predict Match */
+        post: operations["predict_match_leagues__league_id__matches__match_id__predict_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/leagues/{league_id}/matches/{match_id}/prediction": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Get Match Prediction */
+        get: operations["get_match_prediction_leagues__league_id__matches__match_id__prediction_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
 }
 export type webhooks = Record<string, never>;
 export interface components {
@@ -1728,6 +1813,16 @@ export interface components {
          * @enum {string}
          */
         ActivityFeedItemType: "MATCH_STARTED" | "MATCH_EVENT" | "MATCH_FINISHED" | "RECORD_SET";
+        /** AssistantQueryRequest */
+        AssistantQueryRequest: {
+            /** Question */
+            question: string;
+        };
+        /** AssistantQueryResponse */
+        AssistantQueryResponse: {
+            /** Answer */
+            answer: string;
+        };
         /** AthleteBySportEntry */
         AthleteBySportEntry: {
             /** Sport Id */
@@ -2666,6 +2761,24 @@ export interface components {
             /** Delegation Id At Time */
             delegation_id_at_time: number;
             role: components["schemas"]["ParticipantRole"];
+        };
+        /** MatchPredictionResponse */
+        MatchPredictionResponse: {
+            /** Id */
+            id: number;
+            /** Match Id */
+            match_id: number;
+            /** League Id */
+            league_id: number;
+            /** Prediction Json */
+            prediction_json: {
+                [key: string]: unknown;
+            };
+            /**
+             * Generated At
+             * Format: date-time
+             */
+            generated_at: string;
         };
         /** MatchResponse */
         MatchResponse: {
@@ -5828,6 +5941,57 @@ export interface operations {
             };
         };
     };
+    list_global_activity_feed_activities_get: {
+        parameters: {
+            query?: {
+                limit?: number;
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ActivityFeedItem"][];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    stream_global_activity_feed_activities_stream_get: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": unknown;
+                };
+            };
+        };
+    };
     list_events_leagues__league_id__events_get: {
         parameters: {
             query?: {
@@ -7025,6 +7189,105 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["AIGenerationResponse"][];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    query_assistant_leagues__league_id__assistant_query_post: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                league_id: number;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["AssistantQueryRequest"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["AssistantQueryResponse"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    predict_match_leagues__league_id__matches__match_id__predict_post: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                league_id: number;
+                match_id: number;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["MatchPredictionResponse"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    get_match_prediction_leagues__league_id__matches__match_id__prediction_get: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                league_id: number;
+                match_id: number;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["MatchPredictionResponse"] | null;
                 };
             };
             /** @description Validation Error */

@@ -1,6 +1,7 @@
 import { useState } from "react";
 import { Badge } from "@sports-system/ui/components/badge";
 import { Button } from "@sports-system/ui/components/button";
+import { Input } from "@sports-system/ui/components/input";
 import {
   Avatar,
   AvatarFallback,
@@ -19,10 +20,13 @@ import {
   ClipboardList,
   Sparkles,
   Loader2,
+  MessageCircleQuestion,
 } from "lucide-react";
 
+import { allEventsQueryOptions } from "@/features/events/api/queries";
 import { leagueDetailQueryOptions } from "@/features/leagues/api/queries";
 import { useGenerateResumeMutation } from "@/features/narratives/api/queries";
+import { client, unwrap } from "@/shared/lib/api";
 import { MarkdownRenderer } from "@/shared/components/ui/markdown-renderer";
 import { seoMeta } from "@/shared/lib/seo";
 
@@ -40,7 +44,13 @@ export const Route = createFileRoute("/leagues/$leagueId/(public)/")({
 function LeaguePublicPage() {
   const { leagueId } = Route.useParams();
   const { data: league } = useSuspenseQuery(leagueDetailQueryOptions(leagueId));
+  const { data: upcomingEvents } = useSuspenseQuery(
+    allEventsQueryOptions(Number(leagueId), { per_page: 5 }),
+  );
   const [resumeContent, setResumeContent] = useState<string | null>(null);
+  const [assistantQuestion, setAssistantQuestion] = useState("");
+  const [assistantAnswer, setAssistantAnswer] = useState<string | null>(null);
+  const [assistantLoading, setAssistantLoading] = useState(false);
   const generateResume = useGenerateResumeMutation(Number(leagueId));
 
   const handleGenerate = () => {
@@ -49,6 +59,20 @@ function LeaguePublicPage() {
         setResumeContent(data.content);
       },
     });
+  };
+
+  const handleAssistantAsk = () => {
+    if (!assistantQuestion.trim()) return;
+    setAssistantLoading(true);
+    unwrap(
+      client.POST("/leagues/{league_id}/assistant/query", {
+        params: { path: { league_id: Number(leagueId) } },
+        body: { question: assistantQuestion.trim() },
+      }),
+    )
+      .then((data) => setAssistantAnswer(data.answer))
+      .catch(() => setAssistantAnswer("Erro ao consultar o assistente."))
+      .finally(() => setAssistantLoading(false));
   };
 
   const navItems = [
@@ -155,6 +179,104 @@ function LeaguePublicPage() {
               <MarkdownRenderer content={resumeContent} />
             </CardContent>
           )}
+        </Card>
+      </section>
+
+      <section className="mb-8">
+        <Card className="border-dashed">
+          <CardHeader>
+            <div className="flex items-center gap-3">
+              <div className="flex size-10 items-center justify-center rounded-xl bg-primary/10">
+                <MessageCircleQuestion className="size-5 text-primary" />
+              </div>
+              <div className="flex-1">
+                <CardTitle className="text-base">Assistente IA</CardTitle>
+                <CardDescription className="text-sm">
+                  Pergunte qualquer coisa sobre estatísticas, medalhas, partidas e delegações
+                </CardDescription>
+              </div>
+            </div>
+          </CardHeader>
+          <CardContent className="space-y-4">
+            <div className="flex gap-2">
+              <Input
+                placeholder="Ex: Qual delegação tem mais medalhas de ouro?"
+                value={assistantQuestion}
+                onChange={(event) => setAssistantQuestion(event.target.value)}
+                onKeyDown={(event) => {
+                  if (event.key === "Enter") handleAssistantAsk();
+                }}
+              />
+              <Button
+                onClick={handleAssistantAsk}
+                disabled={assistantLoading || !assistantQuestion.trim()}
+                size="sm"
+              >
+                {assistantLoading ? (
+                  <Loader2 className="size-4 animate-spin mr-2" />
+                ) : (
+                  <MessageCircleQuestion className="size-4 mr-2" />
+                )}
+                Perguntar
+              </Button>
+            </div>
+            {assistantAnswer && (
+              <div className="rounded-2xl border border-border/70 bg-muted/15 p-4">
+                <MarkdownRenderer content={assistantAnswer} />
+              </div>
+            )}
+          </CardContent>
+        </Card>
+      </section>
+
+      <section className="mb-8">
+        <Card className="border-dashed">
+          <CardHeader>
+            <div className="flex items-center gap-3">
+              <div className="flex size-10 items-center justify-center rounded-xl bg-primary/10">
+                <Sparkles className="size-5 text-primary" />
+              </div>
+              <div className="flex-1">
+                <CardTitle className="text-base">Previsões IA</CardTitle>
+                <CardDescription className="text-sm">
+                  Gere previsões de resultado com base no histórico das equipes
+                </CardDescription>
+              </div>
+            </div>
+          </CardHeader>
+          <CardContent className="space-y-3">
+            {upcomingEvents && upcomingEvents.data.length > 0 ? (
+              upcomingEvents.data.slice(0, 3).map((event) => (
+                <div key={event.id} className="flex items-center justify-between gap-3 rounded-2xl border border-border/70 bg-muted/15 p-3">
+                  <div className="flex-1 min-w-0">
+                    <div className="font-medium text-sm truncate">
+                      {event.event_date} às {event.start_time}
+                    </div>
+                    <div className="text-xs text-muted-foreground">
+                      {event.venue || "Local a definir"} · {event.phase}
+                    </div>
+                  </div>
+                  <Link
+                    to="/leagues/$leagueId/competitions/$competitionId"
+                    params={{ leagueId, competitionId: String(event.competition_id) }}
+                  >
+                    <Button variant="outline" size="sm">
+                      Ver partidas
+                    </Button>
+                  </Link>
+                </div>
+              ))
+            ) : (
+              <div className="rounded-2xl border border-dashed border-border/70 p-6 text-center text-sm text-muted-foreground">
+                Nenhum evento próximo. Acesse o calendário para ver todas as partidas.
+              </div>
+            )}
+            <div className="flex justify-end">
+              <Link to="/leagues/$leagueId/calendar" params={{ leagueId }}>
+                <Button variant="ghost" size="sm">Ver calendário completo</Button>
+              </Link>
+            </div>
+          </CardContent>
         </Card>
       </section>
 

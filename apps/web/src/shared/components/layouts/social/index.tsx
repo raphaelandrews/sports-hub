@@ -179,6 +179,7 @@ export function SocialLayout({
       <aside className="sticky top-0 z-40 hidden h-screen w-65 shrink-0 flex-col border-r border-input bg-background lg:flex">
         <Link to="/" className="flex h-18 items-center gap-3 px-6 transition-opacity hover:opacity-80">
           <img src={logo} alt="Logo" className="size-6" />
+          <span className="text-xl font-bold">SportsHub</span>
         </Link>
 
         <div className="flex flex-col p-4">

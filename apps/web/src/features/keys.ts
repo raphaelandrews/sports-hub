@@ -81,6 +81,12 @@ export const queryKeys = {
     history: (leagueId: number) => ["ai", leagueId, "history"] as const,
     narrative: (leagueId: number, date: string) => ["ai", leagueId, "narrative", date] as const,
   },
+  assistant: {
+    query: (leagueId: number) => ["assistant", leagueId] as const,
+  },
+  predictions: {
+    detail: (matchId: number) => ["predictions", matchId] as const,
+  },
   activities: {
     feed: (leagueId: number | undefined, limit: number) =>
       ["activities", "feed", leagueId ?? "all", limit] as const,

@@ -13,6 +13,7 @@ class Settings(BaseSettings):
     PORT: int = 3000
     TIMEZONE: str = "America/Sao_Paulo"
     DEBUG: bool = True
+    ENABLE_DOCS: bool = False
     GROQ_API_KEY: str = ""
     GOOGLE_OAUTH_CLIENT_ID: str = ""
     GOOGLE_OAUTH_CLIENT_SECRET: str = ""

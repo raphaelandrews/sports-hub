@@ -1,4 +1,5 @@
 import * as React from "react";
+import { useState } from "react";
 import { useMutation, useQueryClient, useSuspenseQuery } from "@tanstack/react-query";
 import { createFileRoute } from "@tanstack/react-router";
 import { toast } from "sonner";
@@ -30,6 +31,10 @@ import { buildApiUrl } from "@/shared/lib/url";
 import { athleteListQueryOptions } from "@/features/athletes/api/queries";
 import { delegationListQueryOptions } from "@/features/delegations/api/queries";
 import { matchDetailQueryOptions } from "@/features/matches/api/queries";
+import {
+  generateMatchPrediction,
+  matchPredictionQueryOptions,
+} from "@/features/predictions/api/queries";
 import { queryKeys } from "@/features/keys";
 import type { MatchEventCreate, MatchEventType, MatchParticipantResponse } from "@/types/events";
 import * as m from "@/paraglide/messages";
@@ -190,6 +195,8 @@ function MatchLivePage() {
           </CardContent>
         </Card>
       </section>
+
+      <MatchPredictionCard leagueId={Number(leagueId)} matchId={numericMatchId} />
 
       <section className="grid gap-4 xl:grid-cols-[1fr_0.95fr]">
         <Card>
@@ -419,6 +426,83 @@ function MatchEventForm({
         {isPending ? m["common.actions.submit"]() : m["common.actions.create"]()}
       </Button>
     </form>
+  );
+}
+
+function MatchPredictionCard({ leagueId, matchId }: { leagueId: number; matchId: number }) {
+  const queryClient = useQueryClient();
+  const { data: prediction } = useSuspenseQuery(matchPredictionQueryOptions(leagueId, matchId));
+  const [generating, setGenerating] = useState(false);
+
+  const handleGenerate = async () => {
+    setGenerating(true);
+    try {
+      await generateMatchPrediction(leagueId, matchId);
+      await queryClient.invalidateQueries({
+        queryKey: queryKeys.predictions.detail(matchId),
+      });
+      toast.success("Previsão gerada com sucesso!");
+    } catch {
+      toast.error("Erro ao gerar previsão.");
+    } finally {
+      setGenerating(false);
+    }
+  };
+
+  const p = prediction?.prediction_json;
+
+  return (
+    <section>
+      <Card>
+        <CardHeader>
+          <CardTitle>Previsão IA</CardTitle>
+          <CardDescription>Análise preditiva baseada no histórico das equipes</CardDescription>
+        </CardHeader>
+        <CardContent className="space-y-4">
+          {p ? (
+            <div className="grid gap-4 md:grid-cols-3">
+              <div className="rounded-3xl border border-border/70 bg-background/80 p-4 text-center">
+                <div className="text-xs uppercase tracking-[0.24em] text-muted-foreground">Prob. Vitória A</div>
+                <div className="mt-3 text-3xl font-semibold text-primary">{Math.round((p.win_probability_a as number) * 100)}%</div>
+              </div>
+              <div className="rounded-3xl border border-border/70 bg-background/80 p-4 text-center">
+                <div className="text-xs uppercase tracking-[0.24em] text-muted-foreground">Empate</div>
+                <div className="mt-3 text-3xl font-semibold text-muted-foreground">{Math.round((p.draw_probability as number) * 100)}%</div>
+              </div>
+              <div className="rounded-3xl border border-border/70 bg-background/80 p-4 text-center">
+                <div className="text-xs uppercase tracking-[0.24em] text-muted-foreground">Prob. Vitória B</div>
+                <div className="mt-3 text-3xl font-semibold text-primary">{Math.round((p.win_probability_b as number) * 100)}%</div>
+              </div>
+              <div className="rounded-3xl border border-border/70 bg-background/80 p-4 text-center md:col-span-3">
+                <div className="text-xs uppercase tracking-[0.24em] text-muted-foreground">Placar Previsto</div>
+                <div className="mt-3 text-4xl font-bold">{p.predicted_score_a as number} x {p.predicted_score_b as number}</div>
+              </div>
+              <div className="rounded-2xl border border-border/70 bg-muted/15 p-3 md:col-span-3">
+                <div className="text-[11px] uppercase tracking-[0.24em] text-muted-foreground mb-1">Justificativa</div>
+                <div className="text-sm">{p.reasoning as string}</div>
+              </div>
+              <div className="rounded-2xl border border-border/70 bg-muted/15 p-3 md:col-span-3">
+                <div className="text-[11px] uppercase tracking-[0.24em] text-muted-foreground mb-1">Fator Decisivo</div>
+                <div className="text-sm font-medium">{p.key_factor as string}</div>
+              </div>
+            </div>
+          ) : (
+            <div className="rounded-3xl border border-dashed border-border/70 p-8 text-center text-sm text-muted-foreground">
+              Nenhuma previsão gerada para esta partida.
+            </div>
+          )}
+          <Button
+            type="button"
+            variant="outline"
+            disabled={generating}
+            onClick={handleGenerate}
+            className="w-full"
+          >
+            {generating ? "Gerando previsão..." : "Gerar Previsão com IA"}
+          </Button>
+        </CardContent>
+      </Card>
+    </section>
   );
 }
 
