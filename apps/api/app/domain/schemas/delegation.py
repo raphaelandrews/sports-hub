@@ -150,4 +150,4 @@ class LeagueParticipationRequestResponse(BaseModel):
 
 class DelegationAIGenerateRequest(BaseModel):
     prompt: str
-    count: int = Field(default=5, ge=1, le=10)
+    count: int = Field(default=5, ge=1, le=30)

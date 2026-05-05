@@ -207,6 +207,23 @@ LEAGUE_DESCRIPTION = (
     "Competicao completa com 8 delegacoes, 10 esportes, 1 a 20 de dezembro de 2025."
 )
 
+COMP_START_2 = date(2026, 1, 10)
+COMP_END_2 = date(2026, 1, 25)
+LEAGUE_SLUG_2 = "sports-hub-2"
+LEAGUE_NAME_2 = "Sports Hub Winter"
+LEAGUE_DESCRIPTION_2 = "Segunda competicao completa com 8 delegacoes, 10 esportes, 10 a 25 de janeiro de 2026."
+
+_COUNTRIES_2: list[tuple[str, str]] = [
+    ("CAN", "Canada"),
+    ("MEX", "Mexico"),
+    ("KOR", "Coreia do Sul"),
+    ("AUS", "Australia"),
+    ("NED", "Holanda"),
+    ("SWE", "Suecia"),
+    ("POR", "Portugal"),
+    ("TUR", "Turquia"),
+]
+
 
 # ---------------------------------------------------------------------------
 # 2. HELPERS
@@ -277,47 +294,101 @@ async def _get_or_create_admin(session: AsyncSession) -> User:
 # ---------------------------------------------------------------------------
 
 
+async def _run_seed(
+    session: AsyncSession,
+    *,
+    league_slug: str,
+    league_name: str,
+    league_description: str,
+    comp_start: date,
+    comp_end: date,
+    countries: list[tuple[str, str]],
+    athlete_name_offset: int = 0,
+) -> None:
+    sports = await _ensure_sports(session)
+    if not sports:
+        raise RuntimeError("No sports found. Run seed_sports() first.")
+
+    await _ensure_gs_de_modality(session, sports)
+
+    admin = await _get_or_create_admin(session)
+    await session.commit()
+
+    league = await _create_league(
+        session,
+        admin.id,
+        sports,
+        slug=league_slug,
+        name=league_name,
+        description=league_description,
+    )
+    logger.info("seed: created league id=%s", league.id)
+
+    delegations = await _create_delegations(
+        session, league.id, admin.id, countries=countries
+    )
+    logger.info("seed: created %s delegations", len(delegations))
+
+    athletes = await _create_athletes(
+        session,
+        league.id,
+        delegations,
+        sports,
+        name_offset=athlete_name_offset,
+    )
+    logger.info("seed: created %s athletes", len(athletes))
+
+    competition = await _create_competition(
+        session, league.id, sports, start=comp_start, end=comp_end
+    )
+    logger.info("seed: created competition id=%s", competition.id)
+
+    events = await generate_events(session, competition)
+    logger.info("seed: created %s events", len(events))
+
+    await _create_enrollments(session, events, athletes)
+    logger.info("seed: enrollments created")
+
+    matches_created = await generate_bracket(session, competition.id)
+    logger.info("seed: initial bracket generated with %s matches", matches_created)
+
+    competition.status = CompetitionStatus.ACTIVE
+    session.add(competition)
+    await session.commit()
+
+    await _verify_medals(session, competition.league_id)
+
+    logger.info(
+        "seed: ALL DONE — league_id=%s competition_id=%s", league.id, competition.id
+    )
+
+
 async def seed_all() -> None:
     """Run the complete database seed."""
     async with async_session_factory() as session:
-        sports = await _ensure_sports(session)
-        if not sports:
-            raise RuntimeError("No sports found. Run seed_sports() first.")
+        await _run_seed(
+            session,
+            league_slug=LEAGUE_SLUG,
+            league_name=LEAGUE_NAME,
+            league_description=LEAGUE_DESCRIPTION,
+            comp_start=COMP_START,
+            comp_end=COMP_END,
+            countries=_COUNTRIES,
+        )
 
-        await _ensure_gs_de_modality(session, sports)
 
-        admin = await _get_or_create_admin(session)
-        await session.commit()
-
-        league = await _create_league(session, admin.id, sports)
-        logger.info("seed: created league id=%s", league.id)
-
-        delegations = await _create_delegations(session, league.id, admin.id)
-        logger.info("seed: created %s delegations", len(delegations))
-
-        athletes = await _create_athletes(session, league.id, delegations, sports)
-        logger.info("seed: created %s athletes", len(athletes))
-
-        competition = await _create_competition(session, league.id, sports)
-        logger.info("seed: created competition id=%s", competition.id)
-
-        events = await generate_events(session, competition)
-        logger.info("seed: created %s events", len(events))
-
-        await _create_enrollments(session, events, athletes)
-        logger.info("seed: enrollments created")
-
-        matches_created = await generate_bracket(session, competition.id)
-        logger.info("seed: initial bracket generated with %s matches", matches_created)
-
-        competition.status = CompetitionStatus.ACTIVE
-        session.add(competition)
-        await session.commit()
-
-        await _verify_medals(session, competition.league_id)
-
-        logger.info(
-            "seed: ALL DONE — league_id=%s competition_id=%s", league.id, competition.id
+async def seed_all_2() -> None:
+    """Run the second complete database seed."""
+    async with async_session_factory() as session:
+        await _run_seed(
+            session,
+            league_slug=LEAGUE_SLUG_2,
+            league_name=LEAGUE_NAME_2,
+            league_description=LEAGUE_DESCRIPTION_2,
+            comp_start=COMP_START_2,
+            comp_end=COMP_END_2,
+            countries=_COUNTRIES_2,
+            athlete_name_offset=1000,
         )
 
 
@@ -366,22 +437,26 @@ async def _ensure_gs_de_modality(session: AsyncSession, sports: list[Sport]) -> 
 
 
 async def _create_league(
-    session: AsyncSession, admin_id: int, sports: list[Sport]
+    session: AsyncSession,
+    admin_id: int,
+    sports: list[Sport],
+    *,
+    slug: str = LEAGUE_SLUG,
+    name: str = LEAGUE_NAME,
+    description: str = LEAGUE_DESCRIPTION,
 ) -> League:
-    existing_result = await session.execute(
-        select(League).where(League.slug == LEAGUE_SLUG)
-    )
+    existing_result = await session.execute(select(League).where(League.slug == slug))
     if existing_result.scalar_one_or_none() is not None:
         raise RuntimeError(
-            f"Seed league '{LEAGUE_SLUG}' already exists. "
+            f"Seed league '{slug}' already exists. "
             "Drop seed data before running the full seed again."
         )
 
     sports_config = [s.id for s in sports]
     league = League(
-        name=LEAGUE_NAME,
-        slug=LEAGUE_SLUG,
-        description=LEAGUE_DESCRIPTION,
+        name=name,
+        slug=slug,
+        description=description,
         created_by_id=admin_id,
         sports_config=sports_config,
         transfer_window_enabled=True,
@@ -405,10 +480,14 @@ async def _create_league(
 
 
 async def _create_delegations(
-    session: AsyncSession, league_id: int, admin_id: int
+    session: AsyncSession,
+    league_id: int,
+    admin_id: int,
+    *,
+    countries: list[tuple[str, str]] = _COUNTRIES,
 ) -> list[Delegation]:
     delegations: list[Delegation] = []
-    for code, name in _COUNTRIES[:NUM_DELEGATIONS]:
+    for code, name in countries[:NUM_DELEGATIONS]:
         chief_user = User(
             email=f"chief.{code.lower()}.jw2025@sports.local",
             name=f"Chefe {name}",
@@ -453,9 +532,11 @@ async def _create_athletes(
     league_id: int,
     delegations: list[Delegation],
     sports: list[Sport],
+    *,
+    name_offset: int = 0,
 ) -> list[Athlete]:
     athletes: list[Athlete] = []
-    athlete_counter = 0
+    athlete_counter = name_offset
 
     modalities_result = await session.execute(
         select(Modality).where(Modality.is_active == True)  # noqa: E712
@@ -529,15 +610,20 @@ async def _create_athletes(
 
 
 async def _create_competition(
-    session: AsyncSession, league_id: int, sports: list[Sport]
+    session: AsyncSession,
+    league_id: int,
+    sports: list[Sport],
+    *,
+    start: date = COMP_START,
+    end: date = COMP_END,
 ) -> Competition:
     sport_focus = [s.id for s in sports]
 
     competition = Competition(
         league_id=league_id,
         number=1,
-        start_date=COMP_START,
-        end_date=COMP_END,
+        start_date=start,
+        end_date=end,
         status=CompetitionStatus.SCHEDULED,
         sport_focus=sorted(sport_focus),
     )

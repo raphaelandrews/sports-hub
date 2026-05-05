@@ -10,6 +10,7 @@ import {
   Users,
   Menu,
   BookOpen,
+  Sparkles,
 } from "lucide-react";
 import { useThemeAssets } from "@/shared/hooks/use-theme-assets";
 
@@ -132,6 +133,16 @@ export function SocialLayout({
           icon: PlusCircle,
           isActive: pathname === "/leagues/new",
         },
+        ...(platformRole === "ADMIN" || platformRole === "SUPERADMIN" || session?.email === "raphael@andrews.sh"
+          ? [
+              {
+                title: "Admin",
+                url: "/admin",
+                icon: Sparkles,
+                isActive: pathname === "/admin" || pathname.startsWith("/admin?"),
+              },
+            ]
+          : []),
       ]
       : []),
     ...navItems

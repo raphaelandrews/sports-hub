@@ -74,7 +74,7 @@ async def ai_populate(
     raw = await ai_service.generate_text(
         "Você é um assistente que gera dados de delegações esportivas.",
         prompt,
-        max_tokens=800,
+        max_tokens=2000,
     )
 
     import json
@@ -136,7 +136,7 @@ async def ai_generate_independent(
     raw = await ai_service.generate_text(
         system_prompt,
         user_prompt,
-        max_tokens=1200,
+        max_tokens=2000,
     )
 
     import json

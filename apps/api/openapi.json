@@ -1481,7 +1481,7 @@
             "required": false,
             "schema": {
               "type": "integer",
-              "maximum": 15,
+              "maximum": 30,
               "minimum": 1,
               "default": 5,
               "title": "Count"
@@ -1544,7 +1544,7 @@
             "required": false,
             "schema": {
               "type": "integer",
-              "maximum": 15,
+              "maximum": 30,
               "minimum": 1,
               "default": 5,
               "title": "Count"
@@ -6557,6 +6557,66 @@
           }
         }
       }
+    },
+    "/admin/seed": {
+      "post": {
+        "tags": [
+          "superadmin"
+        ],
+        "summary": "Run Seed",
+        "operationId": "run_seed_admin_seed_post",
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "additionalProperties": {
+                    "type": "string"
+                  },
+                  "type": "object",
+                  "title": "Response Run Seed Admin Seed Post"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ]
+      }
+    },
+    "/admin/seed/2": {
+      "post": {
+        "tags": [
+          "superadmin"
+        ],
+        "summary": "Run Seed 2",
+        "operationId": "run_seed_2_admin_seed_2_post",
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "additionalProperties": {
+                    "type": "string"
+                  },
+                  "type": "object",
+                  "title": "Response Run Seed 2 Admin Seed 2 Post"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ]
+      }
     }
   },
   "components": {
@@ -7519,7 +7579,7 @@
           },
           "count": {
             "type": "integer",
-            "maximum": 10.0,
+            "maximum": 30.0,
             "minimum": 1.0,
             "title": "Count",
             "default": 5
