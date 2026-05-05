@@ -4,9 +4,11 @@ from fastapi import APIRouter, BackgroundTasks, Depends, HTTPException, status
 from pydantic import BaseModel
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from app.shared.core.deps import require_league_admin
+from app.shared.core.deps import get_current_user, require_league_admin
 from app.database import get_session
 from app.domain.models.league import LeagueMember
+from app.domain.models.user import User
+from app.domain.models.user import UserRole
 from app.domain.schemas.report import AIGenerationResponse, NarrativeResponse
 from app.features.narratives import service as narrative_service
 
@@ -48,6 +50,7 @@ async def generate_narrative(
     league_id: int,
     target_date: date | None = None,
     session: AsyncSession = Depends(get_session),
+    user: User = Depends(get_current_user),
     _: LeagueMember = Depends(require_league_admin()),
 ) -> NarrativeResponse:
     narrative = await narrative_service.generate(session, league_id, target_date)

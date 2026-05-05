@@ -9,6 +9,7 @@ import {
   PlusCircle,
   Users,
   Menu,
+  BookOpen,
 } from "lucide-react";
 import { useThemeAssets } from "@/shared/hooks/use-theme-assets";
 
@@ -149,6 +150,13 @@ export function SocialLayout({
           ? pathname === item.href
           : pathname.startsWith(item.href),
       })),
+    {
+      title: "Docs",
+      url: "https://sports-system-production.up.railway.app/docs",
+      icon: BookOpen,
+      isActive: false,
+      external: true,
+    },
   ];
 
   const secondaryItems = [
@@ -192,22 +200,30 @@ export function SocialLayout({
         </div>
 
         <nav className="flex flex-1 flex-col gap-1 px-3 pt-2">
-          {mainItems.map((item) => (
-            <Link
-              key={item.title}
-              to={item.url}
-              className={`relative flex h-11 items-center gap-3 rounded-xl px-3 transition-colors hover:bg-card/50 hover:text-foreground ${item.isActive
-                ? "bg-card text-foreground"
-                : "text-muted-foreground hover:bg-muted hover:text-foreground"
-                }`}
-            >
-              <item.icon size={18} />
-              <span>{item.title}</span>
-              {item.isActive && (
-                <div className="absolute top-1.5 bottom-1.5 left-0 w-0.75 rounded-r-full bg-primary" />
-              )}
-            </Link>
-          ))}
+          {mainItems.map((item) => {
+            const className = `relative flex h-11 items-center gap-3 rounded-xl px-3 transition-colors hover:bg-card/50 hover:text-foreground ${item.isActive
+              ? "bg-card text-foreground"
+              : "text-muted-foreground hover:bg-muted hover:text-foreground"
+              }`;
+            const children = (
+              <>
+                <item.icon size={18} />
+                <span>{item.title}</span>
+                {item.isActive && (
+                  <div className="absolute top-1.5 bottom-1.5 left-0 w-0.75 rounded-r-full bg-primary" />
+                )}
+              </>
+            );
+            return "external" in item && item.external ? (
+              <a key={item.title} href={item.url} target="_blank" rel="noopener noreferrer" className={className}>
+                {children}
+              </a>
+            ) : (
+              <Link key={item.title} to={item.url} className={className}>
+                {children}
+              </Link>
+            );
+          })}
 
           {secondaryItems.length > 0 && (
             <>
@@ -295,8 +311,8 @@ function MobileNavigation({
   secondaryItems,
   logo,
 }: {
-  mainItems: Array<{ title: string; url: string; icon: React.ElementType; isActive: boolean }>;
-  secondaryItems: Array<{ title: string; url: string; icon: React.ElementType; isActive: boolean }>;
+  mainItems: Array<{ title: string; url: string; icon: React.ElementType; isActive: boolean; external?: boolean }>;
+  secondaryItems: Array<{ title: string; url: string; icon: React.ElementType; isActive: boolean; external?: boolean }>;
   logo: string;
 }) {
   const [open, setOpen] = React.useState(false);
@@ -317,23 +333,30 @@ function MobileNavigation({
           </div>
         </SheetHeader>
         <nav className="flex flex-1 flex-col gap-1 px-3 py-2 overflow-y-auto">
-          {mainItems.map((item) => (
-            <Link
-              key={item.title}
-              to={item.url}
-              onClick={() => setOpen(false)}
-              className={`relative flex h-11 items-center gap-3 rounded-xl px-3 transition-colors hover:bg-card/50 hover:text-foreground ${item.isActive
-                ? "bg-card text-foreground"
-                : "text-muted-foreground hover:bg-muted hover:text-foreground"
-                }`}
-            >
-              <item.icon size={18} />
-              <span>{item.title}</span>
-              {item.isActive && (
-                <div className="absolute top-1.5 bottom-1.5 left-0 w-0.75 rounded-r-full bg-primary" />
-              )}
-            </Link>
-          ))}
+          {mainItems.map((item) => {
+            const className = `relative flex h-11 items-center gap-3 rounded-xl px-3 transition-colors hover:bg-card/50 hover:text-foreground ${item.isActive
+              ? "bg-card text-foreground"
+              : "text-muted-foreground hover:bg-muted hover:text-foreground"
+              }`;
+            const children = (
+              <>
+                <item.icon size={18} />
+                <span>{item.title}</span>
+                {item.isActive && (
+                  <div className="absolute top-1.5 bottom-1.5 left-0 w-0.75 rounded-r-full bg-primary" />
+                )}
+              </>
+            );
+            return "external" in item && item.external ? (
+              <a key={item.title} href={item.url} target="_blank" rel="noopener noreferrer" className={className}>
+                {children}
+              </a>
+            ) : (
+              <Link key={item.title} to={item.url} onClick={() => setOpen(false)} className={className}>
+                {children}
+              </Link>
+            );
+          })}
 
           {secondaryItems.length > 0 && (
             <>
