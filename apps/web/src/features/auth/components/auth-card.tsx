@@ -7,7 +7,7 @@ import {
 } from "@sports-system/ui/components/field";
 import { buildApiUrl } from "@/shared/lib/url";
 import * as m from "@/paraglide/messages";
-import logoSvg from "@/assets/logo.svg";
+import { useThemeAssets } from "@/shared/hooks/use-theme-assets";
 import { Link } from "@tanstack/react-router";
 import type React from "react";
 
@@ -20,10 +20,12 @@ interface AuthCardProps {
 }
 
 export function AuthCard({ title, switchText, children, onFormSubmit }: AuthCardProps) {
+  const { logo } = useThemeAssets();
+
   return (
     <div className="flex w-full max-w-100 flex-col gap-6">
       <div className="flex flex-col items-center gap-2">
-        <img src={logoSvg} alt="Logo" className="mb-2 hidden lg:block size-10"  />
+        <img src={logo} alt="Logo" className="mb-2 hidden lg:block size-10"  />
 
         <h2 className="text-2xl font-semibold text-foreground">{title}</h2>
       </div>

@@ -1,16 +1,9 @@
 import { useMemo, useState } from "react";
 import { useSuspenseQuery } from "@tanstack/react-query";
 import { Link, createFileRoute } from "@tanstack/react-router";
+import type { ColumnDef } from "@tanstack/react-table";
 import { Badge } from "@sports-system/ui/components/badge";
 import { buttonVariants } from "@sports-system/ui/components/button";
-import {
-  Table,
-  TableBody,
-  TableCell,
-  TableHead,
-  TableHeader,
-  TableRow,
-} from "@sports-system/ui/components/table";
 import { cn } from "@sports-system/ui/lib/utils";
 
 import * as m from "@/paraglide/messages";
@@ -21,7 +14,7 @@ import { TableLayout } from "@/shared/components/ui/table-layout";
 import { Title } from "@/shared/components/ui/title";
 import { SideCard } from "@/shared/components/ui/side-card";
 import { PageAsideLayout } from "@/shared/components/layouts/page-aside-layout";
-import type { CompetitionStatus } from "@/types/competitions";
+import type { CompetitionResponse, CompetitionStatus } from "@/types/competitions";
 
 export const Route = createFileRoute(
   "/leagues/$leagueId/_authenticated/dashboard/_league_admin/competitions/",
@@ -47,8 +40,6 @@ function AdminCompetitionsPage() {
   const { data: competitions } = useSuspenseQuery(competitionListQueryOptions(Number(leagueId)));
   const { data: sports } = useSuspenseQuery(sportListQueryOptions());
 
-  const [pageIndex, setPageIndex] = useState(0);
-  const [pageSize, setPageSize] = useState(10);
   const [searchQuery, setSearchQuery] = useState("");
 
   const sportNamesById = useMemo(
@@ -67,10 +58,56 @@ function AdminCompetitionsPage() {
     );
   }, [competitions.data, searchQuery]);
 
-  const pagedData = filteredData.slice(
-    pageIndex * pageSize,
-    (pageIndex + 1) * pageSize,
-  );
+  const columns: ColumnDef<CompetitionResponse>[] = [
+    {
+      header: m['competitions.admin.table.competition'](),
+      accessorKey: "number",
+      cell: ({ row }) => <span className="font-medium">#{row.original.number}</span>,
+    },
+    {
+      header: m['competitions.admin.table.period'](),
+      accessorKey: "start_date",
+      cell: ({ row }) =>
+        `${formatDate(row.original.start_date)} até ${formatDate(row.original.end_date)}`,
+    },
+    {
+      header: m['competitions.admin.table.status'](),
+      accessorKey: "status",
+      cell: ({ row }) => (
+        <Badge variant={row.original.status === "ACTIVE" ? "secondary" : "outline"}>
+          {statusLabel[row.original.status]}
+        </Badge>
+      ),
+    },
+    {
+      header: m['competitions.admin.table.sports'](),
+      accessorKey: "sport_focus",
+      cell: ({ row }) => (
+        <span className="text-sm text-muted-foreground">
+          {row.original.sport_focus.length > 0
+            ? row.original.sport_focus
+                .filter((sportId): sportId is number => typeof sportId === "number")
+                .map((sportId) => sportNamesById.get(sportId) ?? `#${sportId}`)
+                .join(", ")
+            : "Sem foco definido"}
+        </span>
+      ),
+    },
+    {
+      header: m['competitions.admin.table.actions'](),
+      accessorKey: "id",
+      meta: { className: "text-right" },
+      cell: ({ row }) => (
+        <Link
+          to="/leagues/$leagueId/dashboard/competitions/$competitionId"
+          params={{ leagueId, competitionId: String(row.original.id) }}
+          className={cn(buttonVariants({ variant: "outline" }))}
+        >
+          {m['common.actions.open']()}
+        </Link>
+      ),
+    },
+  ];
 
   return (
     <PageAsideLayout
@@ -111,69 +148,11 @@ function AdminCompetitionsPage() {
 
       <div className="w-full mt-6">
         <TableLayout
-          totalCount={filteredData.length}
-          visibleCount={pagedData.length}
+          columns={columns}
+          data={filteredData}
           searchQuery={searchQuery}
-          onSearchChange={(value) => {
-            setSearchQuery(value);
-            setPageIndex(0);
-          }}
-          pageIndex={pageIndex}
-          pageSize={pageSize}
-          onPageChange={setPageIndex}
-          onPageSizeChange={setPageSize}
-        >
-          <Table>
-            <TableHeader>
-              <TableRow>
-                <TableHead>{m['competitions.admin.table.competition']()}</TableHead>
-                <TableHead>{m['competitions.admin.table.period']()}</TableHead>
-                <TableHead>{m['competitions.admin.table.status']()}</TableHead>
-                <TableHead>{m['competitions.admin.table.sports']()}</TableHead>
-                <TableHead className="text-right">{m['competitions.admin.table.actions']()}</TableHead>
-              </TableRow>
-            </TableHeader>
-            <TableBody>
-              {pagedData.length === 0 && (
-                <TableRow>
-                  <TableCell colSpan={5} className="h-24 text-center text-muted-foreground">
-                    {m['search.noResults']()}
-                  </TableCell>
-                </TableRow>
-              )}
-              {pagedData.map((competition) => (
-                <TableRow key={competition.id}>
-                  <TableCell className="font-medium">#{competition.number}</TableCell>
-                  <TableCell>
-                    {formatDate(competition.start_date)} até {formatDate(competition.end_date)}
-                  </TableCell>
-                  <TableCell>
-                    <Badge variant={competition.status === "ACTIVE" ? "secondary" : "outline"}>
-                      {statusLabel[competition.status]}
-                    </Badge>
-                  </TableCell>
-                  <TableCell className="text-sm text-muted-foreground">
-                    {competition.sport_focus.length > 0
-                      ? competition.sport_focus
-                          .filter((sportId): sportId is number => typeof sportId === "number")
-                          .map((sportId) => sportNamesById.get(sportId) ?? `#${sportId}`)
-                          .join(", ")
-                      : "Sem foco definido"}
-                  </TableCell>
-                  <TableCell className="text-right">
-                    <Link
-                      to="/leagues/$leagueId/dashboard/competitions/$competitionId"
-                      params={{ leagueId, competitionId: String(competition.id) }}
-                      className={cn(buttonVariants({ variant: "outline" }))}
-                    >
-                      {m['common.actions.open']()}
-                    </Link>
-                  </TableCell>
-                </TableRow>
-              ))}
-            </TableBody>
-          </Table>
-        </TableLayout>
+          onSearchChange={(value) => setSearchQuery(value)}
+        />
       </div>
     </PageAsideLayout>
   );

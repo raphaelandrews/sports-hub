@@ -72,11 +72,7 @@ export function AppHeader({ session, scope, league, membership, leagues }: AppHe
 					leagues={leagues}
 				/>
 				<LocaleSwitcher />
-				<AnimatedThemeToggler
-					variant="ghost"
-					size="icon"
-					className="size-8 hover:bg-muted"
-				/>
+				<AnimatedThemeToggler className="size-8 hover:bg-muted" />
 				{session ? <NotificationBell userId={session.id} /> : null}
 				<Separator
 					className="h-4 data-[orientation=vertical]:self-center"

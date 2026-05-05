@@ -2,6 +2,7 @@ import { useMemo, useState } from "react";
 import { useMutation, useQueryClient, useSuspenseQuery } from "@tanstack/react-query";
 import { createFileRoute, useNavigate } from "@tanstack/react-router";
 import { toast } from "sonner";
+import type { ColumnDef } from "@tanstack/react-table";
 
 import { Badge } from "@sports-system/ui/components/badge";
 import { Button } from "@sports-system/ui/components/button";
@@ -15,14 +16,6 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@sports-system/ui/components/select";
-import {
-  Table,
-  TableBody,
-  TableCell,
-  TableHead,
-  TableHeader,
-  TableRow,
-} from "@sports-system/ui/components/table";
 
 import { client, unwrap, ApiError } from "@/shared/lib/api";
 import { queryKeys } from "@/features/keys";
@@ -73,8 +66,6 @@ function LeagueSettingsPage() {
   const [selectedSports, setSelectedSports] = useState<number[]>(league.sports_config);
   const [transferWindow, setTransferWindow] = useState(league.transfer_window_enabled);
 
-  const [pageIndex, setPageIndex] = useState(0);
-  const [pageSize, setPageSize] = useState(10);
   const [searchQuery, setSearchQuery] = useState("");
 
   const filteredData = useMemo(() => {
@@ -86,11 +77,6 @@ function LeagueSettingsPage() {
         getRoleLabel(member.role).toLowerCase().includes(lower),
     );
   }, [members, searchQuery]);
-
-  const pagedData = filteredData.slice(
-    pageIndex * pageSize,
-    (pageIndex + 1) * pageSize,
-  );
 
   const updateMutation = useMutation({
     mutationFn: (payload: {
@@ -182,13 +168,66 @@ function LeagueSettingsPage() {
     });
   };
 
+  const columns: ColumnDef<(typeof members)[number]>[] = [
+    {
+      header: m["league.settings.table.user"](),
+      accessorKey: "user_id",
+      meta: { className: "ps-4 w-24" },
+      cell: ({ row }) => <span className="font-medium">#{row.original.user_id}</span>,
+    },
+    {
+      header: m["league.settings.table.role"](),
+      accessorKey: "role",
+      meta: { className: "w-32" },
+      cell: ({ row }) => <Badge variant="outline">{getRoleLabel(row.original.role)}</Badge>,
+    },
+    {
+      header: m["league.settings.table.actions"](),
+      accessorKey: "id",
+      meta: { className: "pe-4 text-right" },
+      cell: ({ row }) => (
+        <div className="flex items-center justify-end gap-2">
+          <Select
+            value={row.original.role}
+            onValueChange={(role) =>
+              updateRoleMutation.mutate({
+                userId: row.original.user_id,
+                role: role as LeagueMemberRole,
+              })
+            }
+          >
+            <SelectTrigger className="w-36">
+              <SelectValue />
+            </SelectTrigger>
+            <SelectContent>
+              {(["LEAGUE_ADMIN", "CHIEF", "COACH", "ATHLETE"] as LeagueMemberRole[]).map((role) => (
+                <SelectItem key={role} value={role}>
+                  {getRoleLabel(role)}
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+          <Button
+            variant="ghost"
+            size="sm"
+            onClick={() => removeMemberMutation.mutate(row.original.user_id)}
+            disabled={removeMemberMutation.isPending}
+          >
+            {m["common.actions.remove"]()}
+          </Button>
+        </div>
+      ),
+    },
+  ];
+
   return (
     <div className="flex min-w-0 flex-1 flex-col">
       <div className="min-h-screen bg-background">
         <div className="flex flex-1 flex-col">
           <div className="flex-1 overflow-y-auto">
             <div className="mx-auto w-full max-w-4xl px-3 pt-2 pb-24 lg:px-4 lg:pt-8 lg:pb-12">
-              <Title title={m["league.settings.title"]()} />
+              <Title title={m["league.settings.title"]()}
+              />
 
               <div className="mt-3 animate-[fadeInContent_200ms_ease-out] lg:mt-6">
                 <div className="space-y-3 lg:space-y-6">
@@ -267,88 +306,15 @@ function LeagueSettingsPage() {
                     <TableLayout
                       title={m["league.settings.membersHeading"]()}
                       countLabel={m["league.settings.membersCountLabel"]()}
-                      visibleCount={pagedData.length}
-                      totalCount={filteredData.length}
+                      columns={columns}
+                      data={filteredData}
+                      emptyMessage={m["league.settings.membersEmpty"]()}
                       searchPlaceholder={m["league.settings.searchPlaceholder"]()}
                       searchQuery={searchQuery}
-                      onSearchChange={(value) => {
-                        setSearchQuery(value);
-                        setPageIndex(0);
-                      }}
+                      onSearchChange={(value) => setSearchQuery(value)}
                       activeFilterCount={searchQuery ? 1 : 0}
-                      onClearFilters={() => {
-                        setSearchQuery("");
-                        setPageIndex(0);
-                      }}
-                      pageIndex={pageIndex}
-                      pageSize={pageSize}
-                      onPageChange={setPageIndex}
-                      onPageSizeChange={setPageSize}
-                    >
-                      <Table>
-                        <TableHeader>
-                          <TableRow>
-                            <TableHead className="ps-4 w-24">{m["league.settings.table.user"]()}</TableHead>
-                            <TableHead className="w-32">{m["league.settings.table.role"]()}</TableHead>
-                            <TableHead className="pe-4 text-right">{m["league.settings.table.actions"]()}</TableHead>
-                          </TableRow>
-                        </TableHeader>
-                        <TableBody>
-                          {pagedData.length === 0 && (
-                            <TableRow>
-                              <TableCell
-                                colSpan={3}
-                                className="h-24 text-center text-muted-foreground"
-                              >
-                                {m["league.settings.membersEmpty"]()}
-                              </TableCell>
-                            </TableRow>
-                          )}
-                          {pagedData.map((member) => (
-                            <TableRow key={member.id}>
-                              <TableCell className="ps-4 font-medium">
-                                #{member.user_id}
-                              </TableCell>
-                              <TableCell>
-                                <Badge variant="outline">{getRoleLabel(member.role)}</Badge>
-                              </TableCell>
-                              <TableCell className="pe-4 text-right">
-                                <div className="flex items-center justify-end gap-2">
-                                  <Select
-                                    value={member.role}
-                                    onValueChange={(role) =>
-                                      updateRoleMutation.mutate({
-                                        userId: member.user_id,
-                                        role: role as LeagueMemberRole,
-                                      })
-                                    }
-                                  >
-                                    <SelectTrigger className="w-36">
-                                      <SelectValue />
-                                    </SelectTrigger>
-                                    <SelectContent>
-                                      {(["LEAGUE_ADMIN", "CHIEF", "COACH", "ATHLETE"] as LeagueMemberRole[]).map((role) => (
-                                        <SelectItem key={role} value={role}>
-                                          {getRoleLabel(role)}
-                                        </SelectItem>
-                                      ))}
-                                    </SelectContent>
-                                  </Select>
-                                  <Button
-                                    variant="ghost"
-                                    size="sm"
-                                    onClick={() => removeMemberMutation.mutate(member.user_id)}
-                                    disabled={removeMemberMutation.isPending}
-                                  >
-                                    {m["common.actions.remove"]()}
-                                  </Button>
-                                </div>
-                              </TableCell>
-                            </TableRow>
-                          ))}
-                        </TableBody>
-                      </Table>
-                    </TableLayout>
+                      onClearFilters={() => setSearchQuery("")}
+                    />
                   </CardWrapper>
 
                   <CardWrapper title={m["league.settings.danger.title"]()} description={m["league.settings.danger.desc"]()}>

@@ -308,8 +308,7 @@
   },
   "theme": {
     "toggleLabel": "Toggle theme",
-    "toggleLight": "Switch to light",
-    "toggleDark": "Switch to dark"
+    "toggleNext": "Switch to {theme}"
   },
   "league": {
     "card": {

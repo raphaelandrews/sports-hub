@@ -17,10 +17,10 @@ interface HomeChartsProps {
 
 export function HomeCharts({ leagues, feedItems }: HomeChartsProps) {
   return (
-    <div className="grid gap-4 md:grid-cols-2">
+    <div className="grid gap-4 lg:grid-cols-2">
       <Card>
         <CardHeader className="pb-2">
-          <CardTitle className="text-sm font-medium">League Growth</CardTitle>
+          <CardTitle className="text-sm font-medium text-muted-foreground">League Growth</CardTitle>
         </CardHeader>
         <CardContent>
           <LeagueGrowthAreaChart leagues={leagues} />
@@ -29,7 +29,7 @@ export function HomeCharts({ leagues, feedItems }: HomeChartsProps) {
 
       <Card>
         <CardHeader className="pb-2">
-          <CardTitle className="text-sm font-medium">Activity Timeline</CardTitle>
+          <CardTitle className="text-sm font-medium text-muted-foreground">Activity Timeline</CardTitle>
         </CardHeader>
         <CardContent>
           <ActivityTimelineLineChart feedItems={feedItems} />
@@ -38,7 +38,7 @@ export function HomeCharts({ leagues, feedItems }: HomeChartsProps) {
 
       <Card>
         <CardHeader className="pb-2">
-          <CardTitle className="text-sm font-medium">Activity Types</CardTitle>
+          <CardTitle className="text-sm font-medium text-muted-foreground">Activity Types</CardTitle>
         </CardHeader>
         <CardContent>
           <ActivityTypesBarChart feedItems={feedItems} />
@@ -47,7 +47,7 @@ export function HomeCharts({ leagues, feedItems }: HomeChartsProps) {
 
       <Card>
         <CardHeader className="pb-2">
-          <CardTitle className="text-sm font-medium">Leagues & Members by Month</CardTitle>
+          <CardTitle className="text-sm font-medium text-muted-foreground">Leagues & Members by Month</CardTitle>
         </CardHeader>
         <CardContent>
           <MonthlyLeaguesComposedChart leagues={leagues} />
@@ -56,7 +56,7 @@ export function HomeCharts({ leagues, feedItems }: HomeChartsProps) {
 
       <Card className="md:col-span-2">
         <CardHeader className="pb-2">
-          <CardTitle className="text-sm font-medium">Activity by Sport</CardTitle>
+          <CardTitle className="text-sm font-medium text-muted-foreground">Activity by Sport</CardTitle>
         </CardHeader>
         <CardContent className="flex justify-center">
           <ActivityBySportRadarChart feedItems={feedItems} />

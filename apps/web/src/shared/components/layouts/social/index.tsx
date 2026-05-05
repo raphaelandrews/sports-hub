@@ -10,7 +10,7 @@ import {
   Users,
   Menu,
 } from "lucide-react";
-import logoSvg from "@/assets/logo.svg";
+import { useThemeAssets } from "@/shared/hooks/use-theme-assets";
 
 import {
   Sheet,
@@ -53,6 +53,7 @@ export function SocialLayout({
   const pathname = useRouterState({ select: (state) => state.location.pathname });
   const leagueId = getLeagueIdFromPath(pathname);
   const scope = getShellScope(pathname, session);
+  const { logo } = useThemeAssets();
 
   const leagueQuery = useQuery({
     ...leagueDetailQueryOptions(leagueId ?? "0"),
@@ -177,7 +178,7 @@ export function SocialLayout({
     <div className="mx-auto flex min-h-screen max-w-480 bg-background lg:border-x lg:border-input">
       <aside className="sticky top-0 z-40 hidden h-screen w-65 shrink-0 flex-col border-r border-input bg-background lg:flex">
         <Link to="/" className="flex h-18 items-center gap-3 px-6 transition-opacity hover:opacity-80">
-          <img src={logoSvg} alt="Logo" className="size-6" />
+          <img src={logo} alt="Logo" className="size-6" />
         </Link>
 
         <div className="flex flex-col p-4">
@@ -230,13 +231,9 @@ export function SocialLayout({
         </nav>
 
         <div>
-          <div className="flex items-start gap-2 p-4">
+          <div className="flex justify-center gap-2 px-4 py-3">
             <LocaleSwitcher />
-            <AnimatedThemeToggler
-              variant="ghost"
-              size="icon"
-              className="size-8 hover:bg-muted"
-            />
+            <AnimatedThemeToggler className="size-8 hover:bg-muted" />
             {session ? <NotificationBell userId={session.id} /> : null}
           </div>
 
@@ -260,7 +257,7 @@ export function SocialLayout({
       {/* Mobile Header */}
       <header className="safe-top fixed inset-x-0 top-0 z-40 flex min-h-14 items-center justify-between px-4 transition-all duration-300 ease-out lg:hidden translate-y-0 opacity-100 border-border bg-background/90 backdrop-blur-md">
         <Link to="/" className="flex items-center gap-2 transition-opacity hover:opacity-80">
-          <img src={logoSvg} alt="Logo" className="size-5" />
+          <img src={logo} alt="Logo" className="size-5" />
           <span className="text-sm font-semibold">{m["header.siteTitle"]()}</span>
         </Link>
         <div className="flex items-center gap-2">
@@ -277,7 +274,7 @@ export function SocialLayout({
           {session && (
             <NotificationBell userId={session.id} />)
           }
-          <MobileNavigation mainItems={mainItems} secondaryItems={secondaryItems} />
+          <MobileNavigation mainItems={mainItems} secondaryItems={secondaryItems} logo={logo} />
         </div>
       </header>
 
@@ -295,9 +292,11 @@ export function SocialLayout({
 function MobileNavigation({
   mainItems,
   secondaryItems,
+  logo,
 }: {
   mainItems: Array<{ title: string; url: string; icon: React.ElementType; isActive: boolean }>;
   secondaryItems: Array<{ title: string; url: string; icon: React.ElementType; isActive: boolean }>;
+  logo: string;
 }) {
   const [open, setOpen] = React.useState(false);
 
@@ -312,7 +311,7 @@ function MobileNavigation({
       <SheetContent side="right" className="w-70 p-0 gap-0">
         <SheetHeader className="border-b px-4 py-3">
           <div className="flex items-center gap-2">
-            <img src={logoSvg} alt="Logo" className="size-6" />
+            <img src={logo} alt="Logo" className="size-6" />
             <SheetTitle className="text-sm font-semibold">{m["header.siteTitle"]()}</SheetTitle>
           </div>
         </SheetHeader>
@@ -360,11 +359,7 @@ function MobileNavigation({
         </nav>
         <div className="flex items-center gap-2 border-t border-input p-4">
           <LocaleSwitcher />
-          <AnimatedThemeToggler
-            variant="ghost"
-            size="icon"
-            className="size-8 hover:bg-muted"
-          />
+          <AnimatedThemeToggler className="size-8 hover:bg-muted" />
         </div>
       </SheetContent>
     </Sheet>

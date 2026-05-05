@@ -1,92 +1,101 @@
-import { useCallback, useEffect, useRef, useState } from "react";
-import { Moon, Sun } from "lucide-react";
+import { useCallback, useEffect, useState } from "react";
+import { Droplets, Flame, Leaf } from "lucide-react";
 import { useTheme } from "next-themes";
 import { flushSync } from "react-dom";
 
-import * as m from "@/paraglide/messages";
 import { cn } from "@sports-system/ui/lib/utils";
 
-import { Button } from "@sports-system/ui/components/button";
-import { Tooltip, TooltipContent, TooltipTrigger } from "@sports-system/ui/components/tooltip";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@sports-system/ui/components/select";
 
-interface AnimatedThemeTogglerProps extends React.ComponentProps<typeof Button> {
-  duration?: number;
+interface ThemeSelectorProps {
+  className?: string;
 }
 
-export const AnimatedThemeToggler = ({
-  className,
-  duration = 400,
-  ...props
-}: AnimatedThemeTogglerProps) => {
+const themes = [
+  { value: "blue", label: "Squirtle", icon: Droplets },
+  { value: "green", label: "Bulbasaur", icon: Leaf },
+  { value: "orange", label: "Charmander", icon: Flame },
+] as const;
+
+export const AnimatedThemeToggler = ({ className }: ThemeSelectorProps) => {
   const { resolvedTheme, setTheme } = useTheme();
-  const buttonRef = useRef<HTMLButtonElement>(null);
   const [mounted, setMounted] = useState(false);
 
   useEffect(() => {
     setMounted(true);
   }, []);
 
-  const toggleTheme = useCallback(async () => {
-    if (!buttonRef.current) return;
+  const handleValueChange = useCallback(
+    async (value: string | null) => {
+      if (!value) return;
+      if (!("startViewTransition" in document)) {
+        setTheme(value);
+        return;
+      }
 
-    const currentTheme = resolvedTheme === "dark" ? "dark" : "light";
-    const nextTheme = currentTheme === "dark" ? "light" : "dark";
-
-    if (!("startViewTransition" in document)) {
-      setTheme(nextTheme);
-      return;
-    }
-
-    const transition = document.startViewTransition(() => {
-      flushSync(() => {
-        setTheme(nextTheme);
+      const transition = document.startViewTransition(() => {
+        flushSync(() => {
+          setTheme(value);
+        });
       });
-    });
 
-    await transition.ready;
+      await transition.ready;
 
-    const { top, left, width, height } = buttonRef.current.getBoundingClientRect();
-    const x = left + width / 2;
-    const y = top + height / 2;
-    const maxRadius = Math.hypot(
-      Math.max(x, window.innerWidth - x),
-      Math.max(y, window.innerHeight - y),
-    );
+      const maxRadius = Math.hypot(window.innerWidth, window.innerHeight);
 
-    document.documentElement.animate(
-      {
-        clipPath: [`circle(0px at ${x}px ${y}px)`, `circle(${maxRadius}px at ${x}px ${y}px)`],
-      },
-      {
-        duration,
-        easing: "ease-in-out",
-        pseudoElement: "::view-transition-new(root)",
-      },
-    );
-  }, [duration, resolvedTheme, setTheme]);
+      document.documentElement.animate(
+        {
+          clipPath: [
+            `circle(0px at 50% 50%)`,
+            `circle(${maxRadius}px at 50% 50%)`,
+          ],
+        },
+        {
+          duration: 400,
+          easing: "ease-in-out",
+          pseudoElement: "::view-transition-new(root)",
+        },
+      );
+    },
+    [setTheme],
+  );
 
-  const isDark = mounted && resolvedTheme === "dark";
+  const current = mounted ? (resolvedTheme ?? "blue") : "blue";
+  const currentTheme = themes.find((t) => t.value === current) ?? themes[0];
+  const Icon = currentTheme.icon;
 
   return (
-    <Tooltip>
-      <TooltipTrigger
-        render={
-          <Button
-            ref={buttonRef}
-            onClick={toggleTheme}
-            className={cn(className, "")}
-            size="sm"
-            variant="default"
-            {...props}
-          />
-        }
+    <Select value={current} onValueChange={handleValueChange}>
+      <SelectTrigger
+        className={cn(
+          "w-auto gap-1.5 border-0 bg-transparent! px-2 shadow-none hover:bg-muted! focus:ring-0 focus:ring-offset-0",
+          className,
+        )}
+        size="sm"
+        hideChevron
       >
-        {mounted ? isDark ? <Sun size={16} /> : <Moon size={16} /> : <Moon size={16} />}
-        <span className="sr-only">{m['theme.toggleLabel']()}</span>
-      </TooltipTrigger>
-      <TooltipContent>
-        <p>{mounted && isDark ? m['theme.toggleLight']() : m['theme.toggleDark']()}</p>
-      </TooltipContent>
-    </Tooltip>
+        <SelectValue>
+          <Icon size={16} />
+          <span className="sr-only">Theme</span>
+        </SelectValue>
+      </SelectTrigger>
+      <SelectContent align="end" side="bottom">
+        {themes.map((theme) => {
+          const ThemeIcon = theme.icon;
+          return (
+            <SelectItem key={theme.value} value={theme.value}>
+              <ThemeIcon size={16} />
+              {theme.label}
+            </SelectItem>
+          );
+        })}
+      </SelectContent>
+    </Select>
   );
 };

@@ -19,7 +19,7 @@ import type { LeagueMemberResponse, LeagueResponse } from "@/types/leagues";
 
 import { NavGroup } from "./nav-group";
 import { Home, Trophy, Shield, PlusCircle, Users } from "lucide-react";
-import logoSvg from "@/assets/logo.svg";
+import { useThemeAssets } from "@/shared/hooks/use-theme-assets";
 import { Link } from "@tanstack/react-router";
 
 interface AppSidebarProps extends React.ComponentProps<typeof Sidebar> {
@@ -133,11 +133,13 @@ export function AppSidebar({
 			})),
 	];
 
+	const { logo } = useThemeAssets();
+
 	return (
 		<Sidebar collapsible="icon" variant="inset" {...props}>
 			<SidebarHeader>
 			<Link to={"/"} className={`flex items-center w-full h-full px-2 ${state === "expanded" ? "justify-start" : ""}`}>
-				<img src={logoSvg} alt="Logo" className="size-5" />
+				<img src={logo} alt="Logo" className="size-5" />
 			</Link>
 			</SidebarHeader>
 			<SidebarContent>

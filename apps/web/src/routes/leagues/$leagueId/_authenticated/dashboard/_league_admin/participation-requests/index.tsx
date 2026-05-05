@@ -2,17 +2,10 @@ import { useMemo, useState } from "react";
 import { useMutation, useQueryClient, useSuspenseQuery } from "@tanstack/react-query";
 import { createFileRoute } from "@tanstack/react-router";
 import { toast } from "sonner";
+import type { ColumnDef } from "@tanstack/react-table";
 
 import { Badge } from "@sports-system/ui/components/badge";
 import { Button } from "@sports-system/ui/components/button";
-import {
-  Table,
-  TableBody,
-  TableCell,
-  TableHead,
-  TableHeader,
-  TableRow,
-} from "@sports-system/ui/components/table";
 import { Check, X } from "lucide-react";
 import { participationRequestsQueryOptions, type ParticipationRequest } from "@/features/delegations/api/queries";
 import { client, unwrap, ApiError } from "@/shared/lib/api";
@@ -69,8 +62,6 @@ function ParticipationRequestsPage() {
     },
   });
 
-  const [pageIndex, setPageIndex] = useState(0);
-  const [pageSize, setPageSize] = useState(10);
   const [searchQuery, setSearchQuery] = useState("");
 
   const filteredData = useMemo(() => {
@@ -85,12 +76,81 @@ function ParticipationRequestsPage() {
     return data;
   }, [requests, searchQuery]);
 
-  const pagedData = filteredData.slice(
-    pageIndex * pageSize,
-    (pageIndex + 1) * pageSize,
-  );
-
   const pendingRequests = requests.filter((r: ParticipationRequest) => r.status === "PENDING");
+
+  const columns: ColumnDef<ParticipationRequest>[] = [
+    {
+      header: m["delegations.public.title"](),
+      accessorKey: "delegation_id",
+      meta: { className: "ps-4" },
+      cell: ({ row }) => (
+        <span className="font-medium">
+          {m["delegations.public.title"]()} #{row.original.delegation_id}
+        </span>
+      ),
+    },
+    {
+      header: m["enrollments.admin.table.status"](),
+      accessorKey: "status",
+      meta: { className: "w-28" },
+      cell: ({ row }) => (
+        <Badge
+          variant="outline"
+          className={statusVariant[row.original.status] ?? ""}
+        >
+          {statusLabel[row.original.status] ?? row.original.status}
+        </Badge>
+      ),
+    },
+    {
+      header: m["enrollments.admin.table.validation"](),
+      accessorKey: "created_at",
+      meta: { className: "w-36" },
+      cell: ({ row }) => (
+        <span className="text-muted-foreground text-xs">
+          {new Date(row.original.created_at).toLocaleDateString("pt-BR")}
+        </span>
+      ),
+    },
+    {
+      header: m["enrollments.admin.table.actions"](),
+      accessorKey: "id",
+      meta: { className: "pe-4 w-36 text-right" },
+      cell: ({ row }) =>
+        row.original.status === "PENDING" ? (
+          <div className="flex items-center justify-end gap-2">
+            <Button
+              variant="outline"
+              size="sm"
+              className="text-destructive hover:bg-destructive/10"
+              disabled={reviewMutation.isPending}
+              onClick={() =>
+                reviewMutation.mutate({ requestId: row.original.id, status: "REJECTED" })
+              }
+            >
+              <X className="size-3.5 mr-1" />
+              {m["notification.action.refuse"]()}
+            </Button>
+            <Button
+              variant="outline"
+              size="sm"
+              className="text-emerald-700 hover:bg-emerald-50 dark:text-emerald-400"
+              disabled={reviewMutation.isPending}
+              onClick={() =>
+                reviewMutation.mutate({ requestId: row.original.id, status: "APPROVED" })
+              }
+            >
+              <Check className="size-3.5 mr-1" />
+              {m["notification.action.accept"]()}
+            </Button>
+          </div>
+        ) : (
+          <span className="text-muted-foreground text-xs">
+            {row.original.status === "APPROVED" ? m["common.status.approved"]() : m["common.status.rejected"]()}
+          </span>
+        ),
+    },
+  ];
 
   return (
     <PageAsideLayout
@@ -101,8 +161,8 @@ function ParticipationRequestsPage() {
           </p>
           <div className="space-y-3">
             <Badge variant="outline" className="w-full justify-center">
-              {m["common.actions.submit"]()
-            }</Badge>
+              {m["common.actions.submit"]()}
+            </Badge>
             <p className="text-xs text-muted-foreground">
               {pendingRequests.length} {m["enrollments.admin.stat.pending"]()}
             </p>
@@ -121,97 +181,11 @@ function ParticipationRequestsPage() {
 
       <div className="w-full mt-6">
         <TableLayout
-        totalCount={filteredData.length}
-        visibleCount={pagedData.length}
-        searchQuery={searchQuery}
-        onSearchChange={(value) => {
-          setSearchQuery(value);
-          setPageIndex(0);
-        }}
-        pageIndex={pageIndex}
-        pageSize={pageSize}
-        onPageChange={setPageIndex}
-        onPageSizeChange={setPageSize}
-      >
-        <Table>
-          <TableHeader>
-            <TableRow>
-              <TableHead className="ps-4">{m["delegations.public.title"]()}</TableHead>
-              <TableHead className="w-28">{m["enrollments.admin.table.status"]()}</TableHead>
-              <TableHead className="w-36">{m["enrollments.admin.table.validation"]()}</TableHead>
-              <TableHead className="pe-4 w-36 text-right">{m["enrollments.admin.table.actions"]()}</TableHead>
-            </TableRow>
-          </TableHeader>
-          <TableBody>
-            {pagedData.length === 0 && (
-              <TableRow>
-                <TableCell
-                  colSpan={4}
-                  className="h-24 text-center text-muted-foreground"
-                >
-                  {m["search.noResults"]()}
-                </TableCell>
-              </TableRow>
-            )}
-            {pagedData.map((request: ParticipationRequest) => (
-              <TableRow key={request.id}>
-                <TableCell className="ps-4">
-                  <span className="font-medium">
-                    {m["delegations.public.title"]()} #{request.delegation_id}
-                  </span>
-                </TableCell>
-                <TableCell>
-                  <Badge
-                    variant="outline"
-                    className={statusVariant[request.status] ?? ""}
-                  >
-                    {statusLabel[request.status] ?? request.status}
-                  </Badge>
-                </TableCell>
-                <TableCell>
-                  <span className="text-muted-foreground text-xs">
-                    {new Date(request.created_at).toLocaleDateString("pt-BR")}
-                  </span>
-                </TableCell>
-                <TableCell className="pe-4 text-right">
-                  {request.status === "PENDING" ? (
-                    <div className="flex items-center justify-end gap-2">
-                      <Button
-                        variant="outline"
-                        size="sm"
-                        className="text-destructive hover:bg-destructive/10"
-                        disabled={reviewMutation.isPending}
-                        onClick={() =>
-                          reviewMutation.mutate({ requestId: request.id, status: "REJECTED" })
-                        }
-                      >
-                        <X className="size-3.5 mr-1" />
-                        {m["notification.action.refuse"]()}
-                      </Button>
-                      <Button
-                        variant="outline"
-                        size="sm"
-                        className="text-emerald-700 hover:bg-emerald-50 dark:text-emerald-400"
-                        disabled={reviewMutation.isPending}
-                        onClick={() =>
-                          reviewMutation.mutate({ requestId: request.id, status: "APPROVED" })
-                        }
-                      >
-                        <Check className="size-3.5 mr-1" />
-                        {m["notification.action.accept"]()}
-                      </Button>
-                    </div>
-                  ) : (
-                    <span className="text-muted-foreground text-xs">
-                      {request.status === "APPROVED" ? m["common.status.approved"]() : m["common.status.rejected"]()}
-                    </span>
-                  )}
-                </TableCell>
-              </TableRow>
-            ))}
-          </TableBody>
-        </Table>
-      </TableLayout>
+          columns={columns}
+          data={filteredData}
+          searchQuery={searchQuery}
+          onSearchChange={(value) => setSearchQuery(value)}
+        />
       </div>
     </PageAsideLayout>
   );

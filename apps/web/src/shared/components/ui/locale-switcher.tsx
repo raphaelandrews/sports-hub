@@ -5,7 +5,6 @@ import {
   DropdownMenuTrigger,
 } from "@sports-system/ui/components/dropdown-menu";
 import { Button } from "@sports-system/ui/components/button";
-import { Globe } from "lucide-react";
 
 import * as m from "@/paraglide/messages";
 import {
@@ -14,6 +13,12 @@ import {
   type Locale,
   localizeHref,
 } from "@/paraglide/runtime";
+
+const localeFlags: Record<Locale, string> = {
+  en: "🇺🇸",
+  "pt-BR": "🇧🇷",
+  es: "🇪🇸",
+};
 
 const localeLabels: Record<Locale, string> = {
   en: m['locale.en'](),
@@ -27,8 +32,10 @@ export function LocaleSwitcher() {
   return (
     <DropdownMenu>
       <DropdownMenuTrigger>
-        <Button variant="ghost" size="icon" className="size-8 hover:bg-muted">
-          <Globe size={16} />
+        <Button variant="ghost" size="icon" className="size-8 text-lg hover:bg-muted">
+          <span className="size-4 flex justify-center items-center">
+            {localeFlags[currentLocale]}
+          </span>
           <span className="sr-only">{m['locale.switchLabel']()}</span>
         </Button>
       </DropdownMenuTrigger>
@@ -45,8 +52,9 @@ export function LocaleSwitcher() {
             <DropdownMenuItem key={locale} className="p-0">
               <a
                 href={href}
-                className={`flex w-full items-center px-2 py-1.5 text-sm ${currentLocale === locale ? "font-semibold" : ""}`}
+                className={`flex w-full items-center gap-2 px-2 py-1.5 text-sm ${currentLocale === locale ? "font-semibold" : ""}`}
               >
+                <span className="text-base">{localeFlags[locale]}</span>
                 {localeLabels[locale]}
               </a>
             </DropdownMenuItem>

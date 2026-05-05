@@ -2,14 +2,7 @@ import { useMemo, useState } from "react";
 import { Badge } from "@sports-system/ui/components/badge";
 import { useSuspenseQuery } from "@tanstack/react-query";
 import { Link, createFileRoute } from "@tanstack/react-router";
-import {
-  Table,
-  TableBody,
-  TableCell,
-  TableHead,
-  TableHeader,
-  TableRow,
-} from "@sports-system/ui/components/table";
+import type { ColumnDef } from "@tanstack/react-table";
 
 import { TableLayout } from "@/shared/components/ui/table-layout";
 import { Title } from "@/shared/components/ui/title";
@@ -37,8 +30,6 @@ function ResultsPage() {
   });
   const { data: sports } = useSuspenseQuery(sportListQueryOptions());
 
-  const [pageIndex, setPageIndex] = useState(0);
-  const [pageSize, setPageSize] = useState(10);
   const [searchQuery, setSearchQuery] = useState("");
 
   const filteredData = useMemo(() => {
@@ -51,14 +42,61 @@ function ResultsPage() {
     );
   }, [data, searchQuery]);
 
-  const pagedData = filteredData.slice(
-    pageIndex * pageSize,
-    (pageIndex + 1) * pageSize,
-  );
+  const columns: ColumnDef<MedalBoardEntry>[] = [
+    {
+      header: "#",
+      accessorKey: "delegation_id",
+      meta: { className: "ps-4 w-14" },
+      cell: ({ row }) => (
+        <span className="font-medium text-muted-foreground">{row.index + 1}</span>
+      ),
+    },
+    {
+      header: m["results.public.table.delegation"](),
+      accessorKey: "delegation_name",
+      cell: ({ row }) => (
+        <div className="flex flex-wrap items-center gap-2">
+          <span className="font-medium">{row.original.delegation_name}</span>
+          <Badge
+            variant="outline"
+            className="font-mono text-[10px] uppercase tracking-[0.2em]"
+          >
+            {row.original.delegation_code}
+          </Badge>
+        </div>
+      ),
+    },
+    {
+      header: "🥇",
+      accessorKey: "gold",
+      meta: { className: "text-center" },
+      cell: ({ row }) => <span className="font-semibold">{row.original.gold}</span>,
+    },
+    {
+      header: "🥈",
+      accessorKey: "silver",
+      meta: { className: "text-center" },
+      cell: ({ row }) => <span className="font-semibold">{row.original.silver}</span>,
+    },
+    {
+      header: "🥉",
+      accessorKey: "bronze",
+      meta: { className: "text-center" },
+      cell: ({ row }) => <span className="font-semibold">{row.original.bronze}</span>,
+    },
+    {
+      header: m["competition.detail.table.total"](),
+      accessorKey: "total",
+      meta: { className: "pe-4 text-center" },
+      cell: ({ row }) => <span className="font-bold">{row.original.total}</span>,
+    },
+  ];
+
   return (
     <PageAsideLayout
       sidebar={
-        <SideCard title={m["results.public.card.nav.title"]()}>
+        <SideCard title={m["results.public.card.nav.title"]()}
+        >
           <div className="space-y-3">
             <Link
               to="/leagues/$leagueId/results/records"
@@ -95,68 +133,13 @@ function ResultsPage() {
 
       <div className="w-full mt-6">
         <TableLayout
-          totalCount={filteredData.length}
-          visibleCount={pagedData.length}
+          columns={columns}
+          data={filteredData}
           searchQuery={searchQuery}
-          onSearchChange={(value) => {
-            setSearchQuery(value);
-            setPageIndex(0);
-          }}
-          pageIndex={pageIndex}
-          pageSize={pageSize}
-          onPageChange={setPageIndex}
-          onPageSizeChange={setPageSize}
-        >
-          <MedalBoardTable entries={pagedData} />
-        </TableLayout>
+          onSearchChange={(value) => setSearchQuery(value)}
+        />
       </div>
     </PageAsideLayout>
-  );
-}
-
-function MedalBoardTable({ entries }: { entries: MedalBoardEntry[] }) {
-  return (
-    <Table>
-      <TableHeader>
-        <TableRow>
-          <TableHead className="ps-4 w-14">#</TableHead>
-          <TableHead>{m["results.public.table.delegation"]()}</TableHead>
-          <TableHead className="text-center">🥇</TableHead>
-          <TableHead className="text-center">🥈</TableHead>
-          <TableHead className="text-center">🥉</TableHead>
-          <TableHead className="pe-4 text-center">{m["competition.detail.table.total"]()}</TableHead>
-        </TableRow>
-      </TableHeader>
-      <TableBody>
-        {entries.map((entry, index) => (
-          <TableRow key={entry.delegation_id}>
-            <TableCell className="ps-4 font-medium text-muted-foreground">{index + 1}</TableCell>
-            <TableCell>
-              <div className="flex flex-wrap items-center gap-2">
-                <span className="font-medium">{entry.delegation_name}</span>
-                <Badge
-                  variant="outline"
-                  className="font-mono text-[10px] uppercase tracking-[0.2em]"
-                >
-                  {entry.delegation_code}
-                </Badge>
-              </div>
-            </TableCell>
-            <TableCell className="text-center font-semibold">{entry.gold}</TableCell>
-            <TableCell className="text-center font-semibold">{entry.silver}</TableCell>
-            <TableCell className="text-center font-semibold">{entry.bronze}</TableCell>
-            <TableCell className="pe-4 text-center font-bold">{entry.total}</TableCell>
-          </TableRow>
-        ))}
-        {entries.length === 0 && (
-          <TableRow>
-            <TableCell colSpan={6} className="h-24 text-center text-muted-foreground">
-              {m["results.public.empty"]()}
-            </TableCell>
-          </TableRow>
-        )}
-      </TableBody>
-    </Table>
   );
 }
 

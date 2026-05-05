@@ -1,13 +1,15 @@
 import type { ReactNode } from "react";
 import { Trophy, Users, Globe } from "lucide-react";
 import * as m from "@/paraglide/messages";
-import logoSvg from "@/assets/logo.svg";
+import { useThemeAssets } from "@/shared/hooks/use-theme-assets";
 
 interface AuthSplitLayoutProps {
   children: ReactNode;
 }
 
 export function AuthSplitLayout({ children }: AuthSplitLayoutProps) {
+  const { logo } = useThemeAssets();
+
   return (
     <div className="fixed inset-0 z-50 bg-background">
       <div className="flex h-full w-full flex-col lg:flex-row">
@@ -15,7 +17,7 @@ export function AuthSplitLayout({ children }: AuthSplitLayoutProps) {
         <div className="hidden h-full w-[58%] flex-col justify-between bg-background p-16 lg:flex">
           <div className="flex flex-col gap-6">
             <div className="flex items-center gap-3">
-              <img src={logoSvg} alt="Logo" className="size-12" />
+              <img src={logo} alt="Logo" className="size-12" />
               <span className="text-lg font-semibold text-foreground"> {m["header.siteTitle"]()}</span>
             </div>
             <h1 className="mt-8 max-w-lg text-[42px] font-bold leading-[1.15] text-foreground">{m["home.title"]()}</h1>

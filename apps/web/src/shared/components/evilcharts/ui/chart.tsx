@@ -94,7 +94,16 @@ function ChartContainer({
   className,
   children,
   footer,
-  ...props
+  innerResponsiveContainerStyle,
+  aspect,
+  debounce,
+  minHeight,
+  minWidth,
+  maxHeight,
+  height,
+  width,
+  onResize,
+  ...divProps
 }: Readonly<ChartContainerProps>) {
   const uniqueId = React.useId();
   const chartId = `chart-${id ?? uniqueId.replace(/:/g, "")}`;
@@ -113,12 +122,21 @@ function ChartContainer({
           !footer && "aspect-video",
           className,
         )}
-        {...props}
+        {...divProps}
       >
         <ChartStyle id={chartId} config={config} />
         <RechartsPrimitive.ResponsiveContainer
           className="min-h-0 w-full flex-1"
+          style={innerResponsiveContainerStyle}
           initialDimension={initialDimension}
+          aspect={aspect}
+          debounce={debounce}
+          minHeight={minHeight ?? 200}
+          minWidth={minWidth}
+          maxHeight={maxHeight}
+          height={height}
+          width={width}
+          onResize={onResize}
         >
           {children}
         </RechartsPrimitive.ResponsiveContainer>

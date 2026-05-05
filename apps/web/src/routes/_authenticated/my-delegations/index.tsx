@@ -2,6 +2,7 @@ import { useMemo, useState } from "react";
 import { useMutation, useQueryClient, useSuspenseQuery } from "@tanstack/react-query";
 import { Link, createFileRoute } from "@tanstack/react-router";
 import { toast } from "sonner";
+import type { ColumnDef } from "@tanstack/react-table";
 
 import * as m from "@/paraglide/messages";
 import { Badge } from "@sports-system/ui/components/badge";
@@ -28,14 +29,6 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@sports-system/ui/components/select";
-import {
-  Table,
-  TableBody,
-  TableCell,
-  TableHead,
-  TableHeader,
-  TableRow,
-} from "@sports-system/ui/components/table";
 import { cn } from "@sports-system/ui/lib/utils";
 import { MoreHorizontal, Pencil, ExternalLink, Hand, Sparkles, Bot, Send } from "lucide-react";
 import { PageAsideLayout } from "@/shared/components/layouts/page-aside-layout";
@@ -75,8 +68,6 @@ function MyDelegationsPage() {
   const [dialogOpen, setDialogOpen] = useState(false);
   const [aiDialogOpen, setAiDialogOpen] = useState(false);
   const [selectedDelegation, setSelectedDelegation] = useState<DelegationResponse | null>(null);
-  const [pageIndex, setPageIndex] = useState(0);
-  const [pageSize, setPageSize] = useState(10);
   const [searchQuery, setSearchQuery] = useState("");
 
   const filteredData = useMemo(() => {
@@ -92,10 +83,132 @@ function MyDelegationsPage() {
     return data;
   }, [delegations, searchQuery]);
 
-  const pagedData = filteredData.slice(
-    pageIndex * pageSize,
-    (pageIndex + 1) * pageSize,
-  );
+  const columns: ColumnDef<DelegationResponse>[] = [
+    {
+      header: m['myDelegations.table.name'](),
+      accessorKey: "name",
+      meta: { className: "ps-4" },
+      cell: ({ row }) => (
+        <div className="flex items-center gap-3">
+          {row.original.flag_url ? (
+            <img
+              src={row.original.flag_url}
+              alt={row.original.name}
+              className="h-8 w-8 rounded-md object-cover"
+            />
+          ) : (
+            <div className="flex h-8 w-8 items-center justify-center rounded-md bg-muted text-muted-foreground text-sm font-semibold">
+              {row.original.name.charAt(0)}
+            </div>
+          )}
+          {row.original.league_id ? (
+            <Link
+              to="/leagues/$leagueId/delegations/$delegationId"
+              params={{ leagueId: String(row.original.league_id), delegationId: String(row.original.id) }}
+              className="font-medium hover:underline"
+            >
+              {row.original.name}
+            </Link>
+          ) : (
+            <Link
+              to="/delegations/$delegationId"
+              params={{ delegationId: String(row.original.id) }}
+              className="font-medium hover:underline"
+            >
+              {row.original.name}
+            </Link>
+          )}
+        </div>
+      ),
+    },
+    {
+      header: m['myDelegations.table.code'](),
+      accessorKey: "code",
+      meta: { className: "w-28" },
+      cell: ({ row }) => (
+        <span className="font-mono text-muted-foreground text-xs">
+          {row.original.code}
+        </span>
+      ),
+    },
+    {
+      header: m['myDelegations.table.status'](),
+      accessorKey: "status",
+      meta: { className: "w-32" },
+      cell: ({ row }) => (
+        <Badge
+          variant="outline"
+          className={cn("font-mono text-[10px]", statusVariant[row.original.status])}
+        >
+          {statusLabel[row.original.status] ?? row.original.status}
+        </Badge>
+      ),
+    },
+    {
+      header: m['myDelegations.table.created'](),
+      accessorKey: "created_at",
+      meta: { className: "w-36" },
+      cell: ({ row }) => (
+        <span className="text-muted-foreground text-xs">
+          {new Date(row.original.created_at).toLocaleDateString("pt-BR")}
+        </span>
+      ),
+    },
+    {
+      header: m['myDelegations.table.actions'](),
+      accessorKey: "id",
+      meta: { className: "pe-4 w-24 text-right" },
+      cell: ({ row }) => (
+        <DropdownMenu>
+          <DropdownMenuTrigger
+            render={
+              <Button variant="ghost" size="sm">
+                <MoreHorizontal className="size-4" />
+              </Button>
+            }
+          />
+          <DropdownMenuContent align="end" className="w-full">
+            <DropdownMenuItem>
+              <Link
+                to="/my-delegations/$delegationId/edit"
+                params={{ delegationId: String(row.original.id) }}
+                className="flex items-center gap-2 w-full"
+              >
+                <Pencil className="size-3.5" />
+                {m['myDelegations.action.edit']()}
+              </Link>
+            </DropdownMenuItem>
+            <DropdownMenuItem
+              onClick={() => {
+                setSelectedDelegation(row.original);
+                setDialogOpen(true);
+              }}
+            >
+              <span className="flex items-center gap-2 w-full whitespace-nowrap">
+                <Hand className="size-3.5" />
+                {m['myDelegations.action.request']()}
+              </span>
+            </DropdownMenuItem>
+            {row.original.league_id ? (
+              <DropdownMenuItem>
+                <Link
+                  to="/leagues/$leagueId/delegations/$delegationId"
+                  params={{
+                    leagueId: String(row.original.league_id),
+                    delegationId: String(row.original.id),
+                  }}
+                  className="flex items-center gap-2 w-full"
+                >
+                  <ExternalLink className="size-3.5" />
+                  {m['myDelegations.action.view']()}
+                </Link>
+              </DropdownMenuItem>
+            ) : null}
+          </DropdownMenuContent>
+        </DropdownMenu>
+      ),
+    },
+  ];
 
   return (
     <PageAsideLayout
@@ -144,145 +257,11 @@ function MyDelegationsPage() {
         <h2 className="mb-3 text-sm font-semibold uppercase tracking-wide text-placeholder">{m['myDelegations.listHeading']()}</h2>
 
         <TableLayout
-          totalCount={filteredData.length}
-          visibleCount={pagedData.length}
+          columns={columns}
+          data={filteredData}
           searchQuery={searchQuery}
-          onSearchChange={(value) => {
-            setSearchQuery(value);
-            setPageIndex(0);
-          }}
-          pageIndex={pageIndex}
-          pageSize={pageSize}
-          onPageChange={setPageIndex}
-          onPageSizeChange={setPageSize}
-        >
-          <Table>
-            <TableHeader>
-              <TableRow>
-                <TableHead className="ps-4">{m['myDelegations.table.name']()}</TableHead>
-                <TableHead className="w-28">{m['myDelegations.table.code']()}</TableHead>
-                <TableHead className="w-32">{m['myDelegations.table.status']()}</TableHead>
-                <TableHead className="w-36">{m['myDelegations.table.created']()}</TableHead>
-                <TableHead className="pe-4 w-24 text-right">{m['myDelegations.table.actions']()}</TableHead>
-              </TableRow>
-            </TableHeader>
-            <TableBody>
-              {pagedData.length === 0 && (
-                <TableRow>
-                  <TableCell
-                    colSpan={5}
-                    className="h-24 text-center text-muted-foreground"
-                  >
-                    {m['myDelegations.empty']()}
-                  </TableCell>
-                </TableRow>
-              )}
-              {pagedData.map((delegation: DelegationResponse) => (
-                <TableRow key={delegation.id}>
-                  <TableCell className="ps-4">
-                    <div className="flex items-center gap-3">
-                      {delegation.flag_url ? (
-                        <img
-                          src={delegation.flag_url}
-                          alt={delegation.name}
-                          className="h-8 w-8 rounded-md object-cover"
-                        />
-                      ) : (
-                        <div className="flex h-8 w-8 items-center justify-center rounded-md bg-muted text-muted-foreground text-sm font-semibold">
-                          {delegation.name.charAt(0)}
-                        </div>
-                      )}
-                      {delegation.league_id ? (
-                        <Link
-                          to="/leagues/$leagueId/delegations/$delegationId"
-                          params={{ leagueId: String(delegation.league_id), delegationId: String(delegation.id) }}
-                          className="font-medium hover:underline"
-                        >
-                          {delegation.name}
-                        </Link>
-                      ) : (
-                        <Link
-                          to="/delegations/$delegationId"
-                          params={{ delegationId: String(delegation.id) }}
-                          className="font-medium hover:underline"
-                        >
-                          {delegation.name}
-                        </Link>
-                      )}
-                    </div>
-                  </TableCell>
-                  <TableCell>
-                    <span className="font-mono text-muted-foreground text-xs">
-                      {delegation.code}
-                    </span>
-                  </TableCell>
-                  <TableCell>
-                    <Badge
-                      variant="outline"
-                      className={cn("font-mono text-[10px]", statusVariant[delegation.status])}
-                    >
-                      {statusLabel[delegation.status] ?? delegation.status}
-                    </Badge>
-                  </TableCell>
-                  <TableCell>
-                    <span className="text-muted-foreground text-xs">
-                      {new Date(delegation.created_at).toLocaleDateString("pt-BR")}
-                    </span>
-                  </TableCell>
-                  <TableCell className="pe-4 text-right">
-                    <DropdownMenu>
-                      <DropdownMenuTrigger
-                        render={
-                          <Button variant="ghost" size="sm">
-                            <MoreHorizontal className="size-4" />
-                          </Button>
-                        }
-                      />
-                      <DropdownMenuContent align="end" className="w-full">
-                        <DropdownMenuItem>
-                          <Link
-                            to="/my-delegations/$delegationId/edit"
-                            params={{ delegationId: String(delegation.id) }}
-                            className="flex items-center gap-2 w-full"
-                          >
-                            <Pencil className="size-3.5" />
-                            {m['myDelegations.action.edit']()}
-                          </Link>
-                        </DropdownMenuItem>
-                        <DropdownMenuItem
-                          onClick={() => {
-                            setSelectedDelegation(delegation);
-                            setDialogOpen(true);
-                          }}
-                        >
-                          <span className="flex items-center gap-2 w-full whitespace-nowrap">
-                            <Hand className="size-3.5" />
-                            {m['myDelegations.action.request']()}
-                          </span>
-                        </DropdownMenuItem>
-                        {delegation.league_id ? (
-                          <DropdownMenuItem>
-                            <Link
-                              to="/leagues/$leagueId/delegations/$delegationId"
-                              params={{
-                                leagueId: String(delegation.league_id),
-                                delegationId: String(delegation.id),
-                              }}
-                              className="flex items-center gap-2 w-full"
-                            >
-                              <ExternalLink className="size-3.5" />
-                              {m['myDelegations.action.view']()}
-                            </Link>
-                          </DropdownMenuItem>
-                        ) : null}
-                      </DropdownMenuContent>
-                    </DropdownMenu>
-                  </TableCell>
-                </TableRow>
-              ))}
-            </TableBody>
-          </Table>
-        </TableLayout>
+          onSearchChange={(value) => setSearchQuery(value)}
+        />
       </div>
 
       {selectedDelegation && (

@@ -1,4 +1,4 @@
-import { useMemo, useState } from "react";
+import { useMemo } from "react";
 import {
   useMutation,
   useQueryClient,
@@ -9,6 +9,7 @@ import { Link, createFileRoute, useNavigate } from "@tanstack/react-router";
 import { Bot, Check, Plus, Trash2, X } from "lucide-react";
 import { toast } from "sonner";
 import { z } from "zod";
+import type { ColumnDef } from "@tanstack/react-table";
 import { Button, buttonVariants } from "@sports-system/ui/components/button";
 import { Separator } from "@sports-system/ui/components/separator";
 import {
@@ -18,14 +19,6 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@sports-system/ui/components/select";
-import {
-  Table,
-  TableBody,
-  TableCell,
-  TableHead,
-  TableHeader,
-  TableRow,
-} from "@sports-system/ui/components/table";
 import { cn } from "@sports-system/ui/lib/utils";
 
 import { EnrollmentStatusBadge } from "@/features/enrollments/components/enrollment-status-badge";
@@ -136,9 +129,6 @@ function EnrollmentsPage() {
     [sportDetails],
   );
 
-  const [pageIndex, setPageIndex] = useState(0);
-  const [pageSize, setPageSize] = useState(10);
-
   const filtered = useMemo(() => {
     const normalizedSearch = search.trim().toLowerCase();
 
@@ -195,11 +185,6 @@ function EnrollmentsPage() {
     statusFilter,
     weekFilter,
   ]);
-
-  const pagedData = filtered.slice(
-    pageIndex * pageSize,
-    (pageIndex + 1) * pageSize,
-  );
 
   const stats = useMemo(() => {
     const source = enrollmentsData.data;
@@ -281,6 +266,141 @@ function EnrollmentsPage() {
     },
   });
 
+  const columns: ColumnDef<(typeof enrollmentsData.data)[number]>[] = [
+    {
+      header: m["enrollments.admin.table.athlete"](),
+      accessorKey: "athlete_id",
+      meta: { className: "ps-4" },
+      cell: ({ row }) => {
+        const athlete = athleteById.get(row.original.athlete_id);
+        return (
+          <div>
+            <div className="font-medium">
+              {athlete?.name ?? `m["enrollments.admin.table.athlete"]() #${row.original.athlete_id}`}
+            </div>
+            <div className="text-xs text-muted-foreground">
+              {athlete?.code ?? `#${row.original.athlete_id}`}
+            </div>
+          </div>
+        );
+      },
+    },
+    {
+      header: m["enrollments.admin.table.event"](),
+      accessorKey: "event_id",
+      cell: ({ row }) => {
+        const event = eventById.get(row.original.event_id);
+        const competition = event ? competitionById.get(event.competition_id) : null;
+        const modality = event ? modalityById.get(event.modality_id) : null;
+        const sport = event ? sportByModalityId.get(event.modality_id) : null;
+        return (
+          <div>
+            <div className="font-medium">
+              {modality?.name ?? `Evento #${row.original.event_id}`}
+            </div>
+            <div className="text-xs text-muted-foreground">
+              {sport?.name ?? m['enrollment.form.label.sport']()} ·{" "}
+              {event
+                ? `${formatDate(event.event_date)} · ${formatTime(event.start_time)}`
+                : m['calendar.public.empty']()}
+            </div>
+            {competition ? (
+              <div className="mt-1 text-xs text-muted-foreground">
+                {m["enrollments.admin.table.event"]() } {competition.number} · {competition.status}
+              </div>
+            ) : null}
+          </div>
+        );
+      },
+    },
+    {
+      header: m["enrollments.admin.table.delegation"](),
+      accessorKey: "delegation_id",
+      cell: ({ row }) => {
+        const delegation = delegationById.get(row.original.delegation_id);
+        return delegation ? delegation.name : `m["delegations.public.title"]() #${row.original.delegation_id}`;
+      },
+    },
+    {
+      header: m["enrollments.admin.table.status"](),
+      accessorKey: "status",
+      cell: ({ row }) => <EnrollmentStatusBadge status={row.original.status} />,
+    },
+    {
+      header: m["enrollments.admin.table.validation"](),
+      accessorKey: "validation_message",
+      cell: ({ row }) =>
+        row.original.validation_message ? (
+          <span className="text-sm text-muted-foreground">
+            {row.original.validation_message}
+          </span>
+        ) : (
+          <span className="text-sm text-muted-foreground">—</span>
+        ),
+    },
+    {
+      header: m["enrollments.admin.table.actions"](),
+      accessorKey: "id",
+      meta: { className: "pe-4 text-right" },
+      cell: ({ row }) => {
+        const event = eventById.get(row.original.event_id);
+        const competition = event ? competitionById.get(event.competition_id) : null;
+        const competitionLocked = competition ? isEnrollmentLocked(competition) : false;
+        return (
+          <div className="flex justify-end gap-2">
+            {isAdmin && row.original.status === "PENDING" ? (
+              <>
+                <Button
+                  size="sm"
+                  variant="outline"
+                  disabled={reviewMutation.isPending}
+                  onClick={() =>
+                    reviewMutation.mutate({
+                      enrollmentId: row.original.id,
+                      payload: {
+                        status: "APPROVED",
+                        validation_message: m["common.status.approved"](),
+                      },
+                    })
+                  }
+                >
+                  <Check className="size-4" />
+                </Button>
+                <Button
+                  size="sm"
+                  variant="destructive"
+                  disabled={reviewMutation.isPending}
+                  onClick={() =>
+                    reviewMutation.mutate({
+                      enrollmentId: row.original.id,
+                      payload: {
+                        status: "REJECTED",
+                        validation_message: m["common.status.rejected"](),
+                      },
+                    })
+                  }
+                >
+                  <X className="size-4" />
+                </Button>
+              </>
+            ) : null}
+
+            {!isAdmin ? (
+              <Button
+                size="sm"
+                variant="ghost"
+                disabled={cancelMutation.isPending || competitionLocked}
+                onClick={() => cancelMutation.mutate(row.original.id)}
+              >
+                <Trash2 className="size-4" />
+              </Button>
+            ) : null}
+          </div>
+        );
+      },
+    },
+  ];
+
   return (
     <PageAsideLayout
       sidebar={
@@ -351,252 +471,119 @@ function EnrollmentsPage() {
 
       <div className="w-full mt-6">
         <TableLayout
-        searchPlaceholder={m["common.table.searchPlaceholder"]() }
-        searchQuery={search}
-        onSearchChange={(value) =>
-          void navigate({
-            search: (prev) => ({ ...prev, q: value || undefined }),
-          })
-        }
-        activeFilterCount={activeFilterCount}
-        onClearFilters={() =>
-          void navigate({
-            search: (prev) => ({
-              ...prev,
-              q: undefined,
-              status: "ALL",
-              week: "ALL",
-            }),
-          })
-        }
-        pageIndex={pageIndex}
-        pageSize={pageSize}
-        onPageChange={setPageIndex}
-        onPageSizeChange={setPageSize}
-        totalCount={filtered.length}
-        visibleCount={pagedData.length}
-        filterActions={
-          <>
-            <Separator orientation="vertical" className="mx-1 h-6" />
-            <Select
-              value={statusFilter}
-              onValueChange={(value) =>
-                void navigate({
-                  search: (prev) => ({
-                    ...prev,
-                    status: (value as EnrollmentStatus | "ALL" | null) ?? "ALL",
-                  }),
-                })
-              }
-            >
-              <SelectTrigger className="w-44">
-                <SelectValue />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="ALL">{m["enrollments.admin.filter.allStatus"]()}</SelectItem>
-                <SelectItem value="PENDING">{m["enrollments.admin.filter.pending"]()}</SelectItem>
-                <SelectItem value="APPROVED">{m["enrollments.admin.filter.approved"]()}</SelectItem>
-                <SelectItem value="REJECTED">{m["enrollments.admin.filter.rejected"]()}</SelectItem>
-              </SelectContent>
-            </Select>
+          searchPlaceholder={m["common.table.searchPlaceholder"]() }
+          searchQuery={search}
+          onSearchChange={(value) =>
+            void navigate({
+              search: (prev) => ({ ...prev, q: value || undefined }),
+            })
+          }
+          activeFilterCount={activeFilterCount}
+          onClearFilters={() =>
+            void navigate({
+              search: (prev) => ({
+                ...prev,
+                q: undefined,
+                status: "ALL",
+                week: "ALL",
+              }),
+            })
+          }
+          columns={columns}
+          data={filtered}
+          emptyMessage={m["enrollments.admin.empty"]()}
+          filterActions={
+            <>
+              <Separator orientation="vertical" className="mx-1 h-6" />
+              <Select
+                value={statusFilter}
+                onValueChange={(value) =>
+                  void navigate({
+                    search: (prev) => ({
+                      ...prev,
+                      status: (value as EnrollmentStatus | "ALL" | null) ?? "ALL",
+                    }),
+                  })
+                }
+              >
+                <SelectTrigger className="w-44">
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="ALL">{m["enrollments.admin.filter.allStatus"]()}</SelectItem>
+                  <SelectItem value="PENDING">{m["enrollments.admin.filter.pending"]()}</SelectItem>
+                  <SelectItem value="APPROVED">{m["enrollments.admin.filter.approved"]()}</SelectItem>
+                  <SelectItem value="REJECTED">{m["enrollments.admin.filter.rejected"]()}</SelectItem>
+                </SelectContent>
+              </Select>
 
-            <Select
-              value={weekFilter}
-              onValueChange={(value) =>
-                void navigate({
-                  search: (prev) => ({
-                    ...prev,
-                    week: value ?? "ALL",
-                  }),
-                })
-              }
-            >
-              <SelectTrigger className="w-52">
-                <SelectValue />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="ALL">{m["enrollments.admin.filter.allCompetitions"]()}</SelectItem>
-                {competitionsData.data.map((competition) => (
-                  <SelectItem key={competition.id} value={String(competition.id)}>
-                    {m["enrollments.admin.table.event"]() } {competition.number} · {competition.status}
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
+              <Select
+                value={weekFilter}
+                onValueChange={(value) =>
+                  void navigate({
+                    search: (prev) => ({
+                      ...prev,
+                      week: value ?? "ALL",
+                    }),
+                  })
+                }
+              >
+                <SelectTrigger className="w-52">
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="ALL">{m["enrollments.admin.filter.allCompetitions"]()}</SelectItem>
+                  {competitionsData.data.map((competition) => (
+                    <SelectItem key={competition.id} value={String(competition.id)}>
+                      {m["enrollments.admin.table.event"]() } {competition.number} · {competition.status}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
 
-            <Select
-              value={sort}
-              onValueChange={(value) =>
-                void navigate({
-                  search: (prev) => ({
-                    ...prev,
-                    sort: value as "athlete" | "status" | "week",
-                  }),
-                })
-              }
-            >
-              <SelectTrigger className="w-48">
-                <SelectValue />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="week">{m["enrollments.admin.sort.competition"]()}</SelectItem>
-                <SelectItem value="athlete">{m["enrollments.admin.sort.athlete"]()}</SelectItem>
-                <SelectItem value="status">{m["enrollments.admin.sort.status"]()}</SelectItem>
-              </SelectContent>
-            </Select>
+              <Select
+                value={sort}
+                onValueChange={(value) =>
+                  void navigate({
+                    search: (prev) => ({
+                      ...prev,
+                      sort: value as "athlete" | "status" | "week",
+                    }),
+                  })
+                }
+              >
+                <SelectTrigger className="w-48">
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="week">{m["enrollments.admin.sort.competition"]()}</SelectItem>
+                  <SelectItem value="athlete">{m["enrollments.admin.sort.athlete"]()}</SelectItem>
+                  <SelectItem value="status">{m["enrollments.admin.sort.status"]()}</SelectItem>
+                </SelectContent>
+              </Select>
 
-            <Select
-              value={dir}
-              onValueChange={(value) =>
-                void navigate({
-                  search: (prev) => ({
-                    ...prev,
-                    dir: value as "asc" | "desc",
-                  }),
-                })
-              }
-            >
-              <SelectTrigger className="w-36">
-                <SelectValue />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="asc">{m["enrollments.admin.sort.asc"]()}</SelectItem>
-                <SelectItem value="desc">{m["enrollments.admin.sort.desc"]()}</SelectItem>
-              </SelectContent>
-            </Select>
-          </>
-        }
-      >
-        <Table>
-          <TableHeader>
-            <TableRow>
-              <TableHead className="ps-4">{m["enrollments.admin.table.athlete"]()}</TableHead>
-              <TableHead>{m["enrollments.admin.table.event"]()}</TableHead>
-              <TableHead>{m["enrollments.admin.table.delegation"]()}</TableHead>
-              <TableHead>{m["enrollments.admin.table.status"]()}</TableHead>
-              <TableHead>{m["enrollments.admin.table.validation"]()}</TableHead>
-              <TableHead className="pe-4 text-right">{m["enrollments.admin.table.actions"]()}</TableHead>
-            </TableRow>
-          </TableHeader>
-          <TableBody>
-            {pagedData.length === 0 && (
-              <TableRow>
-                <TableCell
-                  colSpan={6}
-                  className="h-24 text-center text-muted-foreground"
-                >
-                  {m["enrollments.admin.empty"]()}
-                </TableCell>
-              </TableRow>
-            )}
-            {pagedData.map((enrollment) => {
-              const event = eventById.get(enrollment.event_id);
-              const competition = event ? competitionById.get(event.competition_id) : null;
-              const modality = event ? modalityById.get(event.modality_id) : null;
-              const sport = event ? sportByModalityId.get(event.modality_id) : null;
-              const athlete = athleteById.get(enrollment.athlete_id);
-              const delegation = delegationById.get(enrollment.delegation_id);
-              const competitionLocked = competition ? isEnrollmentLocked(competition) : false;
-
-              return (
-                <TableRow key={enrollment.id}>
-                  <TableCell className="ps-4">
-                    <div className="font-medium">
-                      {athlete?.name ?? `m["enrollments.admin.table.athlete"]() #${enrollment.athlete_id}`}
-                    </div>
-                    <div className="text-xs text-muted-foreground">
-                      {athlete?.code ?? `#${enrollment.athlete_id}`}
-                    </div>
-                  </TableCell>
-                  <TableCell>
-                    <div className="font-medium">
-                      {modality?.name ?? `Evento #${enrollment.event_id}`}
-                    </div>
-                    <div className="text-xs text-muted-foreground">
-                      {sport?.name ?? m['enrollment.form.label.sport']()} ·{" "}
-                      {event
-                        ? `${formatDate(event.event_date)} · ${formatTime(event.start_time)}`
-                        : m['calendar.public.empty']()}
-                    </div>
-                    {competition ? (
-                      <div className="mt-1 text-xs text-muted-foreground">
-                        {m["enrollments.admin.table.event"]() } {competition.number} · {competition.status}
-                      </div>
-                    ) : null}
-                  </TableCell>
-                  <TableCell>
-                    {delegation ? delegation.name : `m["delegations.public.title"]() #${enrollment.delegation_id}`}
-                  </TableCell>
-                  <TableCell>
-                    <EnrollmentStatusBadge status={enrollment.status} />
-                  </TableCell>
-                  <TableCell>
-                    {enrollment.validation_message ? (
-                      <span className="text-sm text-muted-foreground">
-                        {enrollment.validation_message}
-                      </span>
-                    ) : (
-                      <span className="text-sm text-muted-foreground">—</span>
-                    )}
-                  </TableCell>
-                  <TableCell className="pe-4 text-right">
-                    <div className="flex justify-end gap-2">
-                      {isAdmin && enrollment.status === "PENDING" ? (
-                        <>
-                          <Button
-                            size="sm"
-                            variant="outline"
-                            disabled={reviewMutation.isPending}
-                            onClick={() =>
-                              reviewMutation.mutate({
-                                enrollmentId: enrollment.id,
-                                payload: {
-                                  status: "APPROVED",
-                                  validation_message: m["common.status.approved"](),
-                                },
-                              })
-                            }
-                          >
-                            <Check className="size-4" />
-                          </Button>
-                          <Button
-                            size="sm"
-                            variant="destructive"
-                            disabled={reviewMutation.isPending}
-                            onClick={() =>
-                              reviewMutation.mutate({
-                                enrollmentId: enrollment.id,
-                                payload: {
-                                  status: "REJECTED",
-                                  validation_message: m["common.status.rejected"](),
-                                },
-                              })
-                            }
-                          >
-                            <X className="size-4" />
-                          </Button>
-                        </>
-                      ) : null}
-
-                      {!isAdmin ? (
-                        <Button
-                          size="sm"
-                          variant="ghost"
-                          disabled={cancelMutation.isPending || competitionLocked}
-                          onClick={() => cancelMutation.mutate(enrollment.id)}
-                        >
-                          <Trash2 className="size-4" />
-                        </Button>
-                      ) : null}
-                    </div>
-                  </TableCell>
-                </TableRow>
-              );
-            })}
-          </TableBody>
-        </Table>
-      </TableLayout>
-
+              <Select
+                value={dir}
+                onValueChange={(value) =>
+                  void navigate({
+                    search: (prev) => ({
+                      ...prev,
+                      dir: value as "asc" | "desc",
+                    }),
+                  })
+                }
+              >
+                <SelectTrigger className="w-36">
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="asc">{m["enrollments.admin.sort.asc"]()}</SelectItem>
+                  <SelectItem value="desc">{m["enrollments.admin.sort.desc"]()}</SelectItem>
+                </SelectContent>
+              </Select>
+            </>
+          }
+        />
       </div>
     </PageAsideLayout>
   );

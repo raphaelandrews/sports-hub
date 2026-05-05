@@ -1,25 +1,19 @@
 import { useMemo, useState } from "react";
 import { useSuspenseQuery } from "@tanstack/react-query";
 import { Link, createFileRoute } from "@tanstack/react-router";
+import type { ColumnDef } from "@tanstack/react-table";
 import {
   Avatar,
   AvatarFallback,
   AvatarImage,
 } from "@sports-system/ui/components/avatar";
 import { Badge } from "@sports-system/ui/components/badge";
-import {
-  Table,
-  TableBody,
-  TableCell,
-  TableHead,
-  TableHeader,
-  TableRow,
-} from "@sports-system/ui/components/table";
 
 import * as m from "@/paraglide/messages";
 import { delegationListQueryOptions } from "@/features/delegations/api/queries";
 import { TableLayout } from "@/shared/components/ui/table-layout";
 import { PageSingleLayout } from "@/shared/components/layouts/page-single-layout";
+import type { DelegationResponse } from "@/types/delegations";
 
 export const Route = createFileRoute("/leagues/$leagueId/(public)/delegations/")({
   loader: ({ context: { queryClient }, params: { leagueId } }) =>
@@ -32,8 +26,6 @@ function DelegationsPage() {
   const { data } = useSuspenseQuery(delegationListQueryOptions(Number(leagueId)));
   const delegations = data.data;
 
-  const [pageIndex, setPageIndex] = useState(0);
-  const [pageSize, setPageSize] = useState(10);
   const [searchQuery, setSearchQuery] = useState("");
 
   const filteredData = useMemo(() => {
@@ -46,78 +38,52 @@ function DelegationsPage() {
     );
   }, [delegations, searchQuery]);
 
-  const pagedData = filteredData.slice(
-    pageIndex * pageSize,
-    (pageIndex + 1) * pageSize,
-  );
+  const columns: ColumnDef<DelegationResponse>[] = [
+    {
+      header: m['delegations.public.table.code'](),
+      accessorKey: "code",
+      meta: { className: "ps-4 w-32" },
+      cell: ({ row }) => (
+        <Badge variant="secondary" className="font-mono text-[10px]">
+          {row.original.code}
+        </Badge>
+      ),
+    },
+    {
+      header: m['delegations.public.table.name'](),
+      accessorKey: "name",
+      meta: { className: "pe-4" },
+      cell: ({ row }) => (
+        <Link
+          to="/leagues/$leagueId/delegations/$delegationId"
+          params={{ leagueId, delegationId: String(row.original.id) }}
+          className="flex items-center gap-2 no-underline! hover:text-primary"
+        >
+          <Avatar className="h-6 w-6">
+            <AvatarImage src={row.original.flag_url ?? ""} alt={row.original.name} />
+            <AvatarFallback className="text-xs">
+              {row.original.name.charAt(0)}
+            </AvatarFallback>
+          </Avatar>
+          <span className="font-medium">{row.original.name}</span>
+        </Link>
+      ),
+    },
+  ];
 
   return (
     <PageSingleLayout title={m['delegations.public.title']()}>
       <TableLayout
         countLabel="delegações"
-        visibleCount={pagedData.length}
-        totalCount={filteredData.length}
+        columns={columns}
+        data={filteredData}
+        emptyMessage={m['delegations.public.empty']()}
         searchPlaceholder={m['common.table.searchPlaceholder']()}
         searchQuery={searchQuery}
-        onSearchChange={(value) => {
-          setSearchQuery(value);
-          setPageIndex(0);
-        }}
+        onSearchChange={(value) => setSearchQuery(value)}
         activeFilterCount={searchQuery ? 1 : 0}
-        onClearFilters={() => {
-          setSearchQuery("");
-          setPageIndex(0);
-        }}
-        pageIndex={pageIndex}
-        pageSize={pageSize}
-        onPageChange={setPageIndex}
-        onPageSizeChange={setPageSize}
-      >
-        <Table>
-          <TableHeader>
-            <TableRow>
-              <TableHead className="ps-4 w-32">{m['delegations.public.table.code']()}</TableHead>
-              <TableHead className="pe-4">{m['delegations.public.table.name']()}</TableHead>
-            </TableRow>
-          </TableHeader>
-          <TableBody>
-            {pagedData.length === 0 && (
-              <TableRow>
-                <TableCell
-                  colSpan={2}
-                  className="h-24 text-center text-muted-foreground"
-                >
-                  {m['delegations.public.empty']()}
-                </TableCell>
-              </TableRow>
-            )}
-            {pagedData.map((d) => (
-              <TableRow key={d.id}>
-                <TableCell className="ps-4">
-                  <Badge variant="secondary" className="font-mono text-[10px]">
-                    {d.code}
-                  </Badge>
-                </TableCell>
-                <TableCell className="pe-4">
-                  <Link
-                    to="/leagues/$leagueId/delegations/$delegationId"
-                    params={{ leagueId, delegationId: String(d.id) }}
-                    className="flex items-center gap-2 underline-offset-4 hover:underline"
-                  >
-                    <Avatar className="h-6 w-6">
-                      <AvatarImage src={d.flag_url ?? ""} alt={d.name} />
-                      <AvatarFallback className="text-xs">
-                        {d.name.charAt(0)}
-                      </AvatarFallback>
-                    </Avatar>
-                    <span className="font-medium">{d.name}</span>
-                  </Link>
-                </TableCell>
-              </TableRow>
-            ))}
-          </TableBody>
-        </Table>
-      </TableLayout>
+        onClearFilters={() => setSearchQuery("")}
+      />
     </PageSingleLayout>
   );
 }

@@ -1,6 +1,7 @@
 import { useMemo, useState } from "react";
 import { useSuspenseQuery } from "@tanstack/react-query";
 import { createFileRoute } from "@tanstack/react-router";
+import type { ColumnDef } from "@tanstack/react-table";
 import { Badge } from "@sports-system/ui/components/badge";
 import { Button } from "@sports-system/ui/components/button";
 import { Checkbox } from "@sports-system/ui/components/checkbox";
@@ -11,14 +12,6 @@ import {
   PopoverTrigger,
 } from "@sports-system/ui/components/popover";
 import { Separator } from "@sports-system/ui/components/separator";
-import {
-  Table,
-  TableBody,
-  TableCell,
-  TableHead,
-  TableHeader,
-  TableRow,
-} from "@sports-system/ui/components/table";
 import {
   CircleIcon,
   CircleDotIcon,
@@ -32,7 +25,7 @@ import * as m from "@/paraglide/messages";
 import { formatDate, formatTime } from "@/shared/lib/date";
 import { allEventsQueryOptions } from "@/features/events/api/queries";
 import { competitionListQueryOptions } from "@/features/competitions/api/queries";
-import type { EventStatus } from "@/types/events";
+import type { EventResponse, EventStatus } from "@/types/events";
 import { TableLayout } from "@/shared/components/ui/table-layout";
 import { PageSingleLayout } from "@/shared/components/layouts/page-single-layout";
 
@@ -68,8 +61,6 @@ function CalendarPage() {
   );
   const events = eventsData.data;
 
-  const [pageIndex, setPageIndex] = useState(0);
-  const [pageSize, setPageSize] = useState(10);
   const [searchQuery, setSearchQuery] = useState("");
   const [selectedCompetitionIds, setSelectedCompetitionIds] = useState<
     number[]
@@ -114,11 +105,6 @@ function CalendarPage() {
     );
   }, [events, selectedCompetitionIds, selectedStatuses, searchQuery, competitions]);
 
-  const pagedData = filteredData.slice(
-    pageIndex * pageSize,
-    (pageIndex + 1) * pageSize,
-  );
-
   const statusCounts = useMemo(() => {
     return events.reduce(
       (acc, item) => {
@@ -143,7 +129,6 @@ function CalendarPage() {
     setSelectedCompetitionIds((prev) =>
       prev.includes(id) ? prev.filter((v) => v !== id) : [...prev, id],
     );
-    setPageIndex(0);
   };
 
   const toggleStatus = (status: EventStatus) => {
@@ -152,7 +137,6 @@ function CalendarPage() {
         ? prev.filter((v) => v !== status)
         : [...prev, status],
     );
-    setPageIndex(0);
   };
 
   const activeFilterCount =
@@ -162,169 +146,165 @@ function CalendarPage() {
     setSelectedCompetitionIds([]);
     setSelectedStatuses([]);
     setSearchQuery("");
-    setPageIndex(0);
   };
+
+  const columns: ColumnDef<EventResponse>[] = [
+    {
+      header: m['calendar.public.table.date'](),
+      accessorKey: "event_date",
+      meta: { className: "ps-4 w-28" },
+      cell: ({ row }) => (
+        <span className="inline-flex items-center gap-2 font-mono text-muted-foreground text-xs">
+          {formatDate(row.original.event_date)}
+        </span>
+      ),
+    },
+    {
+      header: m['calendar.public.table.time'](),
+      accessorKey: "start_time",
+      meta: { className: "w-24" },
+      cell: ({ row }) => formatTime(row.original.start_time),
+    },
+    {
+      header: m['calendar.public.table.venue'](),
+      accessorKey: "venue",
+      cell: ({ row }) => (
+        <span className="truncate font-medium">
+          {row.original.venue ?? "—"}
+        </span>
+      ),
+    },
+    {
+      header: m['calendar.public.table.phase'](),
+      accessorKey: "phase",
+      meta: { className: "w-32" },
+      cell: ({ row }) => row.original.phase,
+    },
+    {
+      header: m['calendar.public.table.status'](),
+      accessorKey: "status",
+      meta: { className: "w-36" },
+      cell: ({ row }) => {
+        const meta = STATUS_META[row.original.status];
+        return (
+          <Badge
+            variant="outline"
+            className={
+              "font-mono text-[10px] " +
+              (row.original.status === "SCHEDULED"
+                ? "border-muted-foreground/30 text-muted-foreground"
+                : row.original.status === "IN_PROGRESS"
+                  ? "border-amber-500/30 text-amber-700 dark:text-amber-400"
+                  : row.original.status === "COMPLETED"
+                    ? "border-emerald-500/30 text-emerald-700 dark:text-emerald-400"
+                    : "border-destructive/30 text-destructive")
+            }
+          >
+            {meta.label}
+          </Badge>
+        );
+      },
+    },
+    {
+      header: m['calendar.public.table.competition'](),
+      accessorKey: "competition_id",
+      meta: { className: "pe-4 w-40" },
+      cell: ({ row }) => {
+        const comp = competitions.find(
+          (c) => c.id === row.original.competition_id,
+        );
+        return comp
+          ? m['competition.admin.badge.competition']({ "competition.number": comp.number })
+          : `ID ${row.original.competition_id}`;
+      },
+    },
+  ];
 
   return (
     <PageSingleLayout title={m['calendar.public.title']()}>
-    <TableLayout
-      countLabel="eventos"
-      visibleCount={pagedData.length}
-      totalCount={filteredData.length}
-      searchPlaceholder={m['common.table.searchPlaceholder']()}
-      searchQuery={searchQuery}
-      onSearchChange={(value) => {
-        setSearchQuery(value);
-        setPageIndex(0);
-      }}
-      activeFilterCount={activeFilterCount}
-      onClearFilters={handleClearFilters}
-      pageIndex={pageIndex}
-      pageSize={pageSize}
-      onPageChange={setPageIndex}
-      onPageSizeChange={setPageSize}
-      filterActions={
-        <>
-          <FacetButton
-            label={m['calendar.public.filter.competition']()}
-            icon={<TrophyIcon className="size-3.5" />}
-            count={selectedCompetitionIds.length}
-            chips={selectedCompetitionIds.map((id) => {
-              const c = competitions.find((x) => x.id === id);
-              return c ? m['competition.admin.badge.competition']({ "competition.number": c.number }) : String(id);
-            })}
-          >
-            <div className="p-2">
-              <div className="relative">
-                <input
-                  placeholder={m['calendar.public.filter.placeholder']()}
-                  className="h-8 w-full rounded-md border border-input bg-background px-3 text-sm outline-none transition-shadow focus-visible:border-ring focus-visible:ring-[3px] focus-visible:ring-ring/24"
-                />
-              </div>
-            </div>
-            <Separator />
-            <div className="flex flex-col p-1">
-              {competitions.map((comp) => (
-                <Label
-                  key={comp.id}
-                  className="flex cursor-pointer items-center gap-2 rounded-md px-2 py-1.5 text-sm hover:bg-accent"
-                >
-                  <Checkbox
-                    checked={selectedCompetitionIds.includes(comp.id)}
-                    onCheckedChange={() => toggleCompetition(comp.id)}
+      <TableLayout
+        countLabel="eventos"
+        columns={columns}
+        data={filteredData}
+        emptyMessage={m['calendar.public.empty']()}
+        searchPlaceholder={m['common.table.searchPlaceholder']()}
+        searchQuery={searchQuery}
+        onSearchChange={(value) => setSearchQuery(value)}
+        activeFilterCount={activeFilterCount}
+        onClearFilters={handleClearFilters}
+        filterActions={
+          <>
+            <FacetButton
+              label={m['calendar.public.filter.competition']()}
+              icon={<TrophyIcon className="size-3.5" />}
+              count={selectedCompetitionIds.length}
+              chips={selectedCompetitionIds.map((id) => {
+                const c = competitions.find((x) => x.id === id);
+                return c ? m['competition.admin.badge.competition']({ "competition.number": c.number }) : String(id);
+              })}
+            >
+              <div className="p-2">
+                <div className="relative">
+                  <input
+                    placeholder={m['calendar.public.filter.placeholder']()}
+                    className="h-8 w-full rounded-md border border-input bg-background px-3 text-sm outline-none transition-shadow focus-visible:border-ring focus-visible:ring-[3px] focus-visible:ring-ring/24"
                   />
-                  <span className="flex-1">{m['competition.admin.badge.competition']({ "competition.number": comp.number })}</span>
-                  <span className="text-muted-foreground text-xs">
-                    {competitionCounts[comp.id] ?? 0}
-                  </span>
-                </Label>
-              ))}
-            </div>
-          </FacetButton>
-
-          <FacetButton
-            label={m['calendar.public.filter.status']()}
-            icon={<FunnelIcon className="size-3.5" />}
-            count={selectedStatuses.length}
-            chips={selectedStatuses.map((s) => STATUS_META[s].label)}
-          >
-            <div className="flex flex-col p-1">
-              {(
-                ["SCHEDULED", "IN_PROGRESS", "COMPLETED", "CANCELLED"] as EventStatus[]
-              ).map((status) => {
-                const meta = STATUS_META[status];
-                const Icon = meta.icon;
-                return (
+                </div>
+              </div>
+              <Separator />
+              <div className="flex flex-col p-1">
+                {competitions.map((comp) => (
                   <Label
-                    key={status}
+                    key={comp.id}
                     className="flex cursor-pointer items-center gap-2 rounded-md px-2 py-1.5 text-sm hover:bg-accent"
                   >
                     <Checkbox
-                      checked={selectedStatuses.includes(status)}
-                      onCheckedChange={() => toggleStatus(status)}
+                      checked={selectedCompetitionIds.includes(comp.id)}
+                      onCheckedChange={() => toggleCompetition(comp.id)}
                     />
-                    <Icon className={"size-3.5 " + meta.cls} />
-                    <span className="flex-1">{meta.label}</span>
+                    <span className="flex-1">{m['competition.admin.badge.competition']({ "competition.number": comp.number })}</span>
                     <span className="text-muted-foreground text-xs">
-                      {statusCounts[status] ?? 0}
+                      {competitionCounts[comp.id] ?? 0}
                     </span>
                   </Label>
-                );
-              })}
-            </div>
-          </FacetButton>
-        </>
-      }
-    >
-      <Table>
-        <TableHeader>
-          <TableRow>
-            <TableHead className="ps-4 w-28">{m['calendar.public.table.date']()}</TableHead>
-            <TableHead className="w-24">{m['calendar.public.table.time']()}</TableHead>
-            <TableHead>{m['calendar.public.table.venue']()}</TableHead>
-            <TableHead className="w-32">{m['calendar.public.table.phase']()}</TableHead>
-            <TableHead className="w-36">{m['calendar.public.table.status']()}</TableHead>
-            <TableHead className="pe-4 w-40">{m['calendar.public.table.competition']()}</TableHead>
-          </TableRow>
-        </TableHeader>
-        <TableBody>
-          {pagedData.length === 0 && (
-            <TableRow>
-              <TableCell
-                colSpan={6}
-                className="h-24 text-center text-muted-foreground"
-              >
-                {m['calendar.public.empty']()}
-              </TableCell>
-            </TableRow>
-          )}
-          {pagedData.map((event) => {
-            const meta = STATUS_META[event.status];
-            const comp = competitions.find(
-              (c) => c.id === event.competition_id,
-            );
-            return (
-              <TableRow key={event.id}>
-                <TableCell className="ps-4">
-                  <span className="inline-flex items-center gap-2 font-mono text-muted-foreground text-xs">
-                    {formatDate(event.event_date)}
-                  </span>
-                </TableCell>
-                <TableCell>{formatTime(event.start_time)}</TableCell>
-                <TableCell>
-                  <span className="truncate font-medium">
-                    {event.venue ?? "—"}
-                  </span>
-                </TableCell>
-                <TableCell>{event.phase}</TableCell>
-                <TableCell>
-                  <Badge
-                    variant="outline"
-                    className={
-                      "font-mono text-[10px] " +
-                      (event.status === "SCHEDULED"
-                        ? "border-muted-foreground/30 text-muted-foreground"
-                        : event.status === "IN_PROGRESS"
-                          ? "border-amber-500/30 text-amber-700 dark:text-amber-400"
-                          : event.status === "COMPLETED"
-                            ? "border-emerald-500/30 text-emerald-700 dark:text-emerald-400"
-                            : "border-destructive/30 text-destructive")
-                    }
-                  >
-                    {meta.label}
-                  </Badge>
-                </TableCell>
-                <TableCell className="pe-4">
-                  {comp
-                    ? m['competition.admin.badge.competition']({ "competition.number": comp.number })
-                    : `ID ${event.competition_id}`}
-                </TableCell>
-              </TableRow>
-            );
-          })}
-        </TableBody>
-      </Table>
-    </TableLayout>
+                ))}
+              </div>
+            </FacetButton>
+
+            <FacetButton
+              label={m['calendar.public.filter.status']()}
+              icon={<FunnelIcon className="size-3.5" />}
+              count={selectedStatuses.length}
+              chips={selectedStatuses.map((s) => STATUS_META[s].label)}
+            >
+              <div className="flex flex-col p-1">
+                {(
+                  ["SCHEDULED", "IN_PROGRESS", "COMPLETED", "CANCELLED"] as EventStatus[]
+                ).map((status) => {
+                  const meta = STATUS_META[status];
+                  const Icon = meta.icon;
+                  return (
+                    <Label
+                      key={status}
+                      className="flex cursor-pointer items-center gap-2 rounded-md px-2 py-1.5 text-sm hover:bg-accent"
+                    >
+                      <Checkbox
+                        checked={selectedStatuses.includes(status)}
+                        onCheckedChange={() => toggleStatus(status)}
+                      />
+                      <Icon className={"size-3.5 " + meta.cls} />
+                      <span className="flex-1">{meta.label}</span>
+                      <span className="text-muted-foreground text-xs">
+                        {statusCounts[status] ?? 0}
+                      </span>
+                    </Label>
+                  );
+                })}
+              </div>
+            </FacetButton>
+          </>
+        }
+      />
     </PageSingleLayout>
   );
 }

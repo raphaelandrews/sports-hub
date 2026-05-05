@@ -300,8 +300,7 @@
   },
   "theme": {
     "toggleLabel": "Alternar tema",
-    "toggleLight": "Ligar a luz",
-    "toggleDark": "Mude para o modo escuro."
+    "toggleNext": "Mudar para {theme}"
   },
   "league": {
     "card": {

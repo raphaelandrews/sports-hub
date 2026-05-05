@@ -16,6 +16,7 @@ import { SocialLayout } from "@/shared/components/layouts/social";
 import { ErrorScreen } from "@/shared/components/layouts/error-screen";
 import { NotFoundScreen } from "@/shared/components/layouts/not-found-screen";
 import { getSessionFn } from "@/features/auth/server/auth";
+import { useThemeAssets } from "@/shared/hooks/use-theme-assets";
 
 import appCss from "@/index.css?url";
 
@@ -50,18 +51,20 @@ function RootDocument() {
   const { session } = Route.useRouteContext();
   const pathname = useRouterState({ select: (s) => s.location.pathname });
   const isAuthPage = AUTH_PATHS.some((p) => pathname.startsWith(p));
+  const { favicon } = useThemeAssets();
 
   return (
-    <html lang={getLocale()} suppressHydrationWarning>
+    <html lang={getLocale()} suppressHydrationWarning className="dark">
       <head>
         <HeadContent />
+        <link rel="icon" href={favicon} />
       </head>
       <body>
         <ThemeProvider
-          attribute="class"
-          defaultTheme="dark"
+          attribute="data-palette"
+          defaultTheme="blue"
           enableSystem={false}
-          themes={["light", "dark"]}
+          themes={["blue", "green", "orange", "dark"]}
         >
           {isAuthPage ? (
             <Outlet />
